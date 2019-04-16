@@ -1,0 +1,4 @@
+_build/
+.#*
+.ninja_*
+*.native
