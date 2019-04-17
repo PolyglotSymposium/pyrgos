@@ -11,7 +11,6 @@ type expr =
 
 type gamma = (expr*ty) list
 
-let todo x = failwith "TODO"
 let (>>) g f x = f(g(x))
 
 let rec check (g : gamma) (e : expr) (t : ty) : bool =
@@ -32,3 +31,15 @@ and synthesize (g : gamma) : expr -> ty option = function
     match synthesize g f with
     | Some (Func (t1, t2)) -> if check g x t1 then Some t2 else None
     | _ -> None
+
+let rec showExpr : expr -> string = function
+  | Var x -> x
+  | App (f, x) -> Printf.sprintf "(%s %s)" (showExpr f) (showExpr x)
+  | Lam (a, b) -> Printf.sprintf "(^%s.%s)" a (showExpr b)
+
+let rec showType : ty -> string = function
+  | TVar name -> name
+  | Func (i, o) -> Printf.sprintf "(%s -> %s)" (showType i) (showType o)
+
+let show ((e, t) : expr*ty) : string =
+  Printf.sprintf "%s : %s" (showExpr e) (showType t)
