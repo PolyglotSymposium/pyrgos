@@ -15,11 +15,19 @@ sxp:
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
 | LPAREN RPAREN { Syntax.Unit }
-| LPAREN SYMBOL FATARROW sxp RPAREN { Syntax.Lambda($2, $4) }
-| LPAREN sxp COLON txp RPAREN { Syntax.Annotate ($2, $4) }
-| LPAREN list_body { $2 }
+| LPAREN func_body RPAREN { $2 }
+| LPAREN ann_body RPAREN { $2 }
+| LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }
 
-list_body:
-| sxp sxp RPAREN { Syntax.Appl ($1, $2) }
-| sxp list_body { Syntax.Appl ($1, $2) }
+ann_body:
+| sxp COLON txp { Syntax.Annotate ($1, $3) }
+| func_body COLON txp { Syntax.Annotate ($1, $3) }
+
+func_body:
+| SYMBOL FATARROW func_body { Syntax.Lambda ($1, $3) }
+| SYMBOL FATARROW sxp { Syntax.Lambda ($1, $3) }
+
+appl_body:
+| sxp sxp { Syntax.Appl ($1, $2) }
+| sxp appl_body { Syntax.Appl ($1, $2) }
