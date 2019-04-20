@@ -7,6 +7,7 @@ type result =
   | TypecheckFailed of expr
 
 let rec reduce (env : env) : expr -> expr = function
+  | Annotate (e, _) -> reduce env e
   | Appl (f, x) ->
     let (Lambda (arg, body)) = reduce env f
     in reduce ((arg, reduce env x) :: env) body
