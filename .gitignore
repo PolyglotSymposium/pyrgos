@@ -2,3 +2,5 @@ _build/
 .#*
 .ninja_*
 *.native
+parser.ml
+parser.mli

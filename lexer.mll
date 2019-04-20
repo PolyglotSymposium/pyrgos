@@ -1,0 +1,18 @@
+(* Originally derived from usm-takl/dynamic-scoping-lis-in-ocmal; MIT license *)
+
+let space = ['\t' '\n' '\r' ' ']
+let symbol_char =
+  ['!' '$' '%' '&' '*' '+' '-' '/' '0'-'9' '<' '=' '>' '?' '@' 'A'-'Z' '^' '_'
+   'a'-'z' '-']
+
+rule token = parse
+| space+ { token lexbuf }
+| symbol_char+ as lexeme { Parser.DATUM (Syntax.Symbol lexeme) }
+| '#' { atom lexbuf }
+| '\'' { Parser.QUOTE }
+| '(' { Parser.LPAREN }
+| ')' { Parser.RPAREN }
+| _ { Parser.EOF }
+
+and atom = parse
+| symbol_char+ as lexeme { Parser.DATUM (Syntax.Atom lexeme) }

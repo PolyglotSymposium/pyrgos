@@ -1,13 +1,16 @@
-type name = string
+type symbol = string (* TODO make this right *)
 
 type ty =
-  | TVar of name
+  | TVar of symbol
   | Func of ty * ty
 
 type expr =
-  | Var of name
-  | Lam of name * expr
-  | App of expr * expr
+  | Appl of expr * expr
+  | Atom of symbol
+  | Lambda of symbol * expr
+  | Quote of expr
+  | Unit
+  | Symbol of symbol
 
 type gamma = (expr*ty) list
 
@@ -15,27 +18,33 @@ let (>>) g f x = f(g(x))
 
 let rec check (g : gamma) (e : expr) (t : ty) : bool =
   match e with
-  | Lam (arg, body) ->
+  | Lambda (arg, body) ->
     (match t with
-    | Func (t1, t2) -> check ((Var arg, t1) :: g) body t2
+    | Func (t1, t2) -> check ((Symbol arg, t1) :: g) body t2
     | _ -> false (* We have no type aliasiang mechanism *))
   | _ -> synthesize g e = Some t
 
 and synthesize (g : gamma) : expr -> ty option = function
-  | Var v ->
-    (match List.find_all (fst >> (=) (Var v)) g with
+  | Appl (f, x) ->
+    (match synthesize g f with
+    | Some (Func (t1, t2)) -> if check g x t1 then Some t2 else None
+    | _ -> None)
+  | Atom _ -> Some (TVar "Atom") (* The Atom type is an infinite disjunction. *)
+  | Lambda _ -> None (* There is no synthesis rule for lambdas *)
+  | Quote e -> Some (TVar "S-Expr")
+  | Unit -> Some (TVar "Unit")
+  | Symbol v ->
+    (match List.find_all (fst >> (=) (Symbol v)) g with
     | [(_, t)] -> Some t
     | _ -> None)
-  | Lam _ -> None (* There is no synthesis rule for lambdas *)
-  | App (f, x) ->
-    match synthesize g f with
-    | Some (Func (t1, t2)) -> if check g x t1 then Some t2 else None
-    | _ -> None
 
 let rec showExpr : expr -> string = function
-  | Var x -> x
-  | App (f, x) -> Printf.sprintf "(%s %s)" (showExpr f) (showExpr x)
-  | Lam (a, b) -> Printf.sprintf "(^%s.%s)" a (showExpr b)
+  | Appl (f, x) -> Printf.sprintf "(%s %s)" (showExpr f) (showExpr x)
+  | Atom x -> Printf.sprintf "#%s" x
+  | Lambda (a, b) -> Printf.sprintf "(^%s.%s)" a (showExpr b)
+  | Quote e -> Printf.sprintf "'%s" (showExpr e)
+  | Unit -> "()"
+  | Symbol x -> x
 
 let rec showType : ty -> string = function
   | TVar name -> name
