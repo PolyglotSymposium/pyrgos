@@ -1,6 +1,6 @@
 open Syntax
 
-let preludeTypes : gamma =
+let preludeTypes : Types.gamma =
   [
   ]
 
