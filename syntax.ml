@@ -11,7 +11,9 @@ type expr =
   | Lambda of symbol * expr
   | Quote of expr
   | Symbol of symbol
-  | Unit
+  | DataCtr of symbol*ty
+
+let unit : expr = DataCtr ("()", TVar "Unit")
 
 type gamma = (expr*ty) list
 
@@ -33,8 +35,8 @@ and synthesize (g : gamma) : expr -> ty option = function
     | _ -> None)
   | Atom _ -> Some (TVar "Atom") (* The Atom type is an infinite disjunction. *)
   | Lambda _ -> None (* There is no synthesis rule for lambdas *)
-  | Quote e -> Some (TVar "S-Expr")
-  | Unit -> Some (TVar "Unit")
+  | Quote e -> Some (TVar "Expr")
+  | DataCtr (_, t) -> Some t
   | Symbol v ->
     (match List.find_all (fst >> (=) (Symbol v)) g with
     | [(_, t)] -> Some t
@@ -51,7 +53,7 @@ let rec showExpr : expr -> string = function
   | Atom x -> Printf.sprintf "#%s" x
   | Lambda (a, b) -> Printf.sprintf "(%s => %s)" a (showExpr b)
   | Quote e -> Printf.sprintf "'%s" (showExpr e)
-  | Unit -> "()"
+  | DataCtr (x, _) -> x
   | Symbol x -> x
 
 let show ((e, t) : expr*ty) : string =

@@ -14,7 +14,7 @@ txp:
 sxp:
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
-| LPAREN RPAREN { Syntax.Unit }
+| LPAREN RPAREN { Syntax.unit }
 | LPAREN func_body RPAREN { $2 }
 | LPAREN ann_body RPAREN { $2 }
 | LPAREN appl_body RPAREN { $2 }
