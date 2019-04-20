@@ -30,4 +30,4 @@ func_body:
 
 appl_body:
 | sxp sxp { Syntax.Appl ($1, $2) }
-| sxp appl_body { Syntax.Appl ($1, $2) }
+| appl_body sxp { Syntax.Appl ($1, $2) }
