@@ -12,18 +12,13 @@ let prelude = (preludeTypes, preludeEnv)
 
 let read s = Parser.sxp Lexer.token (Lexing.from_string s)
 
-let eval ((gamma, env) : gamma*Eval.env) (e : expr) : (expr*ty) option =
-  (* TODO: OCaml Option.map? *)
-  match synthesize gamma e with
-  | Some typ -> let reduced = Eval.reduce env e in Some (reduced, typ)
-  | None -> None
-
 let print s =
   match s with
-  | None -> "Type checking failed."
-  | Some x -> Syntax.show x
+  | Eval.Ok e -> Syntax.show e
+  | Eval.TypecheckFailed expr ->
+    Printf.sprintf "Type checking failed: %s" (Syntax.showExpr expr)
 
-let rep str = print (eval prelude (read str))
+let repr str = print (Eval.eval prelude (read str))
 
 (* Originally derived from the OCaml implementation of Make a Lisp *)
 let repl () =
@@ -32,9 +27,7 @@ let repl () =
     while true do
       Printf.printf "%i> " !i;
       let resp =
-        try
-          try rep (read_line ())
-          with Parsing.Parse_error -> "Parsing failed."
+        try repr (read_line ())
         with Parser.Error -> "Parser error."
       in print_endline resp;
       (* i := i' *)

@@ -2,6 +2,10 @@ open Syntax
 
 type env = (Syntax.symbol * expr) list
 
+type result =
+  | Ok of (expr * ty)
+  | TypecheckFailed of expr
+
 let rec reduce (env : env) : expr -> expr = function
   | Appl (f, x) ->
     let (Lambda (arg, body)) = reduce env f
@@ -12,3 +16,9 @@ let rec reduce (env : env) : expr -> expr = function
     | [(_, t)] -> t
     | _ -> Symbol x)
   | x -> x
+
+let eval ((gamma, env) : gamma*env) (e : expr) : result =
+  (* TODO: OCaml Option.map? Or Functor instance? *)
+  match synthesize gamma e with
+  | Some typ -> let reduced = reduce env e in Ok (reduced, typ)
+  | None -> TypecheckFailed e
