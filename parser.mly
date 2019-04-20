@@ -1,6 +1,6 @@
 %token <Syntax.symbol> ATOM
 %token <Syntax.symbol> SYMBOL
-%token LPAREN RPAREN QUOTE ARROW FATARROW EOF COLON
+%token LPAREN RPAREN QUOTE ARROW FATARROW COLON
 %type <Syntax.expr> sxp
 %start sxp
 

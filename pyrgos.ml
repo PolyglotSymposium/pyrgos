@@ -28,7 +28,9 @@ let repl () =
       Printf.printf "%i> " !i;
       let resp =
         try repr (read_line ())
-        with Parser.Error -> "Parser error."
+        with
+        | Parser.Error -> "Parser error."
+        | Failure "lexing: empty token" -> "Ignored."
       in print_endline resp;
       (* i := i' *)
     done

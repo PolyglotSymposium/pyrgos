@@ -15,7 +15,6 @@ rule token = parse
 | ':' { Parser.COLON }
 | '(' { Parser.LPAREN }
 | ')' { Parser.RPAREN }
-| _ { Parser.EOF }
 
 and atom = parse
 | symbol_char+ as lexeme { Parser.ATOM lexeme }
