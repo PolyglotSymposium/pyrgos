@@ -1,7 +1,7 @@
 open Syntax
 
 let preludeTypes : Types.gamma =
-  [
+  [ (Syntax.unit, TVar "Unit")
   ]
 
 let preludeEnv : Eval.env =
@@ -10,15 +10,9 @@ let preludeEnv : Eval.env =
 
 let prelude = (preludeTypes, preludeEnv)
 
-let read s = Parser.sxp Lexer.token (Lexing.from_string s)
+let read s = Parser.toplvl Lexer.token (Lexing.from_string s)
 
-let print s =
-  match s with
-  | Eval.Ok e -> Syntax.show e
-  | Eval.TypecheckFailed expr ->
-    Printf.sprintf "Type checking failed: %s" (Syntax.showExpr expr)
-
-let repr str = print (Eval.eval prelude (read str))
+let repr str = Eval.print (Eval.compilerEval prelude (read str))
 
 (* Originally derived from the OCaml implementation of Make a Lisp *)
 let repl () =

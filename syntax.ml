@@ -11,9 +11,13 @@ type expr =
   | Lambda of symbol * expr
   | Quote of expr
   | Symbol of symbol
-  | DataCtr of symbol*ty
 
-let unit : expr = DataCtr ("()", TVar "Unit")
+type toplvl =
+  (* The ^ operator *)
+  | Up of expr
+  | Expr of expr
+
+let unit : expr = Symbol "()"
 
 let (>>) g f x = f(g(x))
 
@@ -28,7 +32,6 @@ let rec showExpr : expr -> string = function
   | Atom x -> Printf.sprintf "#%s" x
   | Lambda (a, b) -> Printf.sprintf "(%s => %s)" a (showExpr b)
   | Quote e -> Printf.sprintf "'%s" (showExpr e)
-  | DataCtr (x, _) -> x
   | Symbol x -> x
 
 let show ((e, t) : expr*ty) : string =

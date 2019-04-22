@@ -19,7 +19,6 @@ and synthesize (g : gamma) : expr -> ty option = function
   | Atom _ -> Some (TVar "Atom") (* The Atom type is an infinite disjunction. *)
   | Lambda _ -> None (* There is no synthesis rule for lambdas *)
   | Quote e -> Some (TVar "Expr")
-  | DataCtr (_, t) -> Some t
   | Symbol v ->
     (match List.find_all (fst >> (=) (Symbol v)) g with
     | [(_, t)] -> Some t
