@@ -1,7 +1,7 @@
 open Syntax
 
 let preludeTypes : Types.gamma =
-  [ (Syntax.unit, TVar "Unit")
+  [ ("()", TVar "Unit")
   ]
 
 let preludeEnv : Eval.env =
@@ -12,7 +12,7 @@ let prelude = (preludeTypes, preludeEnv)
 
 let read s = Parser.toplvl Lexer.token (Lexing.from_string s)
 
-let repr str = Eval.print (Eval.compilerEval prelude (read str))
+let repr str = Syntax.show (Eval.compilerEval prelude (read str))
 
 (* Originally derived from the OCaml implementation of Make a Lisp *)
 let repl () =
@@ -25,6 +25,11 @@ let repl () =
         with
         | Parser.Error -> "Parser error."
         | Failure "lexing: empty token" -> "Ignored."
+        | Eval.TypecheckFailed expr ->
+          Printf.sprintf "Type checking failed: %s" (Syntax.showExpr expr)
+        | Eval.UpFailed e -> Printf.sprintf "Up failed: %s" (Syntax.show e)
+        | Eval.RunEvalsFailed e ->
+          Printf.sprintf "Running ! evals failed: expression does not have type Expr: %s" (Syntax.show e)
       in print_endline resp;
       (* i := i' *)
     done

@@ -1,13 +1,14 @@
 open Syntax
 
-type env = (symbol * expr) list
+type env = (symbol * unit expr) list
 
-type result =
-  | Ok of (expr * ty)
-  | TypecheckFailed of expr
-  | UpFailed of (expr * ty)
+type result = unit expr * ty
 
-let rec reduce (env : env) : expr -> expr = function
+exception TypecheckFailed of unit expr
+exception UpFailed of (unit expr * ty)
+exception RunEvalsFailed of (unit expr * ty)
+
+let rec reduce (env : env) : unit expr -> unit expr = function
   | Annotate (e, _) -> reduce env e
   | Appl (f, x) ->
     (match reduce env f with
@@ -21,25 +22,32 @@ let rec reduce (env : env) : expr -> expr = function
   (* Quotes, atoms, and unit cannot be reduced *)
   | x -> x
 
-let eval ((gamma, env) : Types.gamma*env) (e : expr) : result =
+let eval ((gamma, env) : Types.gamma*env) (e : unit expr) : result =
   (* TODO: OCaml Option.map? Or Functor instance? *)
   match Types.synthesize gamma e with
-  | Some typ -> let reduced = reduce env e in Ok (reduced, typ)
-  | None -> TypecheckFailed e
+  | Some typ -> (reduce env e, typ)
+  | None -> raise (TypecheckFailed e)
 
-let compilerEval (env : Types.gamma*env) : toplvl -> result =
+let rec runEvals (env : Types.gamma*env) : allowsEval expr -> unit expr =
+  function
+  | Annotate (e, t) -> Annotate (runEvals env e, t)
+  | Appl (e1, e2) -> Appl (runEvals env e1, runEvals env e2)
+  | Atom s -> Atom s
+  | Eval e ->
+    (match eval env (runEvals env e) with
+    | (Quote e, TVar "Expr") -> e
+    | (e, t) -> raise (RunEvalsFailed (e, t)))
+  | Lambda (a, b) -> Lambda (a, runEvals env b)
+  | Quote e -> Quote (runEvals env e)
+  | Symbol s -> Symbol s
+
+let eval' (env : Types.gamma*env) (e : allowsEval expr) : result =
+  eval env (runEvals env e)
+
+let compilerEval (env : Types.gamma*env) : allowsEval toplvl -> result =
   function
   | Up expr ->
-    (match eval env expr with
-    | Ok (Quote e, _) -> eval env e
-    | Ok e -> UpFailed e
-    | r -> r)
-  | Expr expr -> eval env expr
+    let e = eval' env expr
+    in raise (UpFailed e) (* TODO: implement up and tower levels *)
+  | Expr expr -> eval' env expr
 
-
-let print s =
-  match s with
-  | Ok e -> Syntax.show e
-  | TypecheckFailed expr ->
-    Printf.sprintf "Type checking failed: %s" (Syntax.showExpr expr)
-  | UpFailed e -> Printf.sprintf "Up failed: %s" (Syntax.show e)
