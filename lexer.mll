@@ -2,7 +2,8 @@
 
 let space = ['\t' '\n' '\r' ' ']
 let symbol_char =
-  ['$' '%' '&' '*' '+' '-' '/' '0'-'9' '<' '=' '>' '?' '@' 'A'-'Z' '_' 'a'-'z']
+  ['!' '$' '%' '&' '*' '+' '-' '/' '0'-'9' '<' '=' '>' '?' '@' 'A'-'Z' '_'
+   'a'-'z']
 
 rule token = parse
 | space+ { token lexbuf }
@@ -10,7 +11,6 @@ rule token = parse
 | "=>" { Parser.FATARROW }
 | symbol_char+ as lexeme { Parser.SYMBOL lexeme }
 | '#' { atom lexbuf }
-| '!' { Parser.BANG }
 | '^' { Parser.CARET }
 | '\'' { Parser.QUOTE }
 | ':' { Parser.COLON }

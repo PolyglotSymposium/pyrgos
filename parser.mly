@@ -1,7 +1,7 @@
 %token <Syntax.symbol> ATOM
 %token <Syntax.symbol> SYMBOL
-%token LPAREN RPAREN QUOTE ARROW FATARROW COLON CARET BANG
-%type <Syntax.allowsEval Syntax.toplvl> toplvl
+%token LPAREN RPAREN QUOTE ARROW FATARROW COLON CARET
+%type <Syntax.toplvl> toplvl
 %start toplvl
 
 %%
@@ -18,12 +18,11 @@ txp:
 sxp:
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
-| LPAREN RPAREN { Syntax.Symbol "()" }
+| LPAREN RPAREN { Syntax.unit }
 | LPAREN func_body RPAREN { $2 }
 | LPAREN ann_body RPAREN { $2 }
 | LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }
-| BANG sxp { Syntax.Eval $2 }
 
 ann_body:
 | sxp COLON txp { Syntax.Annotate ($1, $3) }
