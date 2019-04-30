@@ -40,6 +40,10 @@ let up ((gamma, env) as env' : Types.gamma*env) (expr : expr) : result =
       let v = reduce env v
       in UppedTheAnte ((Symbol n, t) :: gamma, (n, v) :: env)
     else raise (TypeCheckingFailed (v, t))
+  | ((Appl (Appl (Symbol "data", Atom typ), List ctrs)), _) ->
+    (* TODO what safety checks are needed here? *)
+    let ctrs' = List.map (fun x -> (Symbol x, TVar typ)) ctrs
+    in UppedTheAnte (ctrs' @ gamma, env)
   | e -> raise (UpFailed e)
 
 let compilerEval (env : Types.gamma*env) : toplvl -> result =

@@ -26,11 +26,11 @@ sxp:
 | LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }
 | LSQUARE RSQUARE { Prelude.nil }
-| LSQUARE cons RSQUARE { $2 }
+| LSQUARE cons RSQUARE { Syntax.List $2 }
 
 cons:
-| sxp { Prelude.consCtr $1 Prelude.nil }
-| sxp cons { Prelude.consCtr $1 $2 }
+| ATOM { [$1] }
+| ATOM cons { $1 :: $2 }
 
 txp:
 | SYMBOL { Syntax.TVar $1 }
