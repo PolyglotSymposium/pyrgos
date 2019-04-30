@@ -1,13 +1,13 @@
 %token <Syntax.symbol> ATOM
 %token <Syntax.symbol> SYMBOL
-%token LPAREN RPAREN QUOTE ARROW FATARROW COLON CARET
+%token LPAREN RPAREN QUOTE ARROW FATARROW COLON DOLLAR
 %type <Syntax.toplvl> toplvl
 %start toplvl
 
 %%
 
 toplvl:
-| CARET sxp { Syntax.Up $2 }
+| DOLLAR sxp { Syntax.Up $2 }
 | sxp { Syntax.Expr $1 }
 
 txp:
