@@ -1,18 +1,8 @@
 open Syntax
 
-let preludeTypes : Types.gamma =
-  [ (Syntax.unit, TVar "Unit")
-  ]
-
-let preludeEnv : Eval.env =
-  [
-  ]
-
-let prelude = (preludeTypes, preludeEnv)
-
 let read s = Parser.toplvl Lexer.token (Lexing.from_string s)
 
-let repr str = Eval.print (Eval.compilerEval prelude (read str))
+let repr str = Eval.print (Eval.compilerEval Prelude.prelude (read str))
 
 (* Originally derived from the OCaml implementation of Make a Lisp *)
 let repl () =

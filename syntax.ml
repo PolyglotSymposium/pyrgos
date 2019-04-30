@@ -16,8 +16,6 @@ type toplvl =
   | Up of expr (* the $ operator *)
   | Expr of expr
 
-let unit : expr = Symbol "()"
-
 let (>>) g f x = f(g(x))
 
 let rec showType : ty -> string = function

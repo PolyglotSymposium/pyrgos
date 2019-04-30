@@ -14,10 +14,16 @@ sxp:
 | LBRACE txp RBRACE { Syntax.TExpr $2 }
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
-| LPAREN RPAREN { Syntax.unit }
+| LPAREN RPAREN { Prelude.unit }
 | LPAREN func_body RPAREN { $2 }
 | LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }
+| LSQUARE RSQUARE { Prelude.nil }
+| LSQUARE cons RSQUARE { $2 }
+
+cons:
+| sxp { Prelude.consCtr $1 Prelude.nil }
+| sxp cons { Prelude.consCtr $1 $2 }
 
 txp:
 | SYMBOL { Syntax.TVar $1 }

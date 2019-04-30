@@ -15,11 +15,11 @@ and synthesize (g : gamma) : expr -> ty option = function
     (match synthesize g f with
     | Some (Func (t1, t2)) -> if check g x t1 then Some t2 else None
     | _ -> None)
-  | Atom _ -> Some (TVar "Atom") (* The Atom type is an infinite disjunction. *)
+  | Atom _ -> Some Prelude.tAtom (* The Atom type is an infinite disjunction. *)
   | Lambda _ -> None (* There is no synthesis rule for lambdas *)
-  | Quote _ -> Some (TVar "Expr")
+  | Quote _ -> Some Prelude.tExpr
   | Symbol v ->
     (match List.find_all (fst >> (=) (Symbol v)) g with
     | [(_, t)] -> Some t
     | _ -> None)
-  | TExpr _ -> Some (TVar "Type-Expr")
+  | TExpr _ -> Some Prelude.tTypeExpr
