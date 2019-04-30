@@ -2,10 +2,9 @@ open Syntax
 
 type env = (symbol * expr) list
 
-type result =
-  | Ok of (expr * ty)
-  | TypecheckFailed of expr
-  | UpFailed of (expr * ty)
+exception TypeCheckingFailed of (expr*ty)
+exception TypeSynthesisFailed of expr
+exception UpFailed of (expr * ty)
 
 let rec reduce (env : env) : expr -> expr = function
   | Appl (f, x) ->
@@ -20,25 +19,25 @@ let rec reduce (env : env) : expr -> expr = function
   (* Quotes, atoms, and unit cannot be reduced *)
   | x -> x
 
-let eval ((gamma, env) : Types.gamma*env) (e : expr) : result =
+let eval ((gamma, env) : Types.gamma*env) (e : expr) : (expr * ty) =
   (* TODO: OCaml Option.map? Or Functor instance? *)
   match Types.synthesize gamma e with
-  | Some typ -> let reduced = reduce env e in Ok (reduced, typ)
-  | None -> TypecheckFailed e
+  | Some typ -> (reduce env e, typ)
+  | None -> raise (TypeSynthesisFailed e)
 
-let compilerEval (env : Types.gamma*env) : toplvl -> result =
+type result =
+  | Evaluated of (expr * ty)
+  | UppedTheAnte of (Types.gamma * env)
+
+let compilerEval ((gamma, env) as env' : Types.gamma*env) : toplvl -> result =
   function
   | Up expr ->
-    (match eval env expr with
-    | Ok (Quote e, _) -> eval env e
-    | Ok e -> UpFailed e
-    | r -> r)
-  | Expr expr -> eval env expr
+    (match eval env' expr with
+    | (Quote e, _) -> Evaluated (eval env' e)
+    | (Appl ((Appl (Appl (Symbol "let", Atom n), TExpr t)), Quote v), _) ->
+      if Types.check gamma v t
+      then UppedTheAnte ((Symbol n, t) :: gamma, (n, v) :: env)
+      else raise (TypeCheckingFailed (v, t))
+    | e -> raise (UpFailed e))
+  | Expr expr -> Evaluated (eval env' expr)
 
-
-let print s =
-  match s with
-  | Ok e -> Syntax.show e
-  | TypecheckFailed expr ->
-    Printf.sprintf "Type checking failed: %s" (Syntax.showExpr expr)
-  | UpFailed e -> Printf.sprintf "Up failed: %s" (Syntax.show e)
