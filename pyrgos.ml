@@ -10,6 +10,7 @@ let repr (env : env) (str : string) : env*string =
   | Eval.UppedTheAnte env -> (env, "Upped the ante.")
 
 let repl () =
+  print_endline "Welcome. Pyrgos at your service.";
   try
     let envRef = ref Prelude.prelude in
     while true do
@@ -28,6 +29,6 @@ let repl () =
         | Eval.UpFailed e -> Printf.sprintf "Up failed: %s" (Syntax.show e)
       in print_endline resp
     done
-  with End_of_file -> print_endline "Always at your service. Goodbye."
+  with End_of_file -> print_endline "\rAlways at your service. Goodbye."
 
 let () = repl ()
