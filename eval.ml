@@ -8,7 +8,6 @@ type result =
   | UpFailed of (expr * ty)
 
 let rec reduce (env : env) : expr -> expr = function
-  | Annotate (e, _) -> reduce env e
   | Appl (f, x) ->
     (match reduce env f with
     | Lambda (arg, body) -> reduce ((arg, reduce env x) :: env) body

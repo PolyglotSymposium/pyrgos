@@ -13,9 +13,12 @@ rule token = parse
 | '#' { atom lexbuf }
 | '$' { Parser.DOLLAR }
 | '\'' { Parser.QUOTE }
-| ':' { Parser.COLON }
 | '(' { Parser.LPAREN }
 | ')' { Parser.RPAREN }
+| '[' { Parser.LSQUARE }
+| ']' { Parser.RSQUARE }
+| '{' { Parser.LBRACE }
+| '}' { Parser.RBRACE }
 
 and atom = parse
 | symbol_char+ as lexeme { Parser.ATOM lexeme }
