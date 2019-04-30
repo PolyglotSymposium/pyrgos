@@ -19,6 +19,7 @@ rule token = parse
 | ']' { Parser.RSQUARE }
 | '{' { Parser.LBRACE }
 | '}' { Parser.RBRACE }
+| eof { Parser.EOF }
 
 and atom = parse
 | symbol_char+ as lexeme { Parser.ATOM lexeme }

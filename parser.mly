@@ -1,14 +1,21 @@
 %token <Syntax.symbol> ATOM
 %token <Syntax.symbol> SYMBOL
-%token LPAREN RPAREN QUOTE ARROW FATARROW DOLLAR LSQUARE RSQUARE LBRACE RBRACE
+%token LPAREN RPAREN
+%token QUOTE
+%token ARROW FATARROW
+%token DOLLAR
+%token LSQUARE RSQUARE
+%token LBRACE RBRACE
+%token EOF
 %type <Syntax.toplvl> toplvl
 %start toplvl
 
 %%
 
 toplvl:
-| DOLLAR sxp { Syntax.Up $2 }
-| sxp { Syntax.Expr $1 }
+| DOLLAR sxp EOF { Syntax.Up $2 }
+| sxp EOF { Syntax.Expr $1 }
+| EOF { Syntax.Expr Prelude.unit }
 
 sxp:
 | LBRACE txp RBRACE { Syntax.TExpr $2 }
