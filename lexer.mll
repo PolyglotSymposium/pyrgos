@@ -13,6 +13,7 @@ rule token = parse
 | symbol_char+ as lexeme { Parser.SYMBOL lexeme }
 | '#' { atom lexbuf }
 | '$' { Parser.DOLLAR }
+| '|' { Parser.PIPE }
 | '\'' { Parser.QUOTE }
 | '(' { Parser.LPAREN }
 | ')' { Parser.RPAREN }

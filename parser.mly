@@ -7,6 +7,7 @@
 %token LSQUARE RSQUARE
 %token LBRACE RBRACE
 %token UNIT
+%token PIPE
 %token EOF
 %type <Syntax.toplvl> toplvl
 %start toplvl
@@ -23,7 +24,8 @@ sxp:
 | LBRACE txp RBRACE { Syntax.TExpr $2 }
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
-| LPAREN func_body RPAREN { $2 }
+| LPAREN PIPE RPAREN { Syntax.Lambda [] }
+| LPAREN func_body RPAREN { Syntax.Lambda $2 }
 | LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }
 | LSQUARE RSQUARE { Prelude.nil }
@@ -41,8 +43,11 @@ txp:
 | LPAREN RPAREN { Syntax.TVar Prelude.tUnit }
 
 func_body:
-| SYMBOL FATARROW func_body { Syntax.Lambda ($1, $3) }
-| SYMBOL FATARROW sxp { Syntax.Lambda ($1, $3) }
+| func_piece PIPE func_body { $1 :: $3 }
+| func_piece { [$1] }
+
+func_piece:
+| SYMBOL FATARROW sxp { ($1, $3) }
 
 appl_body:
 | sxp sxp { Syntax.Appl ($1, $2) }

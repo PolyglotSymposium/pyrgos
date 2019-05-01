@@ -12,9 +12,11 @@ let rec reduce (env : env) : expr -> expr = function
     let reducedF = reduce env f in
     let reducedX = reduce env x in
     (match reducedF with
-    | Lambda (arg, body) -> reduce ((arg, reducedX) :: env) body
+    | Lambda [arg, body] -> reduce ((arg, reducedX) :: env) body
+    | Lambda _ -> failwith "NOT IMPLEMENTED YET"
     | f' -> Appl (f', reducedX))
-  | Lambda (a, b) -> Lambda (a, reduce env b)
+  | Lambda [a, b] -> Lambda [a, reduce env b]
+  | Lambda _ -> failwith "NOT IMPLEMENTED YET"
   | Symbol x ->
     (match List.find_all (fst >> (=) x) env with
     | [(_, e)] -> e

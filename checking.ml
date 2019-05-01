@@ -3,10 +3,11 @@ open Types
 
 let rec check (g : gamma) (e : expr) (t : texpr) : bool =
   match e with
-  | Lambda (arg, body) ->
+  | Lambda [arg, body] ->
     (match t with
     | Func (t1, t2) -> check (registerExprType (Symbol arg) t1 g) body t2
     | _ -> false (* We have no type aliasiang mechanism *))
+  | Lambda _ -> failwith "NOT IMPLEMENT YET"
   | _ -> synthesize g e = Some t
 
 and synthesize (g : gamma) : expr -> texpr option =
