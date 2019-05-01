@@ -27,6 +27,11 @@ let repl () =
         | Eval.TypeCheckingFailed e ->
           Printf.sprintf "Fails to type check: %s" (Syntax.show e)
         | Eval.UpFailed e -> Printf.sprintf "Up failed: %s" (Syntax.show e)
+        | Types.DataCtrAlreadyDefinedWithSameName (ctr, newT, existingT) ->
+          let n = Syntax.showType newT in
+          let x = Syntax.showType existingT in
+          Printf.sprintf "Cannot define data constructor %s for type %s: " ctr n
+          ^ Printf.sprintf "already defined as a constructor of %s" x
       in print_endline resp
     done
   with End_of_file -> print_endline "\rAlways at your service. Goodbye."
