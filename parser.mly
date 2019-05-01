@@ -15,13 +15,13 @@
 toplvl:
 | DOLLAR sxp EOF { Syntax.Up $2 }
 | sxp EOF { Syntax.Expr $1 }
-| EOF { Syntax.Expr Prelude.unit }
+| EOF { Syntax.Expr (Syntax.Symbol Prelude.unit) }
 
 sxp:
 | LBRACE txp RBRACE { Syntax.TExpr $2 }
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
-| LPAREN RPAREN { Prelude.unit }
+| LPAREN RPAREN { Syntax.Symbol Prelude.unit }
 | LPAREN func_body RPAREN { $2 }
 | LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }

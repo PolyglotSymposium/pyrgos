@@ -1,10 +1,11 @@
 open Syntax
+open Types
 
 type env = (symbol * expr) list
 
-exception TypeCheckingFailed of (expr*ty)
+exception TypeCheckingFailed of (expr*texpr)
 exception TypeSynthesisFailed of expr
-exception UpFailed of (expr * ty)
+exception UpFailed of (expr * texpr)
 
 let rec reduce (env : env) : expr -> expr = function
   | Appl (f, x) ->
@@ -21,32 +22,31 @@ let rec reduce (env : env) : expr -> expr = function
   (* Quotes, atoms, and unit cannot be reduced *)
   | x -> x
 
-let eval ((gamma, env) : Types.gamma*env) (e : expr) : (expr * ty) =
+let eval ((gamma, env) : gamma*env) (e : expr) : (expr * texpr) =
   (* TODO: OCaml Option.map? Or Functor instance? *)
-  match Types.synthesize gamma e with
+  match Checking.synthesize gamma e with
   | Some typ -> (reduce env e, typ)
   | None -> raise (TypeSynthesisFailed e)
 
 type result =
-  | Evaluated of (expr * ty)
-  | UppedTheAnte of (Types.gamma * env)
+  | Evaluated of (expr * texpr)
+  | UppedTheAnte of (gamma * env)
 
-let up ((gamma, env) as env' : Types.gamma*env) (expr : expr) : result =
+let up ((gamma, env) as env' : gamma*env) (expr : expr) : result =
   match eval env' expr with
   | (Quote e, _) -> Evaluated (eval env' e)
   | (Appl ((Appl (Appl (Symbol "let", Atom n), TExpr t)), Quote v), _) ->
-    if Types.check gamma v t
+    if Checking.check gamma v t
     then
       let v = reduce env v
-      in UppedTheAnte ((Symbol n, t) :: gamma, (n, v) :: env)
+      in UppedTheAnte (registerExprType (Symbol n) t gamma, (n, v) :: env)
     else raise (TypeCheckingFailed (v, t))
-  | ((Appl (Appl (Symbol "data", Atom typ), List ctrs)), _) ->
-    (* TODO what safety checks are needed here? *)
-    let ctrs' = List.map (fun x -> (Symbol x, TVar typ)) ctrs
-    in UppedTheAnte (ctrs' @ gamma, env)
+  | ((Appl (Appl (Symbol "enum", Atom typ), List ctrs)), _) ->
+    let d = { name = typ; ctrs = ctrs }
+    in UppedTheAnte (registerDataType d gamma, env)
   | e -> raise (UpFailed e)
 
-let compilerEval (env : Types.gamma*env) : toplvl -> result =
+let compilerEval (env : gamma*env) : toplvl -> result =
   function
   | Up expr -> up env expr
   | Expr expr -> Evaluated (eval env expr)

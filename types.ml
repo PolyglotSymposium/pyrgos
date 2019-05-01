@@ -1,26 +1,39 @@
 open Syntax
 
-type gamma = (expr*ty) list
+type data =
+  { name : symbol
+  ; ctrs : symbol list
+  }
 
-let rec check (g : gamma) (e : expr) (t : ty) : bool =
-  match e with
-  | Lambda (arg, body) ->
-    (match t with
-    | Func (t1, t2) -> check ((Symbol arg, t1) :: g) body t2
-    | _ -> false (* We have no type aliasiang mechanism *))
-  | _ -> synthesize g e = Some t
+let mkData n c = { name = n ; ctrs = c }
 
-and synthesize (g : gamma) : expr -> ty option = function
-  | Appl (f, x) ->
-    (match synthesize g f with
-    | Some (Func (t1, t2)) -> if check g x t1 then Some t2 else None
-    | _ -> None)
-  | Atom _ -> Some Prelude.tAtom (* The Atom type is an infinite disjunction. *)
-  | Lambda _ -> None (* There is no synthesis rule for lambdas *)
-  | Quote _ -> Some Prelude.tExpr
-  | List _ -> Some Prelude.tList
-  | Symbol v ->
-    (match List.find_all (fst >> (=) (Symbol v)) g with
-    | [(_, t)] -> Some t
-    | _ -> None)
-  | TExpr _ -> Some Prelude.tTypeExpr
+type datas = data list
+
+let mkDatas = List.map (fun (n, c) -> mkData n c)
+
+type gamma =
+  { datas : data list
+  ; exprs : (expr*texpr) list
+  }
+
+let mkGamma ds es =
+  { datas = mkDatas ds; exprs = es }
+
+let registerDataType (d : data) (g : gamma) : gamma =
+  (* TODO what safety checks are needed here? *)
+  { g with datas = d :: g.datas }
+
+let registerExprType (e : expr) (t : texpr) (g : gamma) : gamma =
+  { g with exprs = (e, t) :: g.exprs }
+
+let isDataCtr (g : gamma) (v : symbol) : texpr option =
+  let xs = List.find_all (fun x -> List.exists ((=) v) x.ctrs) g.datas
+  in match xs with
+     | [d] -> Some (TVar d.name)
+     | _ -> None
+
+let inGamma (g : gamma) (v : symbol) : texpr option =
+  match List.find_all (fst >> (=) (Symbol v)) g.exprs with
+  | [(_, t)] -> Some t
+  | _ -> isDataCtr g v
+

@@ -1,7 +1,7 @@
 type symbol = string (* TODO make this right *)
 
-type ty =
-  | Func of ty * ty
+type texpr =
+  | Func of texpr * texpr
   | TVar of symbol
 
 type expr =
@@ -11,7 +11,7 @@ type expr =
   | List of symbol list
   | Quote of expr
   | Symbol of symbol
-  | TExpr of ty
+  | TExpr of texpr
 
 type toplvl =
   | Up of expr (* the $ operator *)
@@ -19,7 +19,7 @@ type toplvl =
 
 let (>>) g f x = f(g(x))
 
-let rec showType : ty -> string = function
+let rec showType : texpr -> string = function
   | Func (TVar i, o) -> Printf.sprintf "%s -> %s" i (showType o)
   | Func (i, o) -> Printf.sprintf "(%s) -> %s" (showType i) (showType o)
   | TVar name -> name
@@ -37,5 +37,5 @@ let rec showExpr : expr -> string = function
   | Symbol x -> x
   | TExpr t -> Printf.sprintf "{%s}" (showType t)
 
-let show ((e, t) : expr*ty) : string =
+let show ((e, t) : expr*texpr) : string =
   Printf.sprintf "%s : %s" (showExpr e) (showType t)
