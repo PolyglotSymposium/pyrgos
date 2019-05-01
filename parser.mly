@@ -6,6 +6,7 @@
 %token DOLLAR
 %token LSQUARE RSQUARE
 %token LBRACE RBRACE
+%token UNIT
 %token EOF
 %type <Syntax.toplvl> toplvl
 %start toplvl
@@ -18,10 +19,10 @@ toplvl:
 | EOF { Syntax.Expr (Syntax.Symbol Prelude.unit) }
 
 sxp:
+| UNIT { Syntax.Symbol Prelude.unit }
 | LBRACE txp RBRACE { Syntax.TExpr $2 }
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
-| LPAREN RPAREN { Syntax.Symbol Prelude.unit }
 | LPAREN func_body RPAREN { $2 }
 | LPAREN appl_body RPAREN { $2 }
 | QUOTE sxp { Syntax.Quote $2 }
@@ -35,7 +36,9 @@ cons:
 txp:
 | SYMBOL { Syntax.TVar $1 }
 | SYMBOL ARROW txp { Syntax.Func (Syntax.TVar $1, $3) }
+| LPAREN RPAREN ARROW txp { Syntax.Func (Syntax.TVar Prelude.tUnit, $4) }
 | LPAREN txp RPAREN ARROW txp { Syntax.Func ($2, $5) }
+| LPAREN RPAREN { Syntax.TVar Prelude.tUnit }
 
 func_body:
 | SYMBOL FATARROW func_body { Syntax.Lambda ($1, $3) }

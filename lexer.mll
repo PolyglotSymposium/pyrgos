@@ -9,6 +9,7 @@ rule token = parse
 | space+ { token lexbuf }
 | "->" { Parser.ARROW }
 | "=>" { Parser.FATARROW }
+| ":()" { Parser.UNIT }
 | symbol_char+ as lexeme { Parser.SYMBOL lexeme }
 | '#' { atom lexbuf }
 | '$' { Parser.DOLLAR }

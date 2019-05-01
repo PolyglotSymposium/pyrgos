@@ -1,7 +1,7 @@
 open Syntax
 open Types
 
-let unit : symbol = "()"
+let unit : symbol = ":()"
 let nil : expr = List []
 let let' : expr = Symbol "let"
 let enum : expr = Symbol "enum"
@@ -12,7 +12,7 @@ let tExpr : texpr = TVar "Expr"
 let tLet : texpr = TVar "Let"
 let tList : texpr = TVar "List"
 let tTypeExpr : texpr = TVar "Type-Expr"
-let tUnit : symbol = "Unit"
+let tUnit : symbol = "()"
 
 let types : gamma =
   mkGamma

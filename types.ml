@@ -21,6 +21,10 @@ let isDataCtr (g : gamma) (v : symbol) : texpr option =
 exception DataCtrAlreadyDefined of symbol*texpr*texpr
 
 let disallowShadowingCtrs (d : data) (g : gamma) : unit =
+  (* None of these algorithms or data structures I'm building are going to scale
+   * well... One thing I have not studied in compiler design is how to make them
+   * efficient, lol. Modules could help here I suppose... Anyway, this is a
+   * hack-it-up compiler for now, so have fun, lol! *)
   List.iter (fun ctr ->
     match isDataCtr g ctr with
     | None -> ()
@@ -37,10 +41,21 @@ let disallowShadowingTypes (d : data) (g : gamma) : unit =
      | [] -> ()
      | _ -> raise (TypeAlreadyDefined d.name)
 
+exception CtrsMustStartWithColon of symbol
+
+let enforceCtrPrefix (d : data) : unit =
+  List.iter (fun ctr ->
+    match ctr.[0] with
+    | ':' -> ()
+    | _ -> raise (CtrsMustStartWithColon ctr)
+  ) d.ctrs
+
 let registerDataType (d : data) (g : gamma) : gamma =
   disallowShadowingCtrs d g;
   disallowShadowingTypes d g;
-  (* TODO what safety checks are needed here? *)
+  enforceCtrPrefix d;
+  (* TODO ensure uniqueness of constructor names within single type
+   * definition *)
   { g with datas = d :: g.datas }
 
 let mkGamma ds es =
