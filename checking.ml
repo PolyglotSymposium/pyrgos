@@ -5,7 +5,9 @@ let rec check (g : gamma) (e : expr) (t : texpr) : bool =
   match e with
   | Lambda [arg, body] ->
     (match t with
-    | Func (t1, t2) -> check (registerExprType (Symbol arg) t1 g) body t2
+    | Func (t1, t2) ->
+      let g' = if arg = "_" then g else registerExprType (Symbol arg) t1 g
+      in check g' body t2
     | _ -> false (* We have no type aliasiang mechanism *))
   | Lambda _ -> failwith "NOT IMPLEMENT YET"
   | _ -> synthesize g e = Some t
