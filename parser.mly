@@ -48,6 +48,7 @@ func_body:
 
 func_piece:
 | SYMBOL FATARROW sxp { ($1, $3) }
+| UNIT FATARROW sxp { (Prelude.unit, $3) }
 
 appl_body:
 | sxp sxp { Syntax.Appl ($1, $2) }

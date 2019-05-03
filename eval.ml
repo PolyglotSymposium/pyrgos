@@ -13,7 +13,10 @@ let rec reduce (env : env) : expr -> expr = function
     let reducedX = reduce env x in
     (match reducedF with
     | Lambda [arg, body] ->
-      let env' = if arg = "_" then env else (arg, reducedX) :: env
+      (* TODO actually implement pattern matching *)
+      let env' = if arg = "_" || arg.[0] = ':'
+                 then env (* don't bind constructors and _ *)
+                 else (arg, reducedX) :: env
       in reduce env' body
     | Lambda _ -> failwith "NOT IMPLEMENTED YET"
     | f' -> Appl (f', reducedX))
