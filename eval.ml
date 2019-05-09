@@ -12,7 +12,7 @@ let rec reduce (env : env) : expr -> expr = function
     let reducedF = reduce env f in
     let reducedX = reduce env x in
     (match reducedF with
-    | Lambda [arg, body] ->
+    | Lambda [Symbol arg, body] ->
       (* TODO actually implement pattern matching *)
       let env' = if arg = "_" || arg.[0] = ':'
                  then env (* don't bind constructors and _ *)

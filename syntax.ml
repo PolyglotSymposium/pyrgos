@@ -7,7 +7,7 @@ type texpr =
 type expr =
   | Appl of expr * expr
   | Atom of symbol
-  | Lambda of (symbol * expr) list
+  | Lambda of (expr * expr) list
   | List of symbol list
   | Quote of expr
   | Symbol of symbol
@@ -31,7 +31,7 @@ let rec showExpr : expr -> string = function
   | Appl (f, x) -> Printf.sprintf "(%s %s)" (showExpr f) (showExpr x)
   | Atom x -> Printf.sprintf "#%s" x
   | Lambda pieces ->
-    let showPiece (a, b) = Printf.sprintf "%s => %s" a (showExpr b) in
+    let showPiece (a, b) = Printf.sprintf "%s => %s" (showExpr a) (showExpr b) in
     let ps = List.map showPiece pieces in
     let lBody = String.concat " | " ps in
     Printf.sprintf "(%s)" lBody
