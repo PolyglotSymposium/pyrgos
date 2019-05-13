@@ -22,6 +22,7 @@ and synthesize (g : gamma) : expr -> texpr option =
   function
   | Appl (f, x) -> synthAppl g f x
   | Atom _ -> Some Prelude.tAtom (* The Atom type is an infinite disjunction. *)
+  | DataCtr x -> failwith "TODO"
   | Lambda ((Symbol _, _) :: _) -> None
   | Lambda ((a, b) :: pieces) ->
     let aType = synthesize g a in

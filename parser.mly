@@ -1,5 +1,6 @@
 %token <Syntax.symbol> ATOM
 %token <Syntax.symbol> SYMBOL
+%token COLON
 %token LPAREN RPAREN
 %token QUOTE
 %token ARROW FATARROW
@@ -20,7 +21,8 @@ toplvl:
 | EOF { Syntax.Expr (Syntax.Symbol Prelude.unit) }
 
 sxp:
-| UNIT { Syntax.Symbol Prelude.unit }
+| COLON LPAREN RPAREN { Syntax.DataCtr Prelude.unit }
+| COLON SYMBOL { Syntax.DataCtr $2 }
 | LBRACE txp RBRACE { Syntax.TExpr $2 }
 | ATOM { Syntax.Atom $1 }
 | SYMBOL { Syntax.Symbol $1 }
