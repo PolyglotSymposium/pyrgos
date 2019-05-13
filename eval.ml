@@ -7,6 +7,13 @@ exception TypeCheckingFailed of (expr*texpr)
 exception TypeSynthesisFailed of expr
 exception UpFailed of (expr * texpr)
 
+let tryApply (e : expr) (pieces : (expr*expr) list) : expr =
+  List.fold_right (fun (a, b) acc ->
+    if a = e
+    then b
+    else acc
+  ) pieces (Lambda pieces)
+
 let rec reduce (env : env) : expr -> expr = function
   | Appl (f, x) ->
     let reducedF = reduce env f in
@@ -18,7 +25,7 @@ let rec reduce (env : env) : expr -> expr = function
                  then env (* don't bind constructors and _ *)
                  else (arg, reducedX) :: env
       in reduce env' body
-    | Lambda _ -> failwith "NOT IMPLEMENTED YET"
+    | Lambda pieces -> reduce env (tryApply reducedX pieces)
     | f' -> Appl (f', reducedX))
   | Lambda pieces ->
     Lambda (List.map (fun (a, b) -> (a, reduce env b)) pieces)

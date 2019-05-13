@@ -28,7 +28,7 @@ and synthesize (g : gamma) : expr -> texpr option =
     let bType = synthesize g b in
     (match (aType, bType) with
     | (Some at, Some bt) ->
-      if checkPieces g at bt pieces (*&& checkExhaustivity g at ((a, b) :: pieces)*)
+      if checkPieces g at bt pieces
       then Some (Func (at, bt))
       else None
     | _ -> None)
@@ -53,5 +53,6 @@ and checkPieces
     in check g' b bodyT
   | (a, b) :: pieces' ->
     check g a argT && check g b bodyT && checkPieces g argT bodyT pieces'
+    (*&& checkExhaustivity g argT ((a, b) :: pieces*)
   (* TODO: check for exhaustivity *)
   (* TODO: check for dead branches *)
