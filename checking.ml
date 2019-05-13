@@ -1,6 +1,9 @@
 open Syntax
 open Types
 
+let checkExhaustivity (g : gamma) (t : texpr) (pieces : (expr*expr) list) : bool =
+  false
+
 let rec check (g : gamma) (e : expr) (t : texpr) : bool =
   match e with
   | Lambda [Symbol arg, body] ->
@@ -25,7 +28,7 @@ and synthesize (g : gamma) : expr -> texpr option =
     let bType = synthesize g b in
     (match (aType, bType) with
     | (Some at, Some bt) ->
-      if checkPieces g at bt pieces
+      if checkPieces g at bt pieces (*&& checkExhaustivity g at ((a, b) :: pieces)*)
       then Some (Func (at, bt))
       else None
     | _ -> None)
@@ -45,6 +48,9 @@ and checkPieces
     : bool =
   match pieces with
   | [] -> true
+  | [Symbol a, b] ->
+    let g' = registerExprType (Symbol a) argT g
+    in check g' b bodyT
   | (a, b) :: pieces' ->
     check g a argT && check g b bodyT && checkPieces g argT bodyT pieces'
   (* TODO: check for exhaustivity *)

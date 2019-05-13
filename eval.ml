@@ -49,7 +49,7 @@ let up ((gamma, env) as env' : gamma*env) (expr : expr) : result =
       in UppedTheAnte (registerExprType (Symbol n) t gamma, (n, v) :: env)
     else raise (TypeCheckingFailed (v, t))
   | ((Appl (Appl (Symbol "enum", Atom typ), List ctrs)), _) ->
-    let d = { name = typ; ctrs = ctrs }
+    let d = mkData (typ, ctrs)
     in UppedTheAnte (registerDataType d gamma, env)
   | e -> raise (UpFailed e)
 

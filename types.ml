@@ -2,10 +2,11 @@ open Syntax
 
 type data =
   { name : symbol
+  ; isInf : bool (* whether the disjunction is infinite *)
   ; ctrs : symbol list
   }
 
-let mkData (n, c) = { name = n ; ctrs = c }
+let mkData (n, c) = { name = n ; isInf = false ; ctrs = c }
 
 type gamma =
   { datas : data list
