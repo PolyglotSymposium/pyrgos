@@ -7,25 +7,27 @@ exception TypeCheckingFailed of (expr*texpr)
 exception TypeSynthesisFailed of expr
 exception UpFailed of (expr * texpr)
 
-let tryApply (e : expr) (pieces : (expr*expr) list) : expr =
+let rec applyPieces env (arg : expr) (pieces : (expr*expr) list) : expr =
   List.fold_right (fun (a, b) acc ->
-    if a = e
-    then b
-    else acc
+    match a with
+    | Symbol param -> apply env param arg b
+    | _ -> if a = arg then b else acc
   ) pieces (Lambda pieces)
 
-let rec reduce (env : env) : expr -> expr = function
+and apply (env : env) (param : symbol) (arg : expr) (body : expr) : expr =
+  (* TODO actually implement pattern matching *)
+  let env' = if param = "_" || param.[0] = ':'
+             then env (* don't bind constructors and _ *)
+             else (param, arg) :: env
+  in reduce env' body
+
+and reduce (env : env) : expr -> expr = function
   | Appl (f, x) ->
     let reducedF = reduce env f in
     let reducedX = reduce env x in
     (match reducedF with
-    | Lambda [Symbol arg, body] ->
-      (* TODO actually implement pattern matching *)
-      let env' = if arg = "_" || arg.[0] = ':'
-                 then env (* don't bind constructors and _ *)
-                 else (arg, reducedX) :: env
-      in reduce env' body
-    | Lambda pieces -> reduce env (tryApply reducedX pieces)
+    | Lambda [Symbol arg, body] -> apply env arg reducedX body
+    | Lambda pieces -> applyPieces env reducedX pieces
     | f' -> Appl (f', reducedX))
   | Lambda pieces ->
     Lambda (List.map (fun (a, b) -> (a, reduce env b)) pieces)
