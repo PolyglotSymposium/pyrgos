@@ -15,7 +15,6 @@ let rec check (g : gamma) (e : expr) (t : texpr) : bool =
                else registerExprType (Symbol arg) t1 g
       in check g' body t2
     | _ -> false (* We have no type aliasing mechanism *))
-  | Lambda _-> failwith "NOT IMPLEMENT YET"
   | _ -> synthesize g e = Some t
 
 and synthesize (g : gamma) : expr -> texpr option =
