@@ -7,7 +7,6 @@
 %token DOLLAR
 %token LSQUARE RSQUARE
 %token LBRACE RBRACE
-%token UNIT
 %token PIPE
 %token EOF
 %type <Syntax.toplvl> toplvl

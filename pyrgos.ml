@@ -34,9 +34,6 @@ let repl () =
           ^ Printf.sprintf "already defined as a constructor of %s" x
         | Types.TypeAlreadyDefined t ->
           Printf.sprintf "Type already defined: %s" t
-        | Types.CtrsMustStartWithColon ctr ->
-          "Constructors must start with : to avoid ambiguity in pattern matches"
-          ^ Printf.sprintf " but %s does not" ctr
       in print_endline resp
     done
   with End_of_file -> print_endline "\rAlways at your service. Goodbye."

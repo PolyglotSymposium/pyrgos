@@ -42,19 +42,9 @@ let disallowShadowingTypes (d : data) (g : gamma) : unit =
      | [] -> ()
      | _ -> raise (TypeAlreadyDefined d.name)
 
-exception CtrsMustStartWithColon of symbol
-
-let enforceCtrPrefix (d : data) : unit =
-  List.iter (fun ctr ->
-    match ctr.[0] with
-    | ':' -> ()
-    | _ -> raise (CtrsMustStartWithColon ctr)
-  ) d.ctrs
-
 let registerDataType (d : data) (g : gamma) : gamma =
   disallowShadowingCtrs d g;
   disallowShadowingTypes d g;
-  enforceCtrPrefix d;
   (* TODO ensure uniqueness of constructor names within single type
    * definition *)
   { g with datas = d :: g.datas }
@@ -63,10 +53,12 @@ let mkGamma ds es =
   List.fold_right (mkData >> registerDataType) ds { datas = []; exprs = es }
 
 let registerExprType (e : expr) (t : texpr) (g : gamma) : gamma =
-  { g with exprs = (e, t) :: g.exprs }
+  if e = Symbol "_"
+  then g (* never bind _ *)
+  else { g with exprs = (e, t) :: g.exprs }
 
 let inGamma (g : gamma) (v : symbol) : texpr option =
   match List.find_all (fst >> (=) (Symbol v)) g.exprs with
   | [(_, t)] -> Some t
-  | _ -> isDataCtr g v
+  | _ -> None
 
