@@ -1,3 +1,5 @@
+open Util
+
 type symbol = string (* TODO make this right *)
 
 type texpr =
@@ -18,14 +20,10 @@ type toplvl =
   | Up of expr (* the $ operator *)
   | Expr of expr
 
-let (>>) g f x = f(g(x))
-
 let rec showType : texpr -> string = function
   | Func (TVar i, o) -> Printf.sprintf "%s -> %s" i (showType o)
   | Func (i, o) -> Printf.sprintf "(%s) -> %s" (showType i) (showType o)
   | TVar name -> name
-
-let unwords = String.concat " "
 
 (* TODO pretty-print *)
 let rec showExpr : expr -> string = function

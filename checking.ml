@@ -1,8 +1,37 @@
+open Util
 open Syntax
 open Types
 
-let checkExhaustivity (g : gamma) (t : texpr) (pieces : (expr*expr) list) : bool =
-  false
+let rec removeFromList (elem : 'a) : 'a list -> 'a list option =
+  function
+  | [] -> None
+  | x :: xs ->
+    if x = elem
+    then Some xs
+    else match removeFromList elem xs with
+         | None -> None
+         | Some xs' -> Some (x :: xs')
+
+let match1Ctr (e : expr) : expr list option -> bool*(expr list option) =
+  function
+  | None -> true, None
+  | Some ctrs ->
+    match removeFromList e ctrs with
+    | None -> false, Some ctrs
+    | Some ctrs' -> true, Some ctrs'
+
+let dataCtrs (g : gamma) : expr -> expr list option =
+  function
+  | DataCtr dc ->
+    typeOfDataCtr g dc
+    |> map_opt (fun d ->
+      List.map (fun x -> DataCtr x) (
+        match removeFromList dc d.ctrs with
+        | None -> d.ctrs
+        | Some ctrs -> ctrs
+      )
+    )
+  | _ -> None
 
 let rec check (g : gamma) (e : expr) (t : texpr) : bool =
   match e with
@@ -25,7 +54,8 @@ and synthesize (g : gamma) : expr -> texpr option =
     let bType = synthesize g b in
     (match (aType, bType) with
     | (Some at, Some bt) ->
-      if checkPieces g at bt pieces
+      let ctrs = dataCtrs g a in
+      if checkPieces g at bt ctrs pieces
       then Some (Func (at, bt))
       else None
     | _ -> None)
@@ -41,15 +71,17 @@ and synthAppl (g : gamma) (f : expr) (x : expr) : texpr option =
   | _ -> None
 
 and checkPieces
-    (g : gamma) (argT : texpr) (bodyT : texpr) (pieces : (expr*expr) list)
+    (g : gamma) (argT : texpr) (bodyT : texpr)
+    (ctrs : expr list option) (pieces : (expr*expr) list)
     : bool =
   match pieces with
-  | [] -> true
+  | [] -> ctrs = Some []
   | [Symbol a, b] ->
     let g' = registerExprType (Symbol a) argT g
     in check g' b bodyT
   | (a, b) :: pieces' ->
-    check g a argT && check g b bodyT && checkPieces g argT bodyT pieces'
-    (*&& checkExhaustivity g argT ((a, b) :: pieces*)
-  (* TODO: check for exhaustivity *)
-  (* TODO: check for dead branches *)
+    let (matched,ctrs') = match1Ctr a ctrs in
+    matched
+    && check g a argT
+    && check g b bodyT
+    && checkPieces g argT bodyT ctrs' pieces'

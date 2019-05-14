@@ -1,3 +1,4 @@
+open Util
 open Syntax
 open Types
 

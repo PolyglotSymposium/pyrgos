@@ -1,3 +1,4 @@
+open Util
 open Syntax
 
 type data =
@@ -13,11 +14,14 @@ type gamma =
   ; exprs : (expr*texpr) list
   }
 
-let isDataCtr (g : gamma) (v : symbol) : texpr option =
+let typeOfDataCtr (g : gamma) (v : symbol) : data option =
   let xs = List.find_all (fun x -> List.exists ((=) v) x.ctrs) g.datas
   in match xs with
-     | [d] -> Some (TVar d.name)
+     | [d] -> Some d
      | _ -> None
+
+let isDataCtr (g : gamma) : symbol -> texpr option =
+  typeOfDataCtr g >> map_opt (fun d -> TVar d.name)
 
 exception DataCtrAlreadyDefined of symbol*texpr*texpr
 
