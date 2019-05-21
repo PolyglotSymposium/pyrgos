@@ -1,0 +1,5 @@
+(module dytype (check synthesize)
+  (import scheme)
+  (define check (lambda () "TODO check"))
+  (define synthesize (lambda () "TODO synthesize"))
+)
