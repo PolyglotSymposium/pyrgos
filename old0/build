@@ -1,0 +1,1 @@
+ocamlbuild -use-menhir -menhir "menhir --explain" pyrgos.native
