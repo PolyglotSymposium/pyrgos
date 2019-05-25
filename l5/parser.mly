@@ -1,6 +1,8 @@
 %token <Syntax.symbol> SYMBOL
 %token <int> NUMBER
-%token LSQBR RSQBR
+%token LBRACE RBRACE
+%token LBRACK RBRACK
+%token LPAREN RPAREN
 %token LAMBDA APPLY CONS UNCONS NIL ISNIL CASE QUOTE EVAL
 %token EOF
 %type <Syntax.toplvl> toplvl
@@ -16,7 +18,10 @@ toplvl:
 sxp:
 | SYMBOL { Syntax.Symbol $1 }
 | NUMBER { Syntax.Integer $1 }
-| LSQBR listish RSQBR { $2 }
+| LBRACE listish RBRACE { $2 }
+| LBRACK RBRACK { Syntax.Nil }
+| LPAREN app RPAREN { $2 }
+| LBRACK cons RBRACK { $2 }
 
 listish:
 | NIL { Syntax.Nil }
@@ -28,3 +33,11 @@ listish:
 | CASE sxp NUMBER sxp sxp { Syntax.Case ($2, $3, $4, $5) }
 | QUOTE sxp { Syntax.Quote $2 }
 | EVAL sxp { Syntax.Eval $2 }
+
+app:
+| sxp sxp { Syntax.Appl ($1, $2) }
+| app sxp { Syntax.Appl ($1, $2) }
+
+cons:
+| sxp cons { Syntax.Cons ($1, $2) }
+| sxp { Syntax.Cons ($1, Syntax.Nil) }
