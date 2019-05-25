@@ -1,1 +1,0 @@
-ocamlbuild -use-menhir -menhir "menhir --explain" l5.native

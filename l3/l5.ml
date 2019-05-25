@@ -11,7 +11,7 @@ let repl () =
   try
     let envRef = ref [] in
     while true do
-      print_string "l5> ";
+      print_string "l3> ";
       let resp =
         try
           let env, resp = repr !envRef (read_line ())
