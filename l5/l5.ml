@@ -19,6 +19,8 @@ let repl () =
         with
         | Eval.UnboundVariable x ->
           Some (Printf.sprintf "Unbound variable %s" x)
+        | Eval.CannotBeApplied x ->
+          Some (Printf.sprintf "Cannot apply non-function: %s" (Syntax.show x))
         | Parser.Error -> Some "Parser error."
         | Failure "lexing: empty token" -> Some "Ignored."
       in match resp with
