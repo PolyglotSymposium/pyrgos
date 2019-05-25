@@ -9,7 +9,7 @@ let symbol_char =
 rule token = parse
 | space+ { token lexbuf }
 | num_char+ as lexeme { Parser.NUMBER (int_of_string lexeme) }
-| symbol_char+ as lexeme { Parser.SYMBOL lexeme }
+| '\'' { Parser.SUGARQUOTE }
 | '$' { keyword lexbuf }
 | '{' { Parser.LBRACE }
 | '}' { Parser.RBRACE }
@@ -17,6 +17,7 @@ rule token = parse
 | ')' { Parser.RPAREN }
 | '[' { Parser.LBRACK }
 | ']' { Parser.RBRACK }
+| symbol_char+ as lexeme { Parser.SYMBOL lexeme }
 | eof { Parser.EOF }
 
 and keyword = parse

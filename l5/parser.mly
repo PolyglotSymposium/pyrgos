@@ -3,7 +3,7 @@
 %token LBRACE RBRACE
 %token LBRACK RBRACK
 %token LPAREN RPAREN
-%token LAMBDA APPLY CONS UNCONS NIL ISNIL CASE QUOTE EVAL
+%token LAMBDA APPLY CONS UNCONS NIL ISNIL CASE QUOTE EVAL SUGARQUOTE
 %token EOF
 %type <Syntax.toplvl> toplvl
 %start toplvl
@@ -22,6 +22,7 @@ sxp:
 | LBRACK RBRACK { Syntax.Nil }
 | LPAREN app RPAREN { $2 }
 | LBRACK cons RBRACK { $2 }
+| SUGARQUOTE sxp { Syntax.Quote $2 }
 
 listish:
 | NIL { Syntax.Nil }
