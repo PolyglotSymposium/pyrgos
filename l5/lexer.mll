@@ -11,8 +11,8 @@ rule token = parse
 | num_char+ as lexeme { Parser.NUMBER (int_of_string lexeme) }
 | symbol_char+ as lexeme { Parser.SYMBOL lexeme }
 | '$' { keyword lexbuf }
-| '(' { Parser.LPAREN }
-| ')' { Parser.RPAREN }
+| '{' { Parser.LSQBR }
+| '}' { Parser.RSQBR }
 | eof { Parser.EOF }
 
 and keyword = parse

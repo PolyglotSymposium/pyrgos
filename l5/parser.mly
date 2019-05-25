@@ -1,6 +1,6 @@
 %token <Syntax.symbol> SYMBOL
 %token <int> NUMBER
-%token LPAREN RPAREN
+%token LSQBR RSQBR
 %token LAMBDA APPLY CONS UNCONS NIL ISNIL CASE QUOTE EVAL
 %token EOF
 %type <Syntax.toplvl> toplvl
@@ -16,7 +16,7 @@ toplvl:
 sxp:
 | SYMBOL { Syntax.Symbol $1 }
 | NUMBER { Syntax.Integer $1 }
-| LPAREN listish RPAREN { $2 }
+| LSQBR listish RSQBR { $2 }
 
 listish:
 | NIL { Syntax.Nil }

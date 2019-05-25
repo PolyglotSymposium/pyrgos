@@ -22,18 +22,18 @@ type toplvl =
 
 let rec show : expr -> string = function
   | Symbol x -> x
-  | Lambda (a, b) -> Printf.sprintf "($\\ %s %s)" a (show b)
-  | Appl (f, x) -> Printf.sprintf "($$ %s %s)" (show f) (show x)
+  | Lambda (a, b) -> Printf.sprintf "{$\\ %s %s}" a (show b)
+  | Appl (f, x) -> Printf.sprintf "{$$ %s %s}" (show f) (show x)
   | Integer x -> Printf.sprintf "%i" x
   | Case (x, y, a, b) ->
-    Printf.sprintf "($= %s %i %s %s)" (show x) y (show a) (show b)
-  | Nil -> "($_)"
+    Printf.sprintf "{$= %s %i %s %s}" (show x) y (show a) (show b)
+  | Nil -> "{$_}"
   | IsNil (x, a, b) ->
-    Printf.sprintf "($- %s %s %s)" (show x) (show a) (show b)
+    Printf.sprintf "{$- %s %s %s}" (show x) (show a) (show b)
   | Cons (a, b) ->
-    Printf.sprintf "($, %s %s)" (show a) (show b)
+    Printf.sprintf "{$, %s %s}" (show a) (show b)
   | Uncons (x, f, a) ->
-    Printf.sprintf "($' %s %s %s)" (show x) (show f) (show a)
-  | Quote q -> Printf.sprintf "$($` %s)" (show q)
-  | Eval e -> Printf.sprintf "$($> %s)" (show e)
+    Printf.sprintf "{$* %s %s %s}" (show x) (show f) (show a)
+  | Quote q -> Printf.sprintf "{$' %s}" (show q)
+  | Eval e -> Printf.sprintf "{$> %s}" (show e)
 
