@@ -28,28 +28,22 @@ and reduce_appl (env : env) (force : bool) (f : expr) (x : expr) : expr =
   | f' -> if force then raise (CannotBeApplied f') else Appl (f', reducedX)
 
 and reduce_case (env : env) (force : bool) (x : expr) (y : int) (a : expr) (b : expr) : expr =
-  reduce env force (
-    match reduce env force x with
-    | Integer x' -> if x' = y then a else b
-    | Symbol _ -> Case (x, y, a, b)
-    | _ -> b
-  )
+  match reduce env force x with
+  | Integer x' -> reduce env force (if x' = y then a else b)
+  | Symbol x' -> Case (Symbol x', y, a, b)
+  | _ -> reduce env force b
 
 and reduce_is_nil (env : env) (force : bool) (x : expr) (a : expr) (b : expr) : expr =
-  reduce env force (
-    match reduce env force x with
-    | Nil -> a
-    | Symbol _ -> IsNil (x, a, b)
-    | _ -> b
-  )
+  match reduce env force x with
+  | Nil -> reduce env force a
+  | Symbol x' -> IsNil (Symbol x', a, b)
+  | _ -> reduce env force b
 
 and reduce_uncons (env : env) (force : bool) (x : expr) (f : expr) (a : expr) : expr =
-  reduce env force (
-    match reduce env force x with
-    | Cons (m, n) -> Appl (Appl (f, m), n)
-    | Symbol _ -> Uncons (x, f, a)
-    | _ -> a
-  )
+  match reduce env force x with
+  | Cons (m, n) -> reduce env force (Appl (Appl (f, m), n))
+  | Symbol x' -> Uncons (Symbol x', f, a)
+  | _ -> reduce env force a
 
 and reduce (env : env) (force : bool) : expr -> expr = function
   | Symbol x -> reduce_symbol env force x
