@@ -1,4 +1,4 @@
-(module dytype (check synthesize)
+(module dytype (check synthesize repl)
   (import scheme)
   (define check
     (lambda (gamma expr type)
@@ -29,13 +29,33 @@
   )
   (define synthesize
     (lambda (gamma expr)
-      (cond ((symbol? expr) (synth-symbol gamma expr))
+      (cond ((number? expr) '*)
+            ((symbol? expr) (synth-symbol gamma expr))
             ((pair? expr) (cond ((eq? 'lambda (car expr)) #f)
-                                ((= 1 (length expr)) (synthesize gamma (car expr)))
                                 (else (synth-appl gamma expr))
                           )
             ) (else #f)
       )
+    )
+  )
+
+  (define repl-with
+    (lambda (gamma)
+      (display "2-t> ")
+      (let [(x [read])]
+        (cond [(equal? x ',q) '()]
+              (else (display (synthesize gamma x))
+                    (newline)
+                    (repl-with gamma))
+        )
+      )
+    )
+  )
+  (define repl
+    (lambda ()
+      (display ">> dytype\n")
+      (repl-with '((+ (* -> *))))
+      (display "dytype >>\n")
     )
   )
 )
