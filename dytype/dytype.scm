@@ -39,22 +39,35 @@
     )
   )
 
+  (define type+
+    (lambda (l r)
+      (if (and (eq? 1 l) (integer? r))
+          (+ l r)
+          (cons l r))))
+
+  (define condense-type
+    (lambda (type)
+      (cond ((pair? type) (type+ (condense-type (car type))
+                                 (condense-type (cdr type))))
+            [(eq? '* type) 1])))
+
   (define repl-with
     (lambda (gamma)
       (display "2-t> ")
       (let [(x [read])]
         (cond [(equal? x ',q) '()]
-              (else (display (synthesize gamma x))
+              (else (display (condense-type (synthesize gamma x)))
                     (newline)
                     (repl-with gamma))
         )
       )
     )
   )
+
   (define repl
     (lambda ()
       (display ">> dytype\n")
-      (repl-with '((+ (* -> *))))
+      (repl-with '((+ (* *))))
       (display "dytype >>\n")
     )
   )
