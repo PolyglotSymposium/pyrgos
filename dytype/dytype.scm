@@ -1,74 +1,99 @@
-(module dytype (check synthesize repl)
-  (import scheme)
-  (define check
-    (lambda (gamma expr type)
-      (equal? type (synthesize gamma expr))
-    )
-  )
-  (define synth-symbol
-    (lambda (gamma expr)
-      (let ((judgment (assq expr gamma))) (if judgment (cdr judgment) #f))
-    )
-  )
-  (define func-type?
-    (lambda (type)
-      (if (and type (list? type) (eq? '-> (car type)) (list? (cdr type))) (cdr type) #f)
-    )
-  )
-  (define synth-appl
-    (lambda (gamma expr)
-      (let* ((type (synthesize gamma (car expr)))
-             (i-and-o (func-type? type))
-            )
-        (if (and i-and-o (check gamma (cdr expr) (cdr i-and-o)))
-            (cdr i-and-o)
-            #f
-        )
-      )
-    )
-  )
-  (define synthesize
-    (lambda (gamma expr)
-      (cond ((number? expr) '*)
-            ((symbol? expr) (synth-symbol gamma expr))
-            ((pair? expr) (cond ((eq? 'lambda (car expr)) #f)
-                                (else (synth-appl gamma expr))
-                          )
-            ) (else #f)
-      )
-    )
-  )
+(import scheme)
 
-  (define type+
-    (lambda (l r)
-      (if (and (eq? 1 l) (integer? r))
-          (+ l r)
-          (cons l r))))
+;; TODO
+;; * `+` is variadic in Scheme, so ((+ 3) 5) type checks but gets a runtime
+;;   exception
+;; * Define syntax for `or` but for #<unspecified> instead of #f, and clean up
+;;   code with it
 
-  (define condense-type
-    (lambda (type)
-      (cond ((pair? type) (type+ (condense-type (car type))
-                                 (condense-type (cdr type))))
-            [(eq? '* type) 1])))
+(define check
+  (lambda (gamma expr type)
+    (equal? type (synthesize gamma expr))))
 
-  (define repl-with
-    (lambda (gamma)
-      (display "2-t> ")
-      (let [(x [read])]
-        (cond [(equal? x ',q) '()]
-              (else (display (condense-type (synthesize gamma x)))
+(define synth-symbol
+  (lambda (gamma expr)
+    (let ((judgment (assq expr gamma))) (if judgment (cdr judgment) #f))))
+
+(define synth-appl-1
+  (lambda (gamma ftype arg)
+    (cond [(and (integer? ftype) (> ftype 1)) (if (check gamma arg 1)
+                                                  (- ftype 1))]
+          [(pair? ftype) (if (check gamma arg (car ftype)) (cdr ftype))])))
+
+(define synth-appl-
+  (lambda (gamma ftype args)
+    (cond [(pair? args)
+           (let [(t1 [synth-appl-1 gamma ftype (car args)])
+                 (rest [cdr args])]
+             (cond [(or [eq? (cond) t1] [eq? '() rest]) t1]
+                   (else [synth-appl- gamma t1 rest])))])))
+
+(define synth-appl
+  (lambda (gamma func args)
+    (synth-appl- gamma (synthesize gamma func) args)))
+
+(define type+
+  (lambda (l r)
+    (cond [(and (eq? 1 l) (integer? r)) (+ l r)]
+          [(pair? r) (cons l r)])))
+
+;; There is exactly one type of non-function, but infinitely may function types.
+;; Therefore, our only hope of synthesizing a lambda is to try and see if it
+;; will work if we assign the argument type 1 (unless I read up more on H-M and
+;; better understand how to do this).
+(define synth-lambda-1
+  (lambda (gamma arg body)
+    (if (symbol? arg)
+        (type+ 1 (synthesize (cons (cons arg 1) gamma) body)))))
+
+(define push-args-onto-body
+  (lambda (args body)
+    (if (eq? '() args)
+        body
+        (cons 'lambda (cons args body)))))
+
+(define synth-lambda
+  (lambda (gamma args body)
+    (if (pair? args)
+        (synth-lambda-1 gamma
+                        (car args)
+                        (push-args-onto-body (cdr args) body)))))
+
+(define synth-pair
+  (lambda (gamma kar kdr)
+    (cond [(eq? 'lambda kar) (if [and (list? kdr) (eq? 2 (length kdr))]
+                                 (synth-lambda gamma (car kdr) (car (cdr kdr))))]
+          ;; A quoted expression is pure data
+          [(eq? 'quote kar) 1]
+          (else (synth-appl gamma kar kdr))
+          )))
+
+(define synthesize
+  (lambda (gamma expr)
+    (cond ((number? expr) 1)
+          ((symbol? expr) (synth-symbol gamma expr))
+          ((pair? expr) (synth-pair gamma (car expr) (cdr expr))))))
+
+(define repl-with
+  (lambda (gamma)
+    (display "2-t> ")
+    (let [(x [read])]
+      (cond [(equal? x ',q) '()]
+            (else (let* ((t (synthesize gamma x))
+                         (x- (if (eq? (cond) t) x (eval x))))
+                    (display (format "~a : ~a" x- t))
                     (newline)
-                    (repl-with gamma))
-        )
-      )
-    )
-  )
+                    (repl-with gamma)))))))
 
-  (define repl
-    (lambda ()
-      (display ">> dytype\n")
-      (repl-with '((+ (* *))))
-      (display "dytype >>\n")
-    )
-  )
-)
+(define prelude
+  '((+ . 3)
+    ))
+
+(define repl
+  (lambda ()
+    (display ">> dytype\n")
+    (repl-with prelude)
+    (display "dytype >>\n")
+  ))
+
+(repl)
