@@ -1,4 +1,4 @@
 while true; do
     csc dytype.scm
-    ./dytype
+    rlwrap ./dytype
 done

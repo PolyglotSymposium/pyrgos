@@ -3,8 +3,7 @@
 ;; TODO
 ;; * `+` is variadic in Scheme, so ((+ 3) 5) type checks but gets a runtime
 ;;   exception
-;; * Define syntax for `or` but for #<unspecified> instead of #f, and clean up
-;;   code with it
+;; * Mysteriously, `(lambda (x y) x)` does not typecheck.
 
 (define check
   (lambda (gamma expr type)
@@ -12,7 +11,7 @@
 
 (define synth-symbol
   (lambda (gamma expr)
-    (let ((judgment (assq expr gamma))) (if judgment (cdr judgment) #f))))
+    (let ((judgment (assq expr gamma))) (if judgment (cdr judgment)))))
 
 (define synth-appl-1
   (lambda (gamma ftype arg)
@@ -68,6 +67,11 @@
           (else (synth-appl gamma kar kdr))
           )))
 
+(define safe-eval
+  (lambda (expr)
+    (condition-case (eval expr) [_ () expr])))
+
+
 (define synthesize
   (lambda (gamma expr)
     (cond ((number? expr) 1)
@@ -80,13 +84,14 @@
     (let [(x [read])]
       (cond [(equal? x ',q) '()]
             (else (let* ((t (synthesize gamma x))
-                         (x- (if (eq? (cond) t) x (eval x))))
+                         (x- (if (eq? (cond) t) x (safe-eval x))))
                     (display (format "~a : ~a" x- t))
                     (newline)
                     (repl-with gamma)))))))
 
 (define prelude
   '((+ . 3)
+    (cons . 3)
     ))
 
 (define repl
