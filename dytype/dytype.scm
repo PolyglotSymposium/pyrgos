@@ -1,9 +1,8 @@
 (import scheme)
 
 ;; TODO
-;; * `+` is variadic in Scheme, so ((+ 3) 5) type checks but gets a runtime
-;;   exception
 ;; * Mysteriously, `(lambda (x y) x)` does not typecheck.
+;; * (+ 1 2 3) does not typecheck correctly
 
 (define check
   (lambda (gamma expr type)
@@ -19,22 +18,34 @@
                                                   (- ftype 1))]
           [(pair? ftype) (if (check gamma arg (car ftype)) (cdr ftype))])))
 
-(define synth-appl-
-  (lambda (gamma ftype args)
-    (cond [(pair? args)
-           (let [(t1 [synth-appl-1 gamma ftype (car args)])
-                 (rest [cdr args])]
-             (cond [(or [eq? (cond) t1] [eq? '() rest]) t1]
-                   (else [synth-appl- gamma t1 rest])))])))
+(define variadic?
+  (lambda (ftype) [and (pair? ftype) (eq? '* (car ftype))]))
 
-(define synth-appl
-  (lambda (gamma func args)
-    (synth-appl- gamma (synthesize gamma func) args)))
+(define cons-it-out
+  (lambda (args)
+    (foldr (lambda (x y) (cons 'cons (cons x y))) '() args)))
 
 (define type+
   (lambda (l r)
     (cond [(and (eq? 1 l) (integer? r)) (+ l r)]
           [(pair? r) (cons l r)])))
+
+(define synth-variadic-appl
+  (lambda (gamma ftype args)
+    (synth-appl-1 gamma (type+ 1 (cdr ftype)) (cons-it-out args))))
+
+(define synth-appl-
+  (lambda (gamma ftype args)
+    (cond [(pair? args)
+           (cond [variadic? ftype] (synth-variadic-appl gamma synth ftype args)
+                 (else (let [(t1 [synth-appl-1 gamma ftype (car args)])
+                             (rest [cdr args])]
+                         (cond [(or [eq? (cond) t1] [eq? '() rest]) t1]
+                               (else [synth-appl- gamma t1 rest])))))])))
+
+(define synth-appl
+  (lambda (gamma func args)
+    (synth-appl- gamma (synthesize gamma func) args)))
 
 ;; There is exactly one type of non-function, but infinitely may function types.
 ;; Therefore, our only hope of synthesizing a lambda is to try and see if it
@@ -75,6 +86,7 @@
 (define synthesize
   (lambda (gamma expr)
     (cond ((number? expr) 1)
+          ((string? expr) 1)
           ((symbol? expr) (synth-symbol gamma expr))
           ((pair? expr) (synth-pair gamma (car expr) (cdr expr))))))
 
@@ -90,8 +102,9 @@
                     (repl-with gamma)))))))
 
 (define prelude
-  '((+ . 3)
+  '((+ . (* . 1))
     (cons . 3)
+    (map . (2 . 2))
     ))
 
 (define repl
