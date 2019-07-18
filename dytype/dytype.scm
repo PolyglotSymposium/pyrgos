@@ -1,9 +1,5 @@
 (import scheme)
 
-;; TODO
-;; * Mysteriously, `(lambda (x y) x)` does not typecheck.
-;; * (+ 1 2 3) does not typecheck correctly
-
 (define check
   (lambda (gamma expr type)
     (equal? type (synthesize gamma expr))))
@@ -23,7 +19,7 @@
 
 (define cons-it-out
   (lambda (args)
-    (foldr (lambda (x y) (cons 'cons (cons x y))) '() args)))
+    (foldr (lambda (x y) (list 'cons x y)) ''() args)))
 
 (define type+
   (lambda (l r)
@@ -34,14 +30,17 @@
   (lambda (gamma ftype args)
     (synth-appl-1 gamma (type+ 1 (cdr ftype)) (cons-it-out args))))
 
+(define synth-partial-appl
+  (lambda (gamma ftype arg rest)
+    (let [(t1 [synth-appl-1 gamma ftype arg])]
+      (cond [(or [eq? (cond) t1] [eq? '() rest]) t1]
+            (else [synth-appl- gamma t1 rest])))))
+
 (define synth-appl-
   (lambda (gamma ftype args)
     (cond [(pair? args)
-           (cond [variadic? ftype] (synth-variadic-appl gamma synth ftype args)
-                 (else (let [(t1 [synth-appl-1 gamma ftype (car args)])
-                             (rest [cdr args])]
-                         (cond [(or [eq? (cond) t1] [eq? '() rest]) t1]
-                               (else [synth-appl- gamma t1 rest])))))])))
+           (cond ([variadic? ftype] [synth-variadic-appl gamma ftype args])
+                 (else (synth-partial-appl gamma ftype (car args) (cdr args))))])))
 
 (define synth-appl
   (lambda (gamma func args)
@@ -60,7 +59,7 @@
   (lambda (args body)
     (if (eq? '() args)
         body
-        (cons 'lambda (cons args body)))))
+        (list 'lambda args body))))
 
 (define synth-lambda
   (lambda (gamma args body)
@@ -102,8 +101,10 @@
                     (repl-with gamma)))))))
 
 (define prelude
-  '((+ . (* . 1))
+  '(
+    (+ . (* . 1))
     (cons . 3)
+    (list . (* . 1))
     (map . (2 . 2))
     ))
 
