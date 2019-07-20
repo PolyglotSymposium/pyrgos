@@ -77,16 +77,22 @@
           (else (synth-appl gamma kar kdr))
           )))
 
+(define (synth-if gamma cnd csq alt)
+  (let [(csq-type (synthesize gamma csq))]
+    (if [and (check gamma cnd 1) (check gamma alt csq-type)]
+      csq-type)))
+
 (define safe-eval
   (lambda (expr)
     (condition-case (eval expr) [_ () expr])))
-
 
 (define synthesize
   (lambda (gamma expr)
     (cond ((number? expr) 1)
           ((string? expr) 1)
           ((symbol? expr) (synth-symbol gamma expr))
+	  ([and (pair? expr) (eq? 4 (length expr)) (eq? 'if (car expr))]
+	     (synth-if gamma (cadr expr) (caddr expr) (cadddr expr)))
           ((pair? expr) (synth-pair gamma (car expr) (cdr expr))))))
 
 (define repl-with
