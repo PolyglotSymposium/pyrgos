@@ -79,11 +79,11 @@
           (else (synth-appl gamma kar kdr))
           )))
 
-(define (synth-if gamma cnd csq alt)
+(define (synth-if gamma cnd csq opt-alt)
   (if (check gamma cnd 1)
     (let [(csq-type (synthesize gamma csq))]
-      (if (check gamma alt csq-type)
-        csq-type))))
+      (cond [(and (null? opt-alt) (eq? 1 csq-type)) 1]
+            [(and (eq? 1 (length opt-alt)) (check gamma (car opt-alt) csq-type)) csq-type]))))
 
 (define safe-eval
   (lambda (expr)
@@ -96,17 +96,17 @@
           ((boolean? expr) 1)
           ((symbol? expr) (synth-symbol gamma expr))
 
-	  ; Putting `if` into the type checker as a "good enough for now"
-	  ; approach to conditionals.
-	  ;
-	  ; We're not really totally sure whether `if` or `cond` is the
-	  ; more appropriate primitive to start with. Also, recognizing
-	  ; that extending the type system of each special form likely
-	  ; won't scale, we should revisit this when we've gotten a better
-	  ; handle on macros or more special-form patterns have been
-	  ; introduced.
-	  ([and (pair? expr) (eq? 4 (length expr)) (eq? 'if (car expr))]
-	     (synth-if gamma (cadr expr) (caddr expr) (cadddr expr)))
+          ; Putting `if` into the type checker as a "good enough for now"
+          ; approach to conditionals.
+          ;
+          ; We're not really totally sure whether `if` or `cond` is the
+          ; more appropriate first conditional primitive. Also, recognizing
+          ; that extending the type system of each special form likely
+          ; won't scale, we should revisit this when we've gotten a better
+          ; handle on macros or more special-form patterns have been
+          ; introduced.
+          ([and (pair? expr) (<= 3 (length expr)) (eq? 'if (car expr))]
+            (synth-if gamma (cadr expr) (caddr expr) (cdddr expr)))
 
           ((pair? expr) (synth-pair gamma (car expr) (cdr expr))))))
 
