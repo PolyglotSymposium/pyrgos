@@ -78,9 +78,10 @@
           )))
 
 (define (synth-if gamma cnd csq alt)
-  (let [(csq-type (synthesize gamma csq))]
-    (if [and (check gamma cnd 1) (check gamma alt csq-type)]
-      csq-type)))
+  (if (check gamma cnd 1)
+    (let [(csq-type (synthesize gamma csq))]
+      (if (check gamma alt csq-type)
+        csq-type))))
 
 (define safe-eval
   (lambda (expr)
