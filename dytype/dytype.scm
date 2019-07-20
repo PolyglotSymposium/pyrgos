@@ -86,6 +86,7 @@
   (lambda (gamma expr)
     (cond ((number? expr) 1)
           ((string? expr) 1)
+          ((boolean? expr) 1)
           ((symbol? expr) (synth-symbol gamma expr))
           ((pair? expr) (synth-pair gamma (car expr) (cdr expr))))))
 
