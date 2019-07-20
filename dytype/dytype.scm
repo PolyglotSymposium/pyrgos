@@ -113,6 +113,7 @@
   '(
     (+ . (* . 1))
     (modulo . 3)
+    (number->string . 2)
     (cons . 3)
     (list . (* . 1))
     (iota . 4)
