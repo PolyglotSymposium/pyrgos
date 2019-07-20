@@ -1,5 +1,7 @@
 (import scheme)
 
+(use srfi-1)
+
 (define check
   (lambda (gamma expr type)
     (equal? type (synthesize gamma expr))))
@@ -110,9 +112,12 @@
 (define prelude
   '(
     (+ . (* . 1))
+    (modulo . 3)
     (cons . 3)
     (list . (* . 1))
+    (iota . 4)
     (map . (2 . 2))
+    (eq? . 3)
     ))
 
 (define repl
