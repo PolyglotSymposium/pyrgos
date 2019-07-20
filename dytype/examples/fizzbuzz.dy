@@ -1,0 +1,6 @@
+(map (lambda (x)
+       (if (eq? 0 (modulo x 15)) "FizzBuzz"
+         (if (eq? 0 (modulo x 5)) "Buzz"
+           (if (eq? 0 (modulo x 3)) "Fizz"
+           (number->string x)))))
+  (iota 100 1 1))
