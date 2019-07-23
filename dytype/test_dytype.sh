@@ -47,4 +47,6 @@ assert_unspecified '(if #t (lambda (x) 42) 99)'
 assert_unspecified '(if 1 2 3 4)'
 assert_unspecified '(if 1 (lambda (x)))'
 
+assert_n 1 "`cat examples/fizzbuzz.dy`"
+
 echo
