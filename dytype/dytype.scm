@@ -111,8 +111,8 @@
          (new-gamma (car result))
          (t (cadr result))
          (x- (guarded-eval x t (cddr result))))
-         (display (format "~s : ~s" x- t))
-         (newline)
+    (display (format "~s : ~s" x- t))
+    (newline)
     new-gamma))
 
 (define (repl-with gamma)
