@@ -113,7 +113,7 @@
                        (gamma (car result))
                        (t (cadr result))
                        (x- (guarded-eval x t (cddr result))))
-                  (display (format "~a : ~a" x- t))
+                  (display (format "~s : ~s" x- t))
                   (newline)
                   (repl-with gamma))))))
 
