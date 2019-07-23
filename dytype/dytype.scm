@@ -1,5 +1,16 @@
 (import scheme)
 
+;; TODO
+;; * variadic lambdas of types like (1 * . 1)
+;; * (define (x args)) syntax
+;; * totality checker/primitive (mutual) recursion
+;; * total macro system
+;; * alternate code backends (e.g. Guile, Chez, Racket)
+;; * make the compiler code compile across many Schemes
+;; * self-host (type-check this code)
+;; * make partial application not just type-check but actually work
+;; * how do we want to handle effects?
+
 (use srfi-1)
 
 (define (check gamma expr type) (equal? type (synthesize gamma expr)))
@@ -22,9 +33,8 @@
                             [(eq? '* l) (cons l r)])]
         ))
 
-(define synth-variadic-appl
-  (lambda (gamma ftype args)
-    (synth-appl-1 gamma (type+ 1 (cdr ftype)) (cons-it-out args))))
+(define (synth-variadic-appl gamma ftype args)
+  (synth-appl-1 gamma (type+ 1 (cdr ftype)) (cons-it-out args)))
 
 (define (synth-partial-appl gamma ftype arg rest)
   (let [(t1 [synth-appl-1 gamma ftype arg])]
@@ -38,7 +48,7 @@
         ))
 
 (define (synth-appl gamma func args)
-    (synth-appl- gamma (synthesize gamma func) args))
+  (synth-appl- gamma (synthesize gamma func) args))
 
 ;; There is exactly one type of non-function, but infinitely may function types.
 ;; Therefore, our only hope of synthesizing a lambda is to try and see if it
@@ -117,22 +127,31 @@
                   (newline)
                   (repl-with gamma))))))
 
+;; Important: if we aren't careful with what we introduce here, we could
+;; introduce unsoundness (namely, by including possibly non-terminating
+;; functions).
 (define prelude
-  '((+ . (* . 1))
-    (caar . 2)
-    (cadr . 2)
-    (car . 2)
-    (cdar . 2)
-    (cddr . 2)
-    (cdr . 2)
+  '((* . (* . 1))
+    (+ . (* . 1))
+    (- . (* . 1))
+    (/ . (* . 1))
+    (assq . 3)
+    (boolean? . 2)
+    (caar . 2) (cadr . 2) (car . 2) (cdar . 2) (cddr . 2) (cdr . 2)
     (cons . 3)
-    (eq? . 3)
+    (eq? . 3) (equal? . 3)
+    (integer? . 2)
     (iota . 4)
     (length . 2)
-    (list . (* . 1))
+    (list . (* . 1)) (list? . 2)
     (map . (2 . 2))
     (modulo . 3)
+    (null? . 1)
     (number->string . 2)
+    (number? . 2)
+    (pair? . 2)
+    (string? . 2)
+    (symbol? . 2)
     ))
 
 (define (repl)
