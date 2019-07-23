@@ -5,7 +5,12 @@ assert_unspecified() {
     printf '.'
   else
     echo
-    echo "Expected $@ to be : unspecified, but it was \"$(./dytype "$@")\""
+    echo "Expected"
+    echo "  $@"
+    echo "to be"
+    echo "  : unspecified"
+    echo "but it was"
+    echo "  $(./dytype "$@")"
     exit 1
   fi
 }
@@ -15,7 +20,12 @@ assert_n() {
     printf '.'
   else
     echo
-    echo "Expected ${@:2} to be : $1, but it was \"$(./dytype "${@:2}")\""
+    echo "Expected"
+    echo "  ${@:2}"
+    echo "to be"
+    echo "  : $1"
+    echo "but it was"
+    echo "  $(./dytype "${@:2}")"
     exit 1
   fi
 }
@@ -36,3 +46,5 @@ assert_n 2 '(if #t (lambda (x) 42) (lambda (y) 99))'
 assert_unspecified '(if #t (lambda (x) 42) 99)'
 assert_unspecified '(if 1 2 3 4)'
 assert_unspecified '(if 1 (lambda (x)))'
+
+echo
