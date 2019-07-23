@@ -1,6 +1,7 @@
 (import scheme)
 
 (use srfi-1)
+(use ports)
 
 (define (check gamma expr type) (equal? type (synthesize gamma expr)))
 
@@ -105,17 +106,20 @@
   (let [(x- (if (eq? (cond) t) x (safe-eval x)))]
     (if (eq? 1 (length o)) (car o) x-)))
 
+(define (run-and-print-with gamma x)
+  (let* ((result (toplevel gamma x))
+         (new-gamma (car result))
+         (t (cadr result))
+         (x- (guarded-eval x t (cddr result))))
+         (display (format "~s : ~s" x- t))
+         (newline)
+    new-gamma))
+
 (define (repl-with gamma)
   (display "2-t> ")
   (let [(x [read])]
     (cond [(equal? x ',q) '()]
-          (else (let* ((result (toplevel gamma x))
-                       (gamma (car result))
-                       (t (cadr result))
-                       (x- (guarded-eval x t (cddr result))))
-                  (display (format "~s : ~s" x- t))
-                  (newline)
-                  (repl-with gamma))))))
+          (else (repl-with (run-and-print-with gamma x))))))
 
 (define prelude
   '((+ . (* . 1))
@@ -141,4 +145,6 @@
   (display "dytype >>\n")
   )
 
-(repl)
+(if (null? (command-line-arguments))
+  (repl)
+  (run-and-print-with prelude (call-with-input-string (car (command-line-arguments)) read)))
