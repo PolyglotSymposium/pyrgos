@@ -10,6 +10,8 @@
 ;; * self-host (type-check this code)
 ;; * make partial application not just type-check but actually work
 ;; * how do we want to handle effects?
+;; * support `:` in the backend
+;; * implement checking for lambdas that cannot be synthesized
 
 (use srfi-1)
 (use ports)
@@ -98,12 +100,13 @@
       (synth-if- gamma (car ifexpr) (cadr ifexpr) (cddr ifexpr))))
 
 (define (synth-list gamma kar kdr)
-  (cond [(eq? 'lambda kar) (synth-lambda gamma kdr)]
-        [(eq? 'if kar) (synth-if gamma kdr)]
-        [(eq? 'quote kar) 1] ;; A quoted expression is pure data
-        [(eq? ': kar) (check-ann gamma kdr)]
-        (else (synth-appl gamma kar kdr))
-        ))
+  (cond
+   [(eq? ': kar) (check-ann gamma kdr)]
+   [(eq? 'if kar) (synth-if gamma kdr)]
+   [(eq? 'lambda kar) (synth-lambda gamma kdr)]
+   [(eq? 'quote kar) 1] ;; A quoted expression is pure data
+   (else (synth-appl gamma kar kdr))
+   ))
 
 (define (safe-eval expr) (condition-case (eval expr) [_ () expr]))
 
@@ -148,10 +151,7 @@
 ;; introduce unsoundness (namely, by including possibly non-terminating
 ;; functions).
 (define prelude
-  '((* . (* . 1))
-    (+ . (* . 1))
-    (- . (* . 1))
-    (/ . (* . 1))
+  '((* . (* . 1)) (+ . (* . 1)) (- . (* . 1)) (/ . (* . 1))
     (assq . 3)
     (boolean? . 2)
     (caar . 2) (cadr . 2) (car . 2) (cdar . 2) (cddr . 2) (cdr . 2)
