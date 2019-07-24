@@ -61,7 +61,7 @@
 (define (push-args-onto-body args body)
   (if (eq? '() args) body (list 'lambda args body)))
 
-(define (synth-lambda gamma args body)
+(define (synth-lambda- gamma args body)
   (cond [(pair? args) (synth-lambda-1 gamma
                                       (car args)
                                       (push-args-onto-body (cdr args) body))]
@@ -69,28 +69,41 @@
                                               body))]
         ))
 
+(define (synth-lambda gamma lexpr)
+  (if (and (list? lexpr) (eq? 2 (length lexpr)))
+      (synth-lambda- gamma (car lexpr) (cadr lexpr))))
+
+(define (check-ann gamma ann)
+  (if (and (list? ann) (eq? 2 (length ann)))
+      (let [(expr (car ann))
+            (type (cadr ann))]
+        (if (check gamma expr type) type))))
+
+;; Putting `if` into the type checker as a "good enough for now" approach to
+;; conditionals.
+;;
+;; We're not really totally sure whether `if` or `cond` is the more appropriate
+;; first conditional primitive. Also, recognizing that extending the type system
+;; of each special form likely won't scale, we should revisit this when we've
+;; gotten a better handle on macros or more special-form patterns have been
+;; introduced.
+(define (synth-if- gamma cnd csq opt-alt)
+  (if (check gamma cnd 1)
+      (let [(csq-type (synthesize gamma csq))]
+        (cond [(and (null? opt-alt) (eq? 1 csq-type)) 1]
+              [(and (eq? 1 (length opt-alt)) (check gamma (car opt-alt) csq-type)) csq-type]))))
+
+(define (synth-if gamma ifexpr)
+  (if (<= 2 (length ifexpr))
+      (synth-if- gamma (car ifexpr) (cadr ifexpr) (cddr ifexpr))))
+
 (define (synth-list gamma kar kdr)
-  (cond [(eq? 'lambda kar) (if [and (list? kdr) (eq? 2 (length kdr))]
-                               (synth-lambda gamma (car kdr) (car (cdr kdr))))]
-        ;; Putting `if` into the type checker as a "good enough for now"
-        ;; approach to conditionals.
-        ;;
-        ;; We're not really totally sure whether `if` or `cond` is the more
-        ;; appropriate first conditional primitive. Also, recognizing that
-        ;; extending the type system of each special form likely won't scale, we
-        ;; should revisit this when we've gotten a better handle on macros or
-        ;; more special-form patterns have been introduced.
-        ([and (eq? 'if kar) (<= 2 (length kdr))] (synth-if gamma (car kdr) (cadr kdr) (cddr kdr)))
-        ;; A quoted expression is pure data
-        [(eq? 'quote kar) 1]
+  (cond [(eq? 'lambda kar) (synth-lambda gamma kdr)]
+        [(eq? 'if kar) (synth-if gamma kdr)]
+        [(eq? 'quote kar) 1] ;; A quoted expression is pure data
+        [(eq? ': kar) (check-ann gamma kdr)]
         (else (synth-appl gamma kar kdr))
         ))
-
-(define (synth-if gamma cnd csq opt-alt)
-  (if (check gamma cnd 1)
-    (let [(csq-type (synthesize gamma csq))]
-      (cond [(and (null? opt-alt) (eq? 1 csq-type)) 1]
-            [(and (eq? 1 (length opt-alt)) (check gamma (car opt-alt) csq-type)) csq-type]))))
 
 (define (safe-eval expr) (condition-case (eval expr) [_ () expr]))
 
