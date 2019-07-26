@@ -14,6 +14,23 @@
 
 (define unspecified (if #f #f))
 
+(define (is-lambda-car expr) (eq? 'lambda expr))
+
+(define (is-lambda-cdr expr) (and (list? expr) (eq? 2 (length expr))))
+
+(define (is-if-car expr) (eq? 'if expr))
+
+(define (is-quote-car expr) (eq? 'quote expr))
+
+(define (is-ann-car ann) (eq? ': ann))
+
+(define (is-define-car expr) (eq? 'define expr))
+
+(define (is-define-cdr expr)
+  (and [list? expr] [eq? 2 (length expr)] [symbol? (car expr)]))
+
+(define (is-ann-cdr ann) (and (list? ann) (eq? 2 (length ann))))
+
 (define (check gamma expr type) (equal? type (synthesize gamma expr)))
 
 (define (synth-symbol gamma expr)
@@ -27,7 +44,8 @@
 
 (define (variadic? ftype) (and (pair? ftype) (eq? '* (car ftype))))
 
-(define (cons-it-out args) (fold-right (lambda (x y) (list 'cons x y)) ''() args))
+(define (cons-it-out args)
+  (fold-right (lambda (x y) (list 'cons x y)) ''() args))
 
 (define (type+ l r)
   (cond [(pair? r) (cons l r)]
@@ -55,7 +73,7 @@
 ;; There is exactly one type of non-function, but infinitely may function types.
 ;; Therefore, our only hope of synthesizing a lambda is to try and see if it
 ;; will work if we assign the argument type 1 (unless I read up more on H-M and
-;; better understand how to do this); or, recognize it as variadic syntactically.
+;; better understand how to do this); or recognize it as variadic syntactically.
 (define (synth-lambda-1 gamma arg body)
   (if (symbol? arg) (type+ 1 (synthesize (cons (cons arg 1) gamma) body))))
 
@@ -71,11 +89,8 @@
         ))
 
 (define (synth-lambda gamma lexpr)
-  (if (and (list? lexpr) (eq? 2 (length lexpr)))
+  (if (is-lambda-cdr lexpr)
       (synth-lambda- gamma (car lexpr) (cadr lexpr))))
-
-(define (is-ann-cdr ann)
-  (and (list? ann) (eq? 2 (length ann))))
 
 (define (check-ann gamma ann)
   (if (is-ann-cdr ann)
@@ -101,14 +116,12 @@
   (if (<= 2 (length ifexpr))
       (synth-if- gamma (car ifexpr) (cadr ifexpr) (cddr ifexpr))))
 
-(define (is-ann-car ann) (eq? ': ann))
-
 (define (synth-list gamma kar kdr)
   (cond
    [(is-ann-car kar) (check-ann gamma kdr)]
-   [(eq? 'if kar) (synth-if gamma kdr)]
-   [(eq? 'lambda kar) (synth-lambda gamma kdr)]
-   [(eq? 'quote kar) 1] ;; A quoted expression is pure data
+   [(is-if-car kar) (synth-if gamma kdr)]
+   [(is-lambda-car kar) (synth-lambda gamma kdr)]
+   [(is-quote-car kar) 1] ;; A quoted expression is pure data
    (else (synth-appl gamma kar kdr))
    ))
 
@@ -119,24 +132,29 @@
     (lambda () (eval expr (interaction-environment)))
     (lambda _ expr)))
 
+(define (non-empty? x) (and (list? x) (pair? x)))
+
 (define (synthesize gamma expr)
   (cond ((number? expr) 1)
         ((string? expr) 1)
         ((boolean? expr) 1)
         ((symbol? expr) (synth-symbol gamma expr))
         ;; Is there a non-empty-list?
-        ((and (list? expr) (pair? expr)) (synth-list gamma (car expr) (cdr expr)))
+        ((non-empty? expr) (synth-list gamma (car expr) (cdr expr)))
         ))
 
 (define (do/define gamma topl)
-  (if (and [list? topl] [eq? 2 (length topl)] [symbol? (car topl)])
+  (if (is-define-cdr topl)
       (let [[t (synthesize gamma (cadr topl))]]
         [list (cons (cons (car topl) t) gamma) t (car topl)])
       [list gamma unspecified]))
 
 (define (toplevel gamma topl)
-  (cond [(and (pair? topl) (eq? 'define (car topl))) (do/define gamma (cdr topl))]
-        (else (list gamma (synthesize gamma topl)))))
+  (match topl
+    [(kar . kdr) (if (is-define-car kar)
+                     (do/define gamma (cdr topl))
+                     (list gamma (synthesize gamma topl)))]
+    [_ (list gamma (synthesize gamma topl))]))
 
 (define (to-guile expr)
   (match expr
@@ -151,7 +169,7 @@
   (let [(x- (if (eq? unspecified t) x (safe-eval (to-guile x))))]
     (if (eq? 1 (length o)) (car o) x-)))
 
-(define (run-and-print-with gamma x)
+(define (type-eval-print gamma x)
   (let* ((result (toplevel gamma x))
          (new-gamma (car result))
          (t (cadr result))
@@ -163,7 +181,7 @@
   (display "2-t> ")
   (let [(x [read])]
     (cond [(equal? x ',q) '()]
-          (else (repl-with (run-and-print-with gamma x))))))
+          (else (repl-with (type-eval-print gamma x))))))
 
 ;; Important: if we aren't careful with what we introduce here, we could
 ;; introduce unsoundness (namely, by including possibly non-terminating
@@ -197,4 +215,4 @@
 
 (if (eq? 1 (length (command-line)))
   (repl)
-  (run-and-print-with prelude (call-with-input-string (car (command-line)) read)))
+  (type-eval-print prelude (call-with-input-string (car (command-line)) read)))
