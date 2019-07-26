@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 
+run_dytype() {
+  guile --no-auto-compile dytype.scm "$@"
+}
+
 assert_unspecified() {
-  if grep --quiet ': #<unspecified>' <(./dytype "$@"); then
+  output=`run_dytype "$@"`
+  if grep --quiet ': #<unspecified>' <<< "$output"; then
     printf '.'
   else
     echo
@@ -10,13 +15,14 @@ assert_unspecified() {
     echo "to be"
     echo "  : unspecified"
     echo "but it was"
-    echo "  $(./dytype "$@")"
+    echo "  $output"
     exit 1
   fi
 }
 
 assert_n() {
-  if grep --quiet ": $1" <(./dytype "${@:2}"); then
+  output=`run_dytype "${@:2}"`
+  if grep --quiet ": $1" <<< "$output"; then
     printf '.'
   else
     echo
@@ -25,7 +31,7 @@ assert_n() {
     echo "to be"
     echo "  : $1"
     echo "but it was"
-    echo "  $(./dytype "${@:2}")"
+    echo "  $output"
     exit 1
   fi
 }
