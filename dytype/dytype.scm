@@ -25,7 +25,7 @@
                                                 (- ftype 1))]
         [(pair? ftype) (if (check gamma arg (car ftype)) (cdr ftype))]))
 
-(define (variadic? ftype) [and (pair? ftype) (eq? '* (car ftype))])
+(define (variadic? ftype) (and (pair? ftype) (eq? '* (car ftype))))
 
 (define (cons-it-out args) (fold-right (lambda (x y) (list 'cons x y)) ''() args))
 
@@ -140,9 +140,11 @@
 
 (define (to-guile expr)
   (match expr
-    [(kar . kdr) (if (and (is-ann-car kar) (is-ann-cdr kdr))
-                     (to-guile (car kdr))
-                     (cons (to-guile (car kdr)) (to-guile (cdr kdr))))]
+    [(kar . kdr) (if (null? kdr)
+                     (list (to-guile kar))
+                     (if (and (is-ann-car kar) (is-ann-cdr kdr))
+                         (to-guile (car kdr))
+                         (cons (to-guile kar) (to-guile kdr))))]
     [_ expr]))
 
 (define (guarded-eval x t o)
