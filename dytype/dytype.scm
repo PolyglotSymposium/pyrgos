@@ -215,4 +215,4 @@
 
 (if (eq? 1 (length (command-line)))
   (repl)
-  (type-eval-print prelude (call-with-input-string (car (command-line)) read)))
+  (type-eval-print prelude (call-with-input-string (cadr (command-line)) read)))
