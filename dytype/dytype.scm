@@ -1,11 +1,10 @@
-(import scheme)
-
+(import (srfi srfi-1))
 ;; TODO
 ;; * variadic lambdas of types like (1 * . 1)
 ;; * (define (x args)) syntax
 ;; * totality checker/primitive (mutual) recursion
 ;; * total macro system
-;; * alternate code backends (e.g. Guile, Chez, Racket)
+;; * alternate code backends (e.g. Chicken, Chez, Racket)
 ;; * make the compiler code compile across many Schemes
 ;; * self-host (type-check this code)
 ;; * make partial application not just type-check but actually work
@@ -13,13 +12,13 @@
 ;; * support `:` in the backend
 ;; * implement checking for lambdas that cannot be synthesized
 
-(use srfi-1)
-(use ports)
+(define unspecified (if #f #f))
 
 (define (check gamma expr type) (equal? type (synthesize gamma expr)))
 
 (define (synth-symbol gamma expr)
-  (let ((judgment (assq expr gamma))) (if judgment (cdr judgment))))
+  (let ((judgment (assq expr gamma)))
+    (if judgment (cdr judgment))))
 
 (define (synth-appl-1 gamma ftype arg)
   (cond [(and (integer? ftype) (> ftype 1)) (if (check gamma arg 1)
@@ -28,7 +27,7 @@
 
 (define (variadic? ftype) [and (pair? ftype) (eq? '* (car ftype))])
 
-(define (cons-it-out args) (foldr (lambda (x y) (list 'cons x y)) ''() args))
+(define (cons-it-out args) (fold-right (lambda (x y) (list 'cons x y)) ''() args))
 
 (define (type+ l r)
   (cond [(pair? r) (cons l r)]
@@ -41,7 +40,7 @@
 
 (define (synth-partial-appl gamma ftype arg rest)
   (let [(t1 [synth-appl-1 gamma ftype arg])]
-    (cond [(or [eq? (cond) t1] [eq? '() rest]) t1]
+    (cond [(or [eq? unspecified t1] [eq? '() rest]) t1]
           (else [synth-appl- gamma t1 rest]))))
 
 (define (synth-appl- gamma ftype args)
@@ -108,7 +107,12 @@
    (else (synth-appl gamma kar kdr))
    ))
 
-(define (safe-eval expr) (condition-case (eval expr) [_ () expr]))
+(define (safe-eval expr)
+  (catch #t
+    ;; I'm not at all sure that this is a good or safe way to implement the
+    ;; evaluator.
+    (lambda () (eval expr (interaction-environment)))
+    (lambda _ expr)))
 
 (define (synthesize gamma expr)
   (cond ((number? expr) 1)
@@ -122,14 +126,14 @@
   (if (and [list? topl] [eq? 2 (length topl)] [symbol? (car topl)])
       (let [[t (synthesize gamma (cadr topl))]]
         [list (cons (cons (car topl) t) gamma) t (car topl)])
-      [list gamma (cond)]))
+      [list gamma unspecified]))
 
 (define (toplevel gamma topl)
   (cond [(and (pair? topl) (eq? 'define (car topl))) (do/define gamma (cdr topl))]
         (else (list gamma (synthesize gamma topl)))))
 
 (define (guarded-eval x t o)
-  (let [(x- (if (eq? (cond) t) x (safe-eval x)))]
+  (let [(x- (if (eq? unspecified t) x (safe-eval x)))]
     (if (eq? 1 (length o)) (car o) x-)))
 
 (define (run-and-print-with gamma x)
@@ -137,8 +141,7 @@
          (new-gamma (car result))
          (t (cadr result))
          (x- (guarded-eval x t (cddr result))))
-    (display (format "~s : ~s" x- t))
-    (newline)
+    (format #t "~s : ~s\n" x- t)
     new-gamma))
 
 (define (repl-with gamma)
@@ -177,6 +180,6 @@
   (display "dytype >>\n")
   )
 
-(if (null? (command-line-arguments))
+(if (eq? 1 (length (command-line)))
   (repl)
-  (run-and-print-with prelude (call-with-input-string (car (command-line-arguments)) read)))
+  (run-and-print-with prelude (call-with-input-string (car (command-line)) read)))

@@ -1,4 +1,3 @@
 while true; do
-    csc dytype.scm
-    rlwrap ./dytype
+    rlwrap guile dytype.scm
 done
