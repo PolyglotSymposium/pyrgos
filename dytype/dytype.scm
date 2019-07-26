@@ -1,4 +1,5 @@
 (import (srfi srfi-1))
+(import (ice-9 match))
 ;; TODO
 ;; * variadic lambdas of types like (1 * . 1)
 ;; * (define (x args)) syntax
@@ -9,7 +10,6 @@
 ;; * self-host (type-check this code)
 ;; * make partial application not just type-check but actually work
 ;; * how do we want to handle effects?
-;; * support `:` in the backend
 ;; * implement checking for lambdas that cannot be synthesized
 
 (define unspecified (if #f #f))
@@ -74,8 +74,11 @@
   (if (and (list? lexpr) (eq? 2 (length lexpr)))
       (synth-lambda- gamma (car lexpr) (cadr lexpr))))
 
+(define (is-ann-cdr ann)
+  (and (list? ann) (eq? 2 (length ann))))
+
 (define (check-ann gamma ann)
-  (if (and (list? ann) (eq? 2 (length ann)))
+  (if (is-ann-cdr ann)
       (let [(expr (car ann))
             (type (cadr ann))]
         (if (check gamma expr type) type))))
@@ -98,9 +101,11 @@
   (if (<= 2 (length ifexpr))
       (synth-if- gamma (car ifexpr) (cadr ifexpr) (cddr ifexpr))))
 
+(define (is-ann-car ann) (eq? ': ann))
+
 (define (synth-list gamma kar kdr)
   (cond
-   [(eq? ': kar) (check-ann gamma kdr)]
+   [(is-ann-car kar) (check-ann gamma kdr)]
    [(eq? 'if kar) (synth-if gamma kdr)]
    [(eq? 'lambda kar) (synth-lambda gamma kdr)]
    [(eq? 'quote kar) 1] ;; A quoted expression is pure data
@@ -119,6 +124,7 @@
         ((string? expr) 1)
         ((boolean? expr) 1)
         ((symbol? expr) (synth-symbol gamma expr))
+        ;; Is there a non-empty-list?
         ((and (list? expr) (pair? expr)) (synth-list gamma (car expr) (cdr expr)))
         ))
 
@@ -132,8 +138,15 @@
   (cond [(and (pair? topl) (eq? 'define (car topl))) (do/define gamma (cdr topl))]
         (else (list gamma (synthesize gamma topl)))))
 
+(define (to-guile expr)
+  (match expr
+    [(kar . kdr) (if (and (is-ann-car kar) (is-ann-cdr kdr))
+                     (to-guile (car kdr))
+                     (cons (to-guile (car kdr)) (to-guile (cdr kdr))))]
+    [_ expr]))
+
 (define (guarded-eval x t o)
-  (let [(x- (if (eq? unspecified t) x (safe-eval x)))]
+  (let [(x- (if (eq? unspecified t) x (safe-eval (to-guile x))))]
     (if (eq? 1 (length o)) (car o) x-)))
 
 (define (run-and-print-with gamma x)
