@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+DIR=`dirname $0`
+
 run_dytype() {
-  guile --no-auto-compile dytype.scm "$@"
+  guile --no-auto-compile $DIR/dytype.scm "$@"
 }
 
 assert_unspecified() {
@@ -53,7 +55,7 @@ assert_unspecified '(if #t (lambda (x) 42) 99)'
 assert_unspecified '(if 1 2 3 4)'
 assert_unspecified '(if 1 (lambda (x)))'
 
-assert_n 1 "`cat examples/fizzbuzz.dy`"
+assert_n 1 "`cat $DIR/examples/fizzbuzz.dy`"
 
 assert_unspecified "(lambda (f) ((lambda (x) (f (x x))) (lambda (x) (f (x x)))))"
 
