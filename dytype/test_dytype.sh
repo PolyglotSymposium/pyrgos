@@ -3,7 +3,7 @@
 DIR=`dirname $0`
 
 run_dytype() {
-  guile --no-auto-compile $DIR/dytype.scm "$@"
+  guile $DIR/dytype.scm "$@"
 }
 
 assert_unspecified() {
@@ -54,6 +54,10 @@ assert_n 2 '(if #t (lambda (x) 42) (lambda (y) 99))'
 assert_unspecified '(if #t (lambda (x) 42) 99)'
 assert_unspecified '(if 1 2 3 4)'
 assert_unspecified '(if 1 (lambda (x)))'
+
+assert_n '(2 . 2)' '(: map (2 . 2))'
+assert_n 1 '(: 42 1)'
+assert_unspecified '(: 42 2)'
 
 assert_n 1 "`cat $DIR/examples/fizzbuzz.dy`"
 
