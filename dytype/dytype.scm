@@ -14,7 +14,7 @@
 
 (define unspecified (if #f #f))
 
-(define (is-lambda-car expr) (eq? 'lambda expr))
+(define (is-lambda-car expr) (or (eq? 'lambda expr) (eq? 'λ expr)))
 
 (define (is-lambda-cdr expr) (and (list? expr) (eq? 2 (length expr))))
 
