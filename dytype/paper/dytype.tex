@@ -1,0 +1,176 @@
+\documentclass{article}
+
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+\title{Dytype: a strongly normalizing, almost-dynamically-typed Lisp}
+\author{Keith Pinson}
+
+\begin{document}
+
+\maketitle
+
+For any primitive non-function literal $c$, we can synthesize its type as $1$
+from the empty context:
+
+\[ \frac{}{\vdash{}c\mathbin{\Rightarrow}1}\quad\text{(literal synthesis)} \]
+
+Our only hope of synthesizing a lambda is to try and see if we can synthesize
+something meaningful if we assign the parameter type $1$ (unless I read up more
+on Hindley-Milner and better understand how to do this).
+
+\[ \frac{\Gamma,x\mathbin{:}1\vdash e\mathbin{\Rightarrow}\alpha}{\Gamma\vdash
+    (\lambda~(x)~e)\mathbin{\Rightarrow}1\to\alpha}\quad\text{(unary
+    $\lambda$ synthesis)} \]
+
+This can easily be extended to forms like $(\lambda~(x~y~z)~e)$ with
+currying (or without, if we want to fully concede to Lisp).
+
+Variadic functions can be recognized syntactically. Essentially, they just take
+in the \textbf{cdr} when they are applied, which is just data, but needs a
+sort of modal distinction, so
+
+\[ \frac{\Gamma,x\mathbin{:}1\vdash e\mathbin{\Rightarrow}\alpha}{\Gamma\vdash
+    (\lambda~x~e)\mathbin{\Rightarrow}\star\to\alpha}\quad\text{(variadic
+    $\lambda$ synthesis)} \]
+
+We have a bit of syntactic sugar for function types, based on reducing to
+naturals numbers:
+
+\[ 1\to1 = 2 \]
+\[ 1\to2 = 3 \]
+
+and so on. Only plain first-order functions can be reduced to a natural;
+higher order functions reduce like so:
+
+\[ (1\to{}1)\to{}1\to{}1 = 2\to{}2 \]
+
+Notably, this does not reduce further:
+
+\[ 2\to{}2 \not = 4 \]
+
+and variadic functions don't reduce to a natural, either, e.g.:
+
+\[ \star\to{}1\to{}1 =
+  \star\to{}2 \]
+
+A variadic function of type like
+$1\to\star\to{}1$ does not reduce. Also, in
+Lisp we don't have the nice infix arrow notation, so we actually write a type
+like $2\to{}2$ as $(2~.~2)$ and $1\to\star\to{}1$ as $(1~.~*~.~1)$.
+
+The application rules are mundane:
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}\alpha\to\beta\quad\Gamma\vdash
+    x\mathbin{\Leftarrow}\alpha}{\Gamma\vdash
+    (f~x)\mathbin{\Rightarrow}\beta}\quad\text{(Unary application synthesis)} \]
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}\star\to\alpha\quad\Gamma\vdash
+    x\mathbin{\Leftarrow}1}{\Gamma\vdash
+    (f~.~x)\mathbin{\Rightarrow}\alpha}\quad\text{(Variadic application synthesis)} \]
+
+The second rule's syntax is imprecise: I do not mean that a literal dotted pair
+is the syntax for invoking, but rather that the entire \textbf{cdr} is captured
+and passed to the function. In other words, $(f~a~b~c)$ for the second rule is
+treated like $(f~(\textbf{list}~a~b~c))$ would be for the first rule. This is a
+concession to Lisp, rather than a particularly salient point of Dytype itself,
+as I see it.
+
+We adopt the standard rule that allows checking to be far more powerful via
+synthesis:
+
+\[ \frac{\Gamma\vdash e\mathbin{\Rightarrow}\alpha}{\Gamma\vdash
+    e\mathbin{\Leftarrow}\alpha}\quad\text{(Synthesis suffices for checking)} \]
+
+And we allow for explicit annotations:
+
+\[ \frac{\Gamma\vdash e\mathbin{\Leftarrow}\alpha}{\Gamma\vdash
+    (: e~\alpha)\mathbin{\Rightarrow}\alpha}\quad\text{(Annotation synthesis)} \]
+
+We do not want to implement a separate totality checker when the entire point of
+the type-system is to provide totality. At the same time, the rules we have
+provided do not offer any form of recursion whatsoever; the power of what is
+already presented, aside from whatever we may decide to surface from the
+underlying Scheme in the Prelude, is insufficient for almost any interesting
+real coding example (fizzbuzz, anyone?). We want the language to be sufficiently
+strong to typecheck itself; ideally, I would like to be able to do the Lisp
+thing and write Dytype interpreter in Dytype (but am not sure if this will be
+achievable). So we need rules for recursion, that allow us a sufficiently useful
+amount of recursion, and yet rigorously enforce totality.
+
+We propose a new binding form, $\mu$, that allows defining two mutually
+recursive functions (how this can be simplified to the case of a self-recursive
+function, or extended to a larger set of mutually recursive functions, or
+extended to functions of multiple arguments, or extended to \textbf{cadr},
+\textbf{cddr} and the like, or to numbers, is all contained by way of exemplar
+in these rules). The first function, if it calls itself, must call itself back
+with a substructure, and also if it calls the second. The second, if it calls
+itself back, must use a substructure; but it may call the first with the same
+size argument it received. The utility of this little extra bit of freedom is
+seen when one tries to implement a typechecker that includes a rule like
+``Synthesis suffices for checking'', above.
+
+%% TODO this looks pretty bad
+\[
+  \frac{
+    \splitfrac{
+      \splitfrac{
+        \Gamma,x\mathbin{:}x^{=},f_{1}\mathbin{:}x^{>}\to\alpha_{1},f_{2}\mathbin{:}x^{>}\to\alpha_{2}\vdash e_{1}\mathbin{\Leftarrow}\alpha_{1}
+      }{
+        \Gamma,x\mathbin{:}x^{=},f_{1}\mathbin{:}x^{\geq}\to\alpha_{1},f_{2}\mathbin{:}x^{>}\to\alpha_{2}\vdash e_{2}\mathbin{\Leftarrow}\alpha_{2}
+      }
+    }{
+      \Gamma,f_{1}\mathbin{:}1\to\alpha_{1},f_{2}\mathbin{:}1\to\alpha_{2}\vdash e_{3}\mathbin{\Rightarrow}\alpha_{3}
+    }
+  }{
+    \Gamma\vdash
+    (\mu~f_{1}~(x)~e_{1}~(1~.~\alpha_{1})~f_{2}~(x)~e_{2}~(1~.~\alpha_{2})~e_{3})\mathbin{\Rightarrow}\alpha_{3}
+  }
+\]
+
+The expression is to be read as, ``define two mutually recursive functions,
+$f_{1}$ and $f_{2}$, on recursive variable $x$, with function bodies $e_{1}$ and
+$e_{2}$, respectively, and types $1\to\alpha_{1}$ and
+$1\to\alpha_{2}$, respectively, such that they are bound in
+expression $e_{3}$''. I have written this as a binding form, because the typing
+rules are best expressed that way; in practice as implemented in a Scheme you
+may want rather to do a conceptually similar thing as a top-level form, and
+elaborate simply to \textbf{define}s.
+
+For this to work properly, we have to do something a little goofy and disallow
+shadowing on variables that are the subject of recursion: or perhaps a special
+symbol could be reserved for such a variable. In other words, the appearance of
+the variable in the type is not an indication of dependent type, but just of a
+dirty little syntactic trick. I call this goofy, because I have not expressed it
+fully in the formalism yet.
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{>}\to\alpha\quad\Gamma\vdash
+    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
+    (\downarrow~f~\textbf{car}~x)\mathbin{\Rightarrow}\alpha} \]
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{>}\to\alpha\quad\Gamma\vdash
+    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
+    (\downarrow~f~\textbf{cdr}~x)\mathbin{\Rightarrow}\alpha} \]
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{\geq}\to\alpha\quad\Gamma\vdash
+    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
+    (\downarrow~f~\textbf{car}~x)\mathbin{\Rightarrow}\alpha} \]
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{\geq}\to\alpha\quad\Gamma\vdash
+    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
+    (\downarrow~f~\textbf{cdr}~x)\mathbin{\Rightarrow}\alpha} \]
+
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{\geq}\to\alpha\quad\Gamma\vdash
+    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
+    (\downarrow~f~x)\mathbin{\Rightarrow}\alpha} \]
+
+The semantics of these calls are such that $(\downarrow~f~\textbf{car}~x)$ would
+translate to simply $(f~(\textbf{car}~x))$ in the Scheme backend, etc.
+
+I do not have any formal proof (yet) of the soundness of this system, or its
+termination. However, it appears to me to be simple enough so that with a little
+reflection, it will be found convincing.
+
+\end{document}
+

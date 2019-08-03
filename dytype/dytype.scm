@@ -139,7 +139,6 @@
         ((string? expr) 1)
         ((boolean? expr) 1)
         ((symbol? expr) (synth-symbol gamma expr))
-        ;; Is there a non-empty-list?
         ((non-empty? expr) (synth-list gamma (car expr) (cdr expr)))
         ))
 
