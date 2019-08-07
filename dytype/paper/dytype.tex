@@ -11,6 +11,53 @@
 
 \maketitle
 
+\section{Introduction}
+
+There is something picturesque about Lisp. Something with such a small core, yet
+expandable in userspace to the standards of any other modern high-level
+language. As illustrated by Joel Martin's ``Make a Lisp'', it is a great
+training ground for building a programming language. Because of the small core,
+in principle it is highly portable (think Shen). There's a magic in it having
+just enough primitives---and yet, not so primitive, in that Lisp has introduced
+a great number of the concepts that we now consider to be basic to high-level
+languages.
+
+This makes Lisp appealing for a use as a sort of portable scripting language, or
+as a basis for fairly powerful domain specific languages, or perhaps, to dream a
+little, as the kernel to bootstrap a language with a self-hosting type system.
+In all such cases, however (and, if you find David Turner's work on total
+functional programming compelling, in almost any case) one could wish to have a
+Lisp that was strongly normalizing. This type of limitedness would fit well with
+the smallness of Lisp's core.
+
+The question becomes, can we implement a type system that will guarantee
+termination, without losing minimalism, and without losing so much programming
+power that the language becomes a curiosity rather than a useful tool? The Lisp
+ecosystem has its interesting type systems. Racket has \texttt{\#lang
+typed/racket}, which has its charms and warts, and is anything but minimalistic.
+Shen has its exotic and powerful system, but it is overpowered for what we want
+(as Deech has said, you can launch the missiles while type-checking),
+and the types can be turned on and off. There is typed Scheme, and gradually
+typed Clojure, and probably others; but none are concerned with termination, as
+far as I'm aware.
+
+To keep the system simple, we focus on termination as the only property we care
+about. \texttt{(cdr \#t)} should not be caught at compile time by this system;
+it can throw a runtime exception. Runtime exceptions of that sort are typically
+easier to trace down that infinite loops; there is a quick feedback loop on
+runtime type errors. Arguably, infinite recursion is an order of magnitude worse
+problem than a runtime type error.
+
+The most minimal type system that guarantees termination (perhaps the most
+minimal interesting type system of all) is the simply typed lambda calculus. We
+start with that, using only one base type, which we call 1 because using numbers
+will provide a syntactic convenience. To this we add the ability to do primitive
+mutual recursion on lists, without having to add a separate termination checker.
+We also add a few touches to improve the fit with Lisp, such as variadic
+function types.
+
+\section{Typing rules}
+
 For any primitive non-function literal $c$, we can synthesize its type as $1$
 from the empty context:
 
@@ -83,6 +130,11 @@ synthesis:
 \[ \frac{\Gamma\vdash e\mathbin{\Rightarrow}\alpha}{\Gamma\vdash
     e\mathbin{\Leftarrow}\alpha}\quad\text{(Synthesis suffices for checking)} \]
 
+and the standard rule for looking up a variable in a context:
+
+\[ \frac{x\mathbin{:}\alpha\in\Gamma}{\Gamma\vdash
+    x\mathbin{\Rightarrow}\alpha}\quad\text{(Synthesis by lookup)} \]
+
 And we allow for explicit annotations:
 
 \[ \frac{\Gamma\vdash e\mathbin{\Leftarrow}\alpha}{\Gamma\vdash
@@ -111,14 +163,18 @@ size argument it received. The utility of this little extra bit of freedom is
 seen when one tries to implement a typechecker that includes a rule like
 ``Synthesis suffices for checking'', above.
 
-%% TODO this looks pretty bad
+The key here is that recursive functions have a different type with respect to
+themselves, internally, than they do with respect to the outside world; and
+therefore, to invoke themselves they cannot employ the typical application
+rules, but have to use specialized rules that enforce structural recursion.
+
 \[
   \frac{
     \splitfrac{
       \splitfrac{
-        \Gamma,x\mathbin{:}x^{=},f_{1}\mathbin{:}x^{>}\to\alpha_{1},f_{2}\mathbin{:}x^{>}\to\alpha_{2}\vdash e_{1}\mathbin{\Leftarrow}\alpha_{1}
+        \Gamma,x\mathbin{:}1,f_{1}\mathbin{:}1^{>}\to\alpha_{1},f_{2}\mathbin{:}1^{>}\to\alpha_{2}\vdash e_{1}\mathbin{\Leftarrow}\alpha_{1}
       }{
-        \Gamma,x\mathbin{:}x^{=},f_{1}\mathbin{:}x^{\geq}\to\alpha_{1},f_{2}\mathbin{:}x^{>}\to\alpha_{2}\vdash e_{2}\mathbin{\Leftarrow}\alpha_{2}
+        \Gamma,x\mathbin{:}1,f_{1}\mathbin{:}1^{\geq}\to\alpha_{1},f_{2}\mathbin{:}1^{>}\to\alpha_{2}\vdash e_{2}\mathbin{\Leftarrow}\alpha_{2}
       }
     }{
       \Gamma,f_{1}\mathbin{:}1\to\alpha_{1},f_{2}\mathbin{:}1\to\alpha_{2}\vdash e_{3}\mathbin{\Rightarrow}\alpha_{3}
@@ -138,39 +194,42 @@ rules are best expressed that way; in practice as implemented in a Scheme you
 may want rather to do a conceptually similar thing as a top-level form, and
 elaborate simply to \textbf{define}s.
 
-For this to work properly, we have to do something a little goofy and disallow
-shadowing on variables that are the subject of recursion: or perhaps a special
-symbol could be reserved for such a variable. In other words, the appearance of
-the variable in the type is not an indication of dependent type, but just of a
-dirty little syntactic trick. I call this goofy, because I have not expressed it
-fully in the formalism yet.
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}1^{>}\to\alpha}{\Gamma\vdash
+    (\downarrow~f~\textbf{car})\mathbin{\Rightarrow}\alpha} \]
 
-\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{>}\to\alpha\quad\Gamma\vdash
-    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
-    (\downarrow~f~\textbf{car}~x)\mathbin{\Rightarrow}\alpha} \]
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}1^{>}\to\alpha}{\Gamma\vdash
+    (\downarrow~f~\textbf{cdr})\mathbin{\Rightarrow}\alpha} \]
 
-\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{>}\to\alpha\quad\Gamma\vdash
-    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
-    (\downarrow~f~\textbf{cdr}~x)\mathbin{\Rightarrow}\alpha} \]
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}1^{\geq}\to\alpha}{\Gamma\vdash
+    (\downarrow~f~\textbf{car})\mathbin{\Rightarrow}\alpha} \]
 
-\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{\geq}\to\alpha\quad\Gamma\vdash
-    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
-    (\downarrow~f~\textbf{car}~x)\mathbin{\Rightarrow}\alpha} \]
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}1^{\geq}\to\alpha}{\Gamma\vdash
+    (\downarrow~f~\textbf{cdr})\mathbin{\Rightarrow}\alpha} \]
 
-\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{\geq}\to\alpha\quad\Gamma\vdash
-    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
-    (\downarrow~f~\textbf{cdr}~x)\mathbin{\Rightarrow}\alpha} \]
+\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}1^{\geq}\to\alpha}{\Gamma\vdash
+    (\downarrow~f)\mathbin{\Rightarrow}\alpha} \]
 
-\[ \frac{\Gamma\vdash f\mathbin{\Rightarrow}x^{\geq}\to\alpha\quad\Gamma\vdash
-    x\mathbin{\Rightarrow}x^{=}}{\Gamma\vdash
-    (\downarrow~f~x)\mathbin{\Rightarrow}\alpha} \]
-
-The semantics of these calls are such that $(\downarrow~f~\textbf{car}~x)$ would
-translate to simply $(f~(\textbf{car}~x))$ in the Scheme backend, etc.
+The semantics of these calls are such that $(\downarrow~f~\textbf{car})$ would
+translate to simply $(f~(\textbf{car}~x))$ in the Scheme backend, if $x$ was the
+recursive variable. Note that the backend is then responsible for guarding
+against shadowing of this variable, by performing any necessary
+$\alpha$-conversions.
 
 I do not have any formal proof (yet) of the soundness of this system, or its
 termination. However, it appears to me to be simple enough so that with a little
 reflection, it will be found convincing.
+
+Something which has been given up here, is the ability to treat functions as
+data. You cannot \textbf{cons} a function onto anything, nor can you
+\textbf{cons} anything onto a function. This is because
+$\textbf{cons}\mathbin{:}3$; i.e., on the one hand, it only takes in data, and
+so cannot take in functions. On the other hand, if you were to be able to put a
+function into a cons cell, the cons cell constructed would have type 1: i.e. it
+would be a way of making the function type disappear, violating the fundamental
+function/data distinction that makes it impossible to construct the type of
+combinators like $Y$ or $\omega$. How important this limitation is, I am not yet
+entirely sure, but I suspect it has the potential to be annoying. I do not yet
+have a strategy for fixing this problem.
 
 \end{document}
 
