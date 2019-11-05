@@ -10,7 +10,7 @@ import qualified Data.List.NonEmpty as NEL
 -- | Exposed at the level of a whole symbol rather than say a nonempty list of
 -- | opaque symbol characters, because if we wanted to allow say a0 but not 0a
 -- | then it's not a simple free monoid.
-newtype Symbol = Symbol (NonEmpty Char)
+newtype Symbol = Symbol (NonEmpty Char) deriving Eq
 
 instance Show Symbol where
   show (Symbol cs) = NEL.toList cs

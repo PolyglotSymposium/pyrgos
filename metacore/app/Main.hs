@@ -1,8 +1,17 @@
 module Main where
 
+import Metacore.AST
 import qualified Data.MExpr.Parser as Parser
 import           System.IO (hFlush, stdout)
-import           Text.Megaparsec (parseTest)
+import Text.Megaparsec (parse, errorBundlePretty)
+
+data Stop = Stop
+
+parseMetacore :: String -> String
+parseMetacore input =
+  case parse Parser.mexpr "repl" input of
+    Left e -> errorBundlePretty e
+    Right x -> show $ ofMExpr x
 
 main :: IO ()
 main = do
@@ -12,5 +21,5 @@ main = do
   if text == ":q"
   then putStrLn "Goodbye!"
   else do
-    parseTest Parser.mexpr text
+    putStrLn $ parseMetacore text
     main
