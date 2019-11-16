@@ -64,6 +64,6 @@ packages:
 # compiler-check: newer-minor
 
 ghc-options:
-    "$locals": -Wall -Wno-unticked-promoted-constructors
+    "$locals": -Wall -Wno-unticked-promoted-constructors -Wmissing-export-lists -Wno-name-shadowing
     "$targets": -Werror
-    "$everything": -O2
+    "$everything": -O2 -fhide-source-paths

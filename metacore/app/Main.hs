@@ -1,11 +1,9 @@
-module Main where
+module Main (main) where
 
 import Metacore.AST
 import qualified Data.MExpr.Parser as Parser
 import           System.IO (hFlush, stdout)
 import Text.Megaparsec (parse, errorBundlePretty)
-
-data Stop = Stop
 
 parseMetacore :: String -> String
 parseMetacore input =

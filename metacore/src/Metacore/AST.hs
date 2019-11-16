@@ -1,18 +1,19 @@
 -- | The meta/core language's syntax
-module Metacore.AST where
+module Metacore.AST (Expr, ofMExpr) where
 
+import Data.Word (Word64)
 import Control.Applicative (liftA2)
 import Data.MExpr (MExpr(..))
 import Data.MExpr.Symbol (Symbol, avowSymbol)
-import Text.Read (readMaybe)
 
 data Expr
   = Var String
   | Lam String Expr
   | Ap Expr Expr
   | String String
-  | Symbol Word
+  | Symbol Word64
   | Nat Integer
+  | Char Char
   deriving Show
 
 v :: Symbol
@@ -24,40 +25,22 @@ l = avowSymbol "l"
 a :: Symbol
 a = avowSymbol "a"
 
-s :: Symbol
-s = avowSymbol "s"
-
-i :: Symbol
-i = avowSymbol "i"
-
-n :: Symbol
-n = avowSymbol "n"
-
 ofMExpr :: MExpr -> Maybe Expr
-ofMExpr (Literal _) = Nothing
+ofMExpr (StrLit s) = Just $ String s
+ofMExpr (ChrLit c) = Just $ Char c
+ofMExpr (NatLit i) = Just $ Nat i
+ofMExpr (SymLit s) = Just $ Symbol s
 ofMExpr (MExpr f xs) =
   if f == v
   then case xs of
-         [Literal x] -> Just $ Var x
+         [StrLit x] -> Just $ Var x
          _ -> Nothing
   else if f == l
   then case xs of
-         [Literal param, body] -> Lam param <$> ofMExpr body
+         [StrLit param, body] -> Lam param <$> ofMExpr body
          _ -> Nothing
   else if f == a
   then case xs of
          [f', x] -> liftA2 Ap (ofMExpr f') (ofMExpr x)
-         _ -> Nothing
-  else if f == s
-  then case xs of
-         [Literal x] -> Just $ String x
-         _ -> Nothing
-  else if f == i
-  then case xs of
-         [Literal x] -> Symbol <$> readMaybe x
-         _ -> Nothing
-  else if f == n
-  then case xs of
-         [Literal x] -> Symbol <$> readMaybe x
          _ -> Nothing
   else Nothing

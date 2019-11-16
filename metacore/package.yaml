@@ -25,6 +25,10 @@ dependencies:
 - megaparsec
 - containers
 
+default-extensions:
+- BlockArguments
+- LambdaCase
+
 library:
   source-dirs: src
 
