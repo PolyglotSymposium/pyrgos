@@ -21,7 +21,7 @@ parens :: Parser a -> Parser a
 parens = between (symbol "(") (symbol ")")
 
 msymbol :: Parser Symbol
-msymbol = fmap avowSymbol $ takeWhile1P (Just "symbol") isSymbolChar
+msymbol = avowSymbol <$> takeWhile1P (Just "symbol") isSymbolChar
 
 comma :: Parser ()
 comma = void $ symbol ","

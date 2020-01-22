@@ -1,4 +1,4 @@
--- | McCarthy's s-expressions get so much love. Type to hype up his
+-- | McCarthy's s-expressions get so much love. Time to hype up his
 -- | m-expressions a bit.
 module Data.MExpr (MExpr(..)) where
 
