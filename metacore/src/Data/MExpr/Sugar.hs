@@ -1,11 +1,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module Data.MExpr.Sugar (is46, decode46) where
+module Data.MExpr.Sugar (is46, decode46, encode46) where
 
+import Data.Bits.Utils (c2w8, w82c)
 import Data.Word (Word8)
-
--- | From MissingH; remove if dependency on MissingH gets added
-c2w8 :: Char -> Word8
-c2w8 = fromIntegral . fromEnum
 
 is46 :: Char -> Bool
 is46 c = '-' <= c && c <= 'Z'
@@ -16,12 +13,15 @@ zero = c2w8 '-'
 to46 :: Char -> Word8
 to46 c = c2w8 c - zero
 
+from46 :: Word8 -> Char
+from46 x = w82c (x + zero)
+
 significance46 :: [Integer]
 significance46 = 1 : fmap (* 46) significance46
 
-littleEndian :: [Char] -> Integer
+littleEndian :: String -> Integer
 littleEndian =
-  sum . fmap (\(x, y) -> x * y) . zip significance46 . fmap (toInteger . to46)
+  sum . fmap (uncurry (*)) . zip significance46 . fmap (toInteger . to46)
 
 -- | A radix 46 encoding
 decode46 :: forall a. (Bounded a, Integral a) => String -> Maybe a
@@ -30,3 +30,13 @@ decode46 s =
   in if x > toInteger (maxBound :: a)
      then Nothing
      else Just $ fromInteger x
+
+
+chars46 :: forall a. Integral a => a -> [Word8]
+chars46 x | x < 46 = [fromIntegral x]
+chars46 x =
+  let (d, m) = divMod x 46
+  in fromIntegral m : chars46 d
+
+encode46 :: forall a. Integral a => a -> String
+encode46 = fmap from46 . chars46

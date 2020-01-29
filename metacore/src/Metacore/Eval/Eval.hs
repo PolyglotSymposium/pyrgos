@@ -1,57 +1,131 @@
 -- | The meta/eval language's interpreter
-module Metacore.Eval.Eval (Env, Interpreter, eval) where
+module Metacore.Eval.Eval
+  ( EvalEr, CrashTerminal, Metavalue, Env, Interpreter, eval
+  ) where
 
-import           Control.Monad.Trans.Class (lift)
-import           Control.Monad.Trans.Reader (ReaderT, local, ask, runReaderT)
-import           Control.Monad.Trans.State (StateT, get, modify)
+import           Control.Monad.Trans.Reader (Reader, ask, runReader)
+import           Control.Monad.Trans.State (State, get, modify)
+import           Data.Functor ((<&>))
+import           Data.MExpr (MExpr(..), Emify(..))
+import           Data.MExpr.Symbol (Symbol, avowSymbol)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Word (Word64)
 import           Metacore.Eval.AST
 
-type Value = Either Fun Terminal
+data Closure = Clo Env Word64 (Expr Terminal)
 
+instance Emify Closure where
+  emify (Clo _ arg body) = emify (Lambda arg body) -- TODO environment
+
+type Value = Either Closure Terminal
 type Env = Map Word64 Value
+type Interpreter = State Env
+type ExprInterpr = Reader Env
 
-type Interpreter = StateT Env (Either String)
-type ExprInterpr = ReaderT Env (Either String)
+ap1 :: Emify a => Symbol -> a -> MExpr
+ap1 s x = MExpr s [emify x]
 
-requireFun :: Value -> ExprInterpr Fun
-requireFun (Right x) =
-  lift $ Left $ "Expected a function, got: " ++ show x
-requireFun (Left f) = return f
+quote :: Emify a => a -> MExpr
+quote = ap1 $ avowSymbol "q"
 
-requireVar :: Word64 -> ExprInterpr Value
-requireVar x = do
-  env <- ask
+unquote :: Emify a => a -> MExpr
+unquote = ap1 $ avowSymbol "u"
+
+quasiquote :: Emify a => a -> MExpr
+quasiquote = ap1 $ avowSymbol "qq"
+
+unableToApply :: Emify a => a -> MExpr
+unableToApply = ap1 $ avowSymbol "inapplicable"
+
+unboundVariable :: Word64 -> MExpr
+unboundVariable x = MExpr (avowSymbol "unbound") [SymLit x]
+
+data EvalEr              =
+  UnableToApply Terminal |
+  UnboundVariable Word64 --
+
+instance Emify EvalEr where
+  emify = \case
+    UnableToApply   t -> unableToApply t
+    UnboundVariable x -> unboundVariable x
+
+data Metaterminal u n =
+  Unquote  u          |
+  Nonquote n          --
+
+instance (Emify u, Emify n) => Emify (Metaterminal u n) where
+  emify = \case
+    Unquote  u -> unquote u
+    Nonquote n -> emify n
+
+type CrashTerminal = Metaterminal EvalEr Terminal
+
+data Metavalue                       =
+  Closure Closure                    |
+  Complete Terminal                  |
+  Crash (Expr CrashTerminal)         --
+
+mapCrash :: (Expr CrashTerminal -> Expr CrashTerminal) -> Metavalue -> Metavalue
+mapCrash f (Crash x) = Crash (f x)
+mapCrash _ complete = complete
+
+bindValue :: (Value -> Metavalue) -> Metavalue -> Metavalue
+bindValue f (Complete x) = f (Right x)
+bindValue f (Closure x) = f (Left x)
+bindValue _ crash = crash
+
+instance Emify Metavalue where
+  emify = \case
+    Closure clo -> emify clo
+    Crash e -> quasiquote e
+    Complete t -> quote t
+
+requireClo :: Metavalue
+           -> Either (Expr CrashTerminal) (Value -> Metavalue)
+requireClo (Closure (Clo env param body)) =
+  Right $ \arg -> runReader (evalExpr body) (Map.insert param arg env)
+requireClo (Complete x) = Left $ T $ Unquote $ UnableToApply x
+requireClo (Crash crash) = Left crash
+
+requireVar :: Word64 -> ExprInterpr Metavalue
+requireVar x = ask <&> \env ->
   case Map.lookup x env of
-    Nothing -> lift $ Left $ "Unbound name: " ++ show x
-    Just v -> return v
+    Nothing -> Crash $ T $ Unquote $ UnboundVariable x
+    Just (Left c) -> Closure c
+    Just (Right v) -> Complete v
 
-evalExpr :: Expr -> ExprInterpr Value
+evalExpr :: Expr Terminal -> ExprInterpr Metavalue
 evalExpr = \case
-  Ap f x -> do
-    f' <- evalExpr f
-    x' <- evalExpr x
-    Fun arg body <- requireFun f'
-    local (Map.insert arg x') (evalExpr body)
-  T t -> return $ Right t
+  Ap fExpr xExpr -> do
+    fExpr' <- evalExpr fExpr
+    x <- evalExpr xExpr
+    return $ bindValue (helper fExpr') $ mapCrash (Ap (fmap Nonquote fExpr)) x
+      where
+        helper fExpr' x' =
+          case requireClo fExpr' of
+            Right f -> f x'
+            Left m -> Crash $ Ap m (fmap Nonquote xExpr)
+  Lambda arg body -> do
+    env <- ask -- Is it overly greedy to close on the whole env?
+    return $ Closure (Clo env arg body)
+  T t -> return $ Complete t
   Var x -> requireVar x
 
-liftReader :: Monad m => ReaderT e m a -> StateT e m a
-liftReader r = do
-  env <- get
-  let x = runReaderT r env
-  lift x
+liftReader :: Reader e a -> State e a
+liftReader r = runReader r <$> get
 
-eval :: TopLevel -> Interpreter (Maybe Value)
+eval :: TopLevel -> Interpreter (Maybe Metavalue)
 eval = \case
-  DefVar name value -> do
+  Def name value -> do
     value' <- liftReader $ evalExpr value
-    modify (Map.insert name value')
-    return Nothing
-  DefFun name fun -> do
-    modify (Map.insert name $ Left fun)
-    return Nothing
+    case value' of
+      Complete v -> do
+        modify (Map.insert name (Right v))
+        return Nothing
+      Closure v -> do
+        modify (Map.insert name (Left v))
+        return Nothing
+      crash -> return $ Just crash
   Eval expr ->
     Just <$> liftReader (evalExpr expr)

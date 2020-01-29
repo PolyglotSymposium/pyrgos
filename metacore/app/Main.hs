@@ -1,26 +1,27 @@
 module Main (main) where
 
 import           Control.Monad.Trans.Class (lift)
-import           Control.Monad.Trans.State (runStateT)
-import Data.Bifunctor (first)
+import           Control.Monad.Trans.State (StateT, mapStateT, runStateT)
+import           Data.Bifunctor (first)
+import           Data.Functor.Identity (Identity(..))
+import           Data.MExpr (emify, deemify)
 import qualified Data.MExpr.Parser as Parser
 import qualified Data.Map as Map
-import Metacore.Eval.AST
-import Metacore.Eval.Eval (Interpreter, Env, eval)
+import           Data.Foldable (traverse_)
+import           Metacore.Eval.Eval (Env, Metavalue, eval)
 import           System.IO (hFlush, stdout)
-import Text.Megaparsec (parse, errorBundlePretty)
+import           Text.Megaparsec (parse, errorBundlePretty)
 
-evalAndPrint :: String -> Interpreter String
+type Rep = StateT Env (Either String)
+
+evalAndPrint :: String -> Rep (Maybe Metavalue)
 evalAndPrint input = do
   mexpr <- lift $ first errorBundlePretty $ parse Parser.mexpr "repl" input
-  toplevel <- case mExprToTopLevel mexpr of
+  toplevel <- case deemify mexpr of
                 Nothing -> lift $ Left "meta/eval syntax error"
                 Just x -> pure x
-  x <- eval toplevel
-  return $ case x of
-             Nothing -> "Defined"
-             Just (Right x') -> show x'
-             Just (Left _) -> "<function>"
+  x <- mapStateT (\(Identity x) -> Right x) (eval toplevel)
+  lift $ traverse (Left . show . emify) x
 
 loop :: Env -> IO ()
 loop env = do
@@ -31,9 +32,9 @@ loop env = do
   then putStrLn "Goodbye!"
   else do
     let (out, env') = case runStateT (evalAndPrint text) env of
-                        Left e -> (e, env)
-                        Right x -> x
-    putStrLn out
+                        Left e -> (Just e, env)
+                        Right (x, env) -> (fmap (show . emify) x, env)
+    traverse_ putStrLn out
     loop env'
 
 main :: IO ()
