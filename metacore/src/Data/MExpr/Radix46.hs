@@ -1,5 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-module Data.MExpr.Sugar (is46, decode46, encode46) where
+module Data.MExpr.Radix46 (is46, decode46, encode46) where
 
 import Data.Bits.Utils (c2w8, w82c)
 import Data.Word (Word8)

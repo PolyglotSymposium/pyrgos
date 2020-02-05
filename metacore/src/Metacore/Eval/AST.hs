@@ -7,22 +7,22 @@ module Metacore.Eval.AST
 import Data.Word (Word64)
 import Control.Applicative (liftA2)
 import Data.MExpr (MExpr(..), Deemify(..), Emify(..))
-import Data.MExpr.Symbol (Symbol, avowSymbol)
+import Data.MExpr.Symbol (Symbol, symbol)
 
 applSymbol :: Symbol
-applSymbol = avowSymbol "a"
+applSymbol = symbol 20 -- A
 
 defineSymbol :: Symbol
-defineSymbol = avowSymbol "d"
+defineSymbol = symbol 23 -- D
 
 evalSymbol :: Symbol
-evalSymbol = avowSymbol "e"
+evalSymbol = symbol 24 -- E
 
 lambdaSymbol :: Symbol
-lambdaSymbol = avowSymbol "l"
+lambdaSymbol = symbol 31 -- L
 
 varSymbol :: Symbol
-varSymbol = avowSymbol "v"
+varSymbol = symbol 41 -- V
 
 data Expr t              =
   Ap (Expr t) (Expr t)   |

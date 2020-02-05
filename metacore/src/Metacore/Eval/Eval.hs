@@ -7,7 +7,7 @@ import           Control.Monad.Trans.Reader (Reader, ask, runReader)
 import           Control.Monad.Trans.State (State, get, modify)
 import           Data.Functor ((<&>))
 import           Data.MExpr (MExpr(..), Emify(..))
-import           Data.MExpr.Symbol (Symbol, avowSymbol)
+import           Data.MExpr.Symbol (Symbol, symbol)
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Word (Word64)
@@ -27,19 +27,19 @@ ap1 :: Emify a => Symbol -> a -> MExpr
 ap1 s x = MExpr s [emify x]
 
 quote :: Emify a => a -> MExpr
-quote = ap1 $ avowSymbol "q"
+quote = ap1 $ symbol 36 -- Q
 
 unquote :: Emify a => a -> MExpr
-unquote = ap1 $ avowSymbol "u"
+unquote = ap1 $ symbol 40 -- U
 
 quasiquote :: Emify a => a -> MExpr
-quasiquote = ap1 $ avowSymbol "qq"
+quasiquote = ap1 $ symbol 1692 -- QQ
 
 unableToApply :: Emify a => a -> MExpr
-unableToApply = ap1 $ avowSymbol "inapplicable"
+unableToApply = ap1 $ symbol 1334819977440548434 -- INAPPLICABL
 
 unboundVariable :: Word64 -> MExpr
-unboundVariable x = MExpr (avowSymbol "unbound") [SymLit x]
+unboundVariable x = MExpr (symbol 224888060474 {- UNBOUND -}) [SymLit x]
 
 data EvalEr              =
   UnableToApply Terminal |

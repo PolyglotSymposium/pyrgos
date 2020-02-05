@@ -8,7 +8,7 @@ import Data.List.Utils (replace)
 import Data.List (intercalate)
 import Data.MExpr.Symbol (Symbol)
 import Data.Word (Word64)
-import Data.MExpr.Sugar (encode46)
+import Data.MExpr.Radix46 (encode46)
 
 data MExpr             =
   ChrLit Char          |
