@@ -1,4 +1,4 @@
-module Data.MExpr.Parser (mexpr) where
+module Data.MExpr.Parser (Parser, mexpr) where
 
 import           Control.Applicative (liftA2)
 import           Control.Monad (void)

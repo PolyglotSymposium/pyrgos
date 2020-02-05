@@ -6,8 +6,11 @@ import           Control.Monad.Trans.State (StateT, mapStateT, runStateT)
 import           Data.Bifunctor (first)
 import           Data.Foldable (traverse_)
 import           Data.Functor.Identity (Identity(..))
-import           Data.MExpr (emify, deemify)
-import qualified Data.MExpr.Parser as Parser
+import           Data.MExpr (emify)
+import           Data.MExpr.Parser (Parser)
+import qualified Metacore.Eval.Parser as EvalParser
+import           Metacore.Eval.AST (TopLevel)
+import qualified Metacore.Human.Parser as HumanParser
 import           Data.MExpr.Radix46 (encode46, decode46)
 import qualified Data.Map as Map
 import           Data.Word (Word64)
@@ -19,28 +22,32 @@ import           Text.Read (readMaybe)
 
 type Rep = StateT Env (Either String)
 
-evalAndPrint :: String -> Rep (Maybe Metavalue)
-evalAndPrint input = do
-  mexpr <- lift $ first errorBundlePretty $ parse Parser.mexpr "repl" input
-  toplevel <- case deemify mexpr of
-                Nothing -> lift $ Left "meta/eval syntax error"
-                Just x -> pure x
+data Lang = MetaEval | MetaHuman
+
+selectParser :: Lang -> Parser TopLevel
+selectParser MetaEval = EvalParser.topLevel
+selectParser MetaHuman = HumanParser.topLevel
+
+evalAndPrint :: Lang -> String -> Rep (Maybe Metavalue)
+evalAndPrint lang input = do
+  let parsed = parse (selectParser lang) "repl" input
+  toplevel <- lift $ first errorBundlePretty parsed
   x <- mapStateT (\(Identity x) -> Right x) (eval toplevel)
   lift $ traverse (Left . show . emify) x
 
-loop :: Env -> IO ()
-loop env = do
+loop :: Lang -> Env -> IO ()
+loop lang env = do
   putStr "> "
   hFlush stdout
   text <- getLine
   if text == ":q"
   then putStrLn "Goodbye!"
   else do
-    let (out, env') = case runStateT (evalAndPrint text) env of
+    let (out, env') = case runStateT (evalAndPrint lang text) env of
                         Left e -> (Just e, env)
                         Right (x, env'') -> (fmap (show . emify) x, env'')
     traverse_ putStrLn out
-    loop env'
+    loop lang env'
 
 main :: IO ()
 main = do
@@ -54,4 +61,5 @@ main = do
       putStrLn $ case decode46 x of
         Nothing -> "Invalid."
         Just (x' :: Word64) -> show x'
-    _ -> loop Map.empty
+    ["--repl-eval"] -> loop MetaEval Map.empty
+    _ -> loop MetaHuman Map.empty

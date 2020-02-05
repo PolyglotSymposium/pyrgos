@@ -1,6 +1,6 @@
 -- | The parser for the meta/human language, which is simply a
 -- | minimally-human-friendly syntax for meta/eval.
-module Metacore.Human.Parser (human) where
+module Metacore.Human.Parser (topLevel) where
 
 import           Control.Applicative (liftA2)
 import           Control.Monad (void)
@@ -80,5 +80,5 @@ expr =
   <|> try fun
   <|> (Var <$> msymbol)
 
-human :: Parser TopLevel
-human = try def <|> fmap Eval expr
+topLevel :: Parser TopLevel
+topLevel = try def <|> fmap Eval expr
