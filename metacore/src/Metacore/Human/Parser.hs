@@ -24,7 +24,7 @@ parens = between (symbol "(") (symbol ")")
 
 msymbol :: Parser Symbol
 msymbol = do
-  s <- takeWhile1P (Just "symbol") (is46 . toUpper)
+  s <- L.lexeme space $ takeWhile1P (Just "symbol") (is46 . toUpper)
   case decode46 $ fmap toUpper s of
     Nothing -> fail "Symbol literal too large"
     Just x -> return $ Symbol x
@@ -34,6 +34,9 @@ symbolMark = void $ symbol "#"
 
 charMark :: Parser ()
 charMark = void $ symbol "'"
+
+natMark :: Parser ()
+natMark = void $ symbol "+"
 
 strMark :: Parser ()
 strMark = void $ symbol "\""
@@ -66,19 +69,22 @@ symbolLiteral = symbolMark *> msymbol
 characterLiteral :: Parser Char
 characterLiteral = between charMark charMark L.charLiteral
 
+nat :: Parser Integer
+nat = natMark *> L.decimal
+
 terminal :: Parser Terminal
 terminal =
   try (String <$> stringLiteral)
-  <|> try (Nat <$> L.decimal)
+  <|> try (Nat <$> nat)
   <|> try (TSymbol <$> symbolLiteral)
-  <|> try (Char <$> characterLiteral)
+  <|> (Char <$> characterLiteral)
 
 expr :: Parser (Expr Terminal)
 expr =
-  try (T <$> terminal)
-  <|> try ap
-  <|> try fun
-  <|> (Var <$> msymbol)
+  try fun
+  <|> try (T <$> terminal)
+  <|> try (Var <$> msymbol)
+  <|> ap
 
 topLevel :: Parser TopLevel
 topLevel = try def <|> fmap Eval expr
