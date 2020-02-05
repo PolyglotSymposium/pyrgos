@@ -6,20 +6,18 @@ module Metacore.Eval.Eval
 import           Control.Monad.Trans.Reader (Reader, ask, runReader)
 import           Control.Monad.Trans.State (State, get, modify)
 import           Data.Functor ((<&>))
-import           Data.MExpr (MExpr(..), Emify(..))
-import           Data.MExpr.Symbol (Symbol, symbol)
+import           Data.MExpr (Symbol(..), MExpr(..), Emify(..))
 import           Data.Map (Map)
 import qualified Data.Map as Map
-import           Data.Word (Word64)
 import           Metacore.Eval.AST
 
-data Closure = Clo Env Word64 (Expr Terminal)
+data Closure = Clo Env Symbol (Expr Terminal)
 
 instance Emify Closure where
   emify (Clo _ arg body) = emify (Lambda arg body) -- TODO environment
 
 type Value = Either Closure Terminal
-type Env = Map Word64 Value
+type Env = Map Symbol Value
 type Interpreter = State Env
 type ExprInterpr = Reader Env
 
@@ -27,23 +25,23 @@ ap1 :: Emify a => Symbol -> a -> MExpr
 ap1 s x = MExpr s [emify x]
 
 quote :: Emify a => a -> MExpr
-quote = ap1 $ symbol 36 -- Q
+quote = ap1 $ Symbol 36 -- Q
 
 unquote :: Emify a => a -> MExpr
-unquote = ap1 $ symbol 40 -- U
+unquote = ap1 $ Symbol 40 -- U
 
 quasiquote :: Emify a => a -> MExpr
-quasiquote = ap1 $ symbol 1692 -- QQ
+quasiquote = ap1 $ Symbol 1692 -- QQ
 
 unableToApply :: Emify a => a -> MExpr
-unableToApply = ap1 $ symbol 1334819977440548434 -- INAPPLICABL
+unableToApply = ap1 $ Symbol 1334819977440548434 -- INAPPLICABL
 
-unboundVariable :: Word64 -> MExpr
-unboundVariable x = MExpr (symbol 224888060474 {- UNBOUND -}) [SymLit x]
+unboundVariable :: Symbol -> MExpr
+unboundVariable x = MExpr (Symbol 224888060474 {- UNBOUND -}) [SymLit x]
 
 data EvalEr              =
   UnableToApply Terminal |
-  UnboundVariable Word64 --
+  UnboundVariable Symbol --
 
 instance Emify EvalEr where
   emify = \case
@@ -88,7 +86,7 @@ requireClo (Closure (Clo env param body)) =
 requireClo (Complete x) = Left $ T $ Unquote $ UnableToApply x
 requireClo (Crash crash) = Left crash
 
-requireVar :: Word64 -> ExprInterpr Metavalue
+requireVar :: Symbol -> ExprInterpr Metavalue
 requireVar x = ask <&> \env ->
   case Map.lookup x env of
     Nothing -> Crash $ T $ Unquote $ UnboundVariable x

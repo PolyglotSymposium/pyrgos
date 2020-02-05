@@ -4,31 +4,29 @@ module Metacore.Eval.AST
   ( TopLevel(..), Terminal(..), Expr(..)
   ) where
 
-import Data.Word (Word64)
 import Control.Applicative (liftA2)
-import Data.MExpr (MExpr(..), Deemify(..), Emify(..))
-import Data.MExpr.Symbol (Symbol, symbol)
+import Data.MExpr (Symbol(..), MExpr(..), Deemify(..), Emify(..))
 
 applSymbol :: Symbol
-applSymbol = symbol 20 -- A
+applSymbol = Symbol 20 -- A
 
 defineSymbol :: Symbol
-defineSymbol = symbol 23 -- D
+defineSymbol = Symbol 23 -- D
 
 evalSymbol :: Symbol
-evalSymbol = symbol 24 -- E
+evalSymbol = Symbol 24 -- E
 
 lambdaSymbol :: Symbol
-lambdaSymbol = symbol 31 -- L
+lambdaSymbol = Symbol 31 -- L
 
 varSymbol :: Symbol
-varSymbol = symbol 41 -- V
+varSymbol = Symbol 41 -- V
 
 data Expr t              =
   Ap (Expr t) (Expr t)   |
-  Lambda Word64 (Expr t) |
+  Lambda Symbol (Expr t) |
   T t                    |
-  Var Word64             --
+  Var Symbol             --
   deriving Functor
 
 instance Emify t => Emify (Expr t) where
@@ -42,17 +40,17 @@ data Terminal                   =
   Char Char                     |
   Nat Integer                   |
   String String                 |
-  Symbol Word64                 --
+  TSymbol Symbol                --
 
 instance Emify Terminal where
   emify = \case
     Char c -> ChrLit c
     Nat n -> NatLit n
     String s -> StrLit s
-    Symbol s -> SymLit s
+    TSymbol s -> SymLit s
 
 data TopLevel
-  = Def Word64 (Expr Terminal)
+  = Def Symbol (Expr Terminal)
   | Eval (Expr Terminal)
 
 -- TODO property: deemify (emify t) = Just t
@@ -61,7 +59,7 @@ instance Deemify Terminal where
     StrLit s -> Just $ String s
     ChrLit c -> Just $ Char c
     NatLit i -> Just $ Nat i
-    SymLit s -> Just $ Symbol s
+    SymLit s -> Just $ TSymbol s
     _ -> Nothing
 
 instance Deemify t => Deemify (Expr t) where
