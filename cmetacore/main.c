@@ -2,6 +2,7 @@
 #include "Eval.h"
 #include "Parser.h"
 #include "Lexer.h"
+#include <assert.h>
 
 int yyparse(SExpr** expr, yyscan_t scanner);
 
@@ -23,18 +24,13 @@ int main(void)
   char* code = NULL;
   size_t len = 0;
   getline(&code, &len, stdin);
-  if (code == NULL) {
-    fprintf(stderr, "augh");
-    return 4;
-  }
+  assert(code != NULL);
   SExpr* e = getAST(code);
   free(code);
   code = NULL;
-  if (e == NULL) {
-    fprintf(stderr, "augh");
-    return 4;
-  }
+  assert(e != NULL);
   Value* value = eval(e);
+  assert(value != NULL);
   printValue(stdout, value);
   return 0;
 }
