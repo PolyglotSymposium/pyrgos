@@ -8,6 +8,4 @@ typedef struct Cons {
 
 Cons* cons(void*, Cons*);
 
-void recDelConsWith(void(*)(void*), Cons*);
-
 #endif // CONS_H

@@ -1,12 +1,13 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "Cons.h"
 #include "Expr.h"
+#include <gc.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 
 SExpr* num(int value)
 {
-  SExpr* x = (SExpr*)malloc(sizeof(SExpr));
+  SExpr* x = (SExpr*)GC_MALLOC(sizeof(SExpr));
   if (x == NULL) {
     exit(3);
     return NULL;
@@ -18,7 +19,7 @@ SExpr* num(int value)
 
 SExpr* str(char* s)
 {
-  SExpr* x = (SExpr*)malloc(sizeof(SExpr));
+  SExpr* x = (SExpr*)GC_MALLOC(sizeof(SExpr));
   if (x == NULL) {
     exit(3);
     return NULL;
@@ -30,7 +31,7 @@ SExpr* str(char* s)
 
 SExpr* ap(Func func, Cons* args)
 {
-  SExpr* x = (SExpr*)malloc(sizeof(SExpr));
+  SExpr* x = (SExpr*)GC_MALLOC(sizeof(SExpr));
   if (x == NULL) {
     exit(3);
     return NULL;

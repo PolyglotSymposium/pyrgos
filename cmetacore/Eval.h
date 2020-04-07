@@ -16,13 +16,8 @@ typedef struct Value {
 } Value;
 
 
-/**
- * Evaluate the expression, stealing or freeing memory as you go, as needed, in
- * order to entirely consume the structure.
- */
 Value* eval(SExpr*);
 
 void printValue(FILE*, Value*);
-void recDelValue(Value*);
 
 #endif

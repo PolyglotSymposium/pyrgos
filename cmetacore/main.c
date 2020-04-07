@@ -36,6 +36,5 @@ int main(void)
   }
   Value* value = eval(e);
   printValue(stdout, value);
-  recDelValue(value);
   return 0;
 }
