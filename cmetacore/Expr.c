@@ -5,9 +5,9 @@
 #include <stdlib.h>
 
 
-SExpr* num(int value)
+Expr* num(int value)
 {
-  SExpr* x = (SExpr*)GC_MALLOC(sizeof(SExpr));
+  Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
   if (x == NULL) {
     exit(3);
     return NULL;
@@ -17,9 +17,9 @@ SExpr* num(int value)
   return x;
 }
 
-SExpr* str(char* s)
+Expr* str(char* s)
 {
-  SExpr* x = (SExpr*)GC_MALLOC(sizeof(SExpr));
+  Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
   if (x == NULL) {
     exit(3);
     return NULL;
@@ -29,9 +29,9 @@ SExpr* str(char* s)
   return x;
 }
 
-SExpr* ap(Func func, Cons* args)
+Expr* ap(Func func, Cons* args)
 {
-  SExpr* x = (SExpr*)GC_MALLOC(sizeof(SExpr));
+  Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
   if (x == NULL) {
     exit(3);
     return NULL;

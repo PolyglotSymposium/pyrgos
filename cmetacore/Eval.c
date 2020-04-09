@@ -5,14 +5,6 @@
 #include <string.h>
 #include <assert.h>
 
-char* concat(char* s1, char* s2) {
-  char* x = (char*)GC_MALLOC(strlen(s1) + strlen(s2) + 1);
-  assert(x != NULL);
-  strcpy(x, s1);
-  strcat(x, s2);
-  return x;
-}
-
 static Error typeError(const ValueTag required, const ValueTag actual) {
   TypeError typeError = { .requiredType = required, .actualType = actual };
   Error error = { typeError, eTYPE };
@@ -93,6 +85,10 @@ static Value* mult(Value* x, Value* y) {
   return v;
 }
 
+static Value* kcomb(Value* x, Value* _) {
+  return x;
+}
+
 Value* funcToClo(Func func) {
   Value* v = NULL;
   switch (func) {
@@ -102,6 +98,9 @@ Value* funcToClo(Func func) {
   case fMULT:
     v = primFun2(mult);
     break;
+  case fKCOMB:
+    v = primFun2(kcomb);
+    break;
   default:
     int UNHANDLED_FUNC_TAG = 0;
     assert(UNHANDLED_FUNC_TAG);
@@ -109,9 +108,10 @@ Value* funcToClo(Func func) {
   return v;
 }
 
-Value* apply1(Value* f, Value* arg, Cons* args) {
+Value* apply1(Value* f, Expr* exprArg, Cons* args) {
   Value* v = NULL;
   v = require(vCLO, f);
+  Value* arg = eval(exprArg);
   if (v == NULL) {
     if (f->primFun2.arg1 == NULL) {
       v = ap1PrimFun2(f->primFun2, arg);
@@ -119,7 +119,7 @@ Value* apply1(Value* f, Value* arg, Cons* args) {
       v = f->primFun2.fun2(f->primFun2.arg1, arg);
     }
     if (args != NULL) {
-      v = apply1(v, (Value*)args->head, args->tail);
+      v = apply1(v, (Expr*)args->head, args->tail);
     }
   }
   return v;
@@ -131,12 +131,12 @@ Value* apply(Func func, Cons* args) {
   if (args == NULL) {
     v = f;
   } else {
-    v = apply1(f, (Value*)args->head, args->tail);
+    v = apply1(f, (Expr*)args->head, args->tail);
   }
   return v;
 }
 
-Value* eval(SExpr* e) {
+Value* eval(Expr* e) {
   Value* v = NULL;
   switch (e->type) {
   case eINT:
@@ -161,9 +161,7 @@ static void printType(FILE* stream, ValueTag type) {
   case vSTRING: fprintf(stream, "string"); break;
   case vERROR: fprintf(stream, "error"); break;
   case vCLO: fprintf(stream, "closure"); break;
-  default:
-    int UNHANDLED_VALUE_TAG = 0;
-    assert(UNHANDLED_VALUE_TAG);
+  default: fprintf(stream, "unrecognized (%i)", type); break;
   }
 }
 

@@ -4,7 +4,7 @@
 #include "Parser.h"
 #include "Lexer.h"
 
-int yyerror(SExpr **expr, yyscan_t scanner, const char *msg) {
+int yyerror(Expr **expr, yyscan_t scanner, const char *msg) {
   fprintf(stderr, "Parser: %s\n", msg);
   exit(1);
   return 0;
@@ -21,13 +21,13 @@ int yyerror(SExpr **expr, yyscan_t scanner, const char *msg) {
 
 %define api.pure
 %lex-param   { yyscan_t scanner }
-%parse-param { SExpr **expr }
+%parse-param { Expr **expr }
 %parse-param { yyscan_t scanner }
 
 %union {
   int value;
   char* string;
-  SExpr* expr;
+  Expr* expr;
   Func func;
   Cons* args;
 }

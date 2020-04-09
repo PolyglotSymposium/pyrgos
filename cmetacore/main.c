@@ -4,11 +4,11 @@
 #include "Lexer.h"
 #include <assert.h>
 
-int yyparse(SExpr** expr, yyscan_t scanner);
+int yyparse(Expr** expr, yyscan_t scanner);
 
-SExpr* getAST(const char *code)
+Expr* getAST(const char *code)
 {
-  SExpr* expr = NULL;
+  Expr* expr = NULL;
   yyscan_t scanner = 0;
   YY_BUFFER_STATE state = 0;
   if (yylex_init(&scanner)) return NULL;
@@ -19,14 +19,17 @@ SExpr* getAST(const char *code)
   return expr;
 }
 
-int main(void)
+int main(int argc, char* argv[])
 {
   char* code = NULL;
-  size_t len = 0;
-  getline(&code, &len, stdin);
-  assert(code != NULL);
-  SExpr* e = getAST(code);
-  free(code);
+  if (argc == 2) {
+    code = argv[1];
+  } else {
+    size_t len = 0;
+    getline(&code, &len, stdin);
+    assert(code != NULL);
+  }
+  Expr* e = getAST(code);
   code = NULL;
   assert(e != NULL);
   Value* value = eval(e);

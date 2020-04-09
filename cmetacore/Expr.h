@@ -4,14 +4,14 @@
 #include "Cons.h"
 
 typedef enum Func {
-  fADD, fMULT
+  fADD, fMULT, fKCOMB
 } Func;
 
 typedef enum ExprTag {
   eINT, eAPPLY, eSTRING
 } ExprTag;
 
-typedef struct SExpr {
+typedef struct Expr {
   union {
     struct {
       Func func;
@@ -21,10 +21,10 @@ typedef struct SExpr {
     char* cString;
   };
   ExprTag type;
-} SExpr;
+} Expr;
 
-SExpr* num(int);
-SExpr* str(char*);
-SExpr* ap(Func, Cons*);
+Expr* num(int);
+Expr* str(char*);
+Expr* ap(Func, Cons*);
 
 #endif /* __EXPR_H__ */

@@ -44,7 +44,7 @@ struct Value {
 };
 
 
-Value* eval(SExpr*);
+Value* eval(Expr*);
 
 void printValue(FILE*, Value*);
 
