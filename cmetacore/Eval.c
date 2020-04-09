@@ -177,7 +177,7 @@ static Value* bcomb(Value* f, Value* g, Value* x) {
   return v;
 }
 
-Value* funcToClo(Func func) { // TODO misnamed
+Value* toClosable(Func func) {
   Value* v = NULL;
   switch (func) {
   case fADD:
@@ -213,9 +213,8 @@ Value* apply1By1(Value* f, Expr* exprArg, Cons* args) {
   return v;
 }
 
-Value* apply(Func func, Cons* args) {
+Value* apply(Value* f, Cons* args) {
   Value* v = NULL;
-  Value* f = funcToClo(func);
   if (args == NULL) {
     v = f;
   } else {
@@ -234,7 +233,10 @@ Value* eval(Expr* e) {
     v = vStr(e->cString);
     break;
   case eAPPLY:
-    v = apply(e->func, e->args);
+    v = apply(eval(e->applyF), e->args);
+    break;
+  case eFUN:
+    v = toClosable(e->func);
     break;
   default:
     int UNHANDLED_EXPR_TAG = 0;

@@ -8,16 +8,18 @@ typedef enum Func
  fADD, fMULT, fKCOMB, fICOMB, fBCOMB
 } Func;
 
-typedef enum ExprTag {
-  eINT, eAPPLY, eSTRING
+typedef enum ExprTag
+{
+ eINT, eAPPLY, eSTRING, eFUN
 } ExprTag;
 
 typedef struct Expr {
   union {
     struct {
-      Func func;
+      struct Expr* applyF;
       Cons* args;
     };
+    Func func;
     int intValue;
     char* cString;
   };
@@ -26,6 +28,7 @@ typedef struct Expr {
 
 Expr* num(int);
 Expr* str(char*);
-Expr* ap(Func, Cons*);
+Expr* ap(Expr*, Cons*);
+Expr* fun(Func);
 
 #endif /* __EXPR_H__ */

@@ -48,11 +48,12 @@ input
 ;
 
 expr
-: TOKEN_LPAREN TOKEN_FUNC[F] args[A] TOKEN_RPAREN {
+: TOKEN_LPAREN expr[F] args[A] TOKEN_RPAREN {
   $$ = ap($F, $A);
 }
 | TOKEN_NUMBER { $$ = num($1); }
 | TOKEN_STRING { $$ = str($1); }
+| TOKEN_FUNC { $$ = fun($1); }
 ;
 
 args
