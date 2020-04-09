@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 typedef enum ValueTag {
-  vINT, vSTRING, vERROR, vCLO
+  vINT, vSTRING, vERROR, vFUN
 } ValueTag;
 
 typedef struct Value Value;
@@ -25,19 +25,29 @@ typedef struct Error {
   ErrorTag type;
 } Error;
 
+typedef enum PrimFunTag { PRIMFUN1, PRIMFUN2 } PrimFunTag;
+
 typedef struct PrimFun2 {
     Value* (*fun2) (Value*, Value*);
     /**
     * Function is partially applied if `arg1` is non-null
     */
     Value* arg1;
-} Clo1;
+} PrimFun2;
+
+typedef struct PrimFun {
+  union {
+    PrimFun2 f2;
+    Value* (*f1) (Value*);
+  };
+  PrimFunTag type;
+} PrimFun;
 
 struct Value {
   union {
     int intValue;
     char* cString;
-    PrimFun2 primFun2;
+    PrimFun primFun;
     Error error;
   };
   ValueTag type;

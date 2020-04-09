@@ -33,6 +33,7 @@ int yyerror(const char *msg) {
 "*"                { yylval->func = fMULT; return TOKEN_FUNC; }
 "+"                { yylval->func = fADD; return TOKEN_FUNC; }
 "k"                { yylval->func = fKCOMB; return TOKEN_FUNC; }
+"i"                { yylval->func = fICOMB; return TOKEN_FUNC; }
 "("                { return TOKEN_LPAREN; }
 ")"                { return TOKEN_RPAREN; }
 \"                 { BEGIN STRING; }

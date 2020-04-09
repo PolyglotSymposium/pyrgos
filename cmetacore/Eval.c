@@ -35,21 +35,32 @@ static Value* vStr(char* s) {
   return x;
 }
 
+static Value* primFun1(Value* (*fun1) (Value*)) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vFUN;
+  x->primFun.type = PRIMFUN1;
+  x->primFun.f1 = fun1;
+  return x;
+}
+
 static Value* primFun2(Value* (*fun2) (Value*, Value*)) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);
   PrimFun2 pfun2 = { .fun2 = fun2, .arg1 = NULL };
-  x->type = vCLO;
-  x->primFun2 = pfun2;
+  x->type = vFUN;
+  x->primFun.type = PRIMFUN2;
+  x->primFun.f2 = pfun2;
   return x;
 }
 
 static Value* ap1PrimFun2(const PrimFun2 fun2, Value* arg1) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);
-  x->type = vCLO;
-  x->primFun2 = fun2;
-  x->primFun2.arg1 = arg1;
+  x->type = vFUN;
+  x->primFun.type = PRIMFUN2;
+  x->primFun.f2 = fun2;
+  x->primFun.f2.arg1 = arg1;
   return x;
 }
 
@@ -89,6 +100,8 @@ static Value* kcomb(Value* x, Value* _) {
   return x;
 }
 
+static Value* icomb(Value* x) { return x; }
+
 Value* funcToClo(Func func) {
   Value* v = NULL;
   switch (func) {
@@ -101,6 +114,9 @@ Value* funcToClo(Func func) {
   case fKCOMB:
     v = primFun2(kcomb);
     break;
+  case fICOMB:
+    v = primFun1(icomb);
+    break;
   default:
     int UNHANDLED_FUNC_TAG = 0;
     assert(UNHANDLED_FUNC_TAG);
@@ -110,13 +126,23 @@ Value* funcToClo(Func func) {
 
 Value* apply1(Value* f, Expr* exprArg, Cons* args) {
   Value* v = NULL;
-  v = require(vCLO, f);
-  Value* arg = eval(exprArg);
+  v = require(vFUN, f);
   if (v == NULL) {
-    if (f->primFun2.arg1 == NULL) {
-      v = ap1PrimFun2(f->primFun2, arg);
-    } else {
-      v = f->primFun2.fun2(f->primFun2.arg1, arg);
+    Value* arg = eval(exprArg);
+    switch (f->primFun.type) {
+    case PRIMFUN1:
+      v = f->primFun.f1(arg);
+      break;
+    case PRIMFUN2:
+      if (f->primFun.f2.arg1 == NULL) {
+        v = ap1PrimFun2(f->primFun.f2, arg);
+      } else {
+        v = f->primFun.f2.fun2(f->primFun.f2.arg1, arg);
+      }
+      break;
+    default:
+      int UNHANDLED_PRIMFUN_TAG = 0;
+      assert(UNHANDLED_PRIMFUN_TAG);
     }
     if (args != NULL) {
       v = apply1(v, (Expr*)args->head, args->tail);
@@ -160,7 +186,7 @@ static void printType(FILE* stream, ValueTag type) {
   case vINT: fprintf(stream, "integer"); break;
   case vSTRING: fprintf(stream, "string"); break;
   case vERROR: fprintf(stream, "error"); break;
-  case vCLO: fprintf(stream, "closure"); break;
+  case vFUN: fprintf(stream, "closure"); break;
   default: fprintf(stream, "unrecognized (%i)", type); break;
   }
 }
@@ -184,7 +210,7 @@ void printValue(FILE* stream, Value* v) {
   case vINT: fprintf(stream, "%i", v->intValue); break;
   case vERROR: printError(stream, v->error); break;
   case vSTRING: fprintf(stream, "\"%s\"", v->cString); break;
-  case vCLO: fprintf(stream, "[closure]"); break;
+  case vFUN: fprintf(stream, "[closure]"); break;
   default:
     int UNHANDLED_VALUE_TAG = 0;
     assert(UNHANDLED_VALUE_TAG);
