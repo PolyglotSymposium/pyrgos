@@ -3,8 +3,9 @@
 
 #include "Cons.h"
 
-typedef enum Func {
-  fADD, fMULT, fKCOMB, fICOMB
+typedef enum Func
+{
+ fADD, fMULT, fKCOMB, fICOMB, fBCOMB
 } Func;
 
 typedef enum ExprTag {

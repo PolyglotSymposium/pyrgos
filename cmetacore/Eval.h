@@ -25,7 +25,10 @@ typedef struct Error {
   ErrorTag type;
 } Error;
 
-typedef enum PrimFunTag { PRIMFUN1, PRIMFUN2 } PrimFunTag;
+typedef enum PrimFunTag
+{
+ PRIMFUN1, PRIMFUN2, PRIMFUN3
+} PrimFunTag;
 
 typedef struct PrimFun2 {
     Value* (*fun2) (Value*, Value*);
@@ -35,10 +38,23 @@ typedef struct PrimFun2 {
     Value* arg1;
 } PrimFun2;
 
+typedef struct PrimFun3 {
+  Value* (*fun3) (Value*, Value*, Value*);
+  /**
+   * Function is partially applied if `arg1` is non-null
+   */
+  Value* arg1;
+  /**
+   * Function is partially applied if `arg2` is non-null
+   */
+  Value* arg2;
+} PrimFun3;
+
 typedef struct PrimFun {
   union {
-    PrimFun2 f2;
     Value* (*f1) (Value*);
+    PrimFun2 f2;
+    PrimFun3 f3;
   };
   PrimFunTag type;
 } PrimFun;

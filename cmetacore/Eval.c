@@ -54,6 +54,16 @@ static Value* primFun2(Value* (*fun2) (Value*, Value*)) {
   return x;
 }
 
+static Value* primFun3(Value* (*fun3) (Value*, Value*, Value*)) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  PrimFun3 pfun3 = { .fun3 = fun3, .arg1 = NULL };
+  x->type = vFUN;
+  x->primFun.type = PRIMFUN3;
+  x->primFun.f3 = pfun3;
+  return x;
+}
+
 static Value* ap1PrimFun2(const PrimFun2 fun2, Value* arg1) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);
@@ -61,6 +71,28 @@ static Value* ap1PrimFun2(const PrimFun2 fun2, Value* arg1) {
   x->primFun.type = PRIMFUN2;
   x->primFun.f2 = fun2;
   x->primFun.f2.arg1 = arg1;
+  return x;
+}
+
+static Value* ap1PrimFun3(const PrimFun3 fun3, Value* arg1) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vFUN;
+  x->primFun.type = PRIMFUN3;
+  x->primFun.f3 = fun3;
+  x->primFun.f3.arg1 = arg1;
+  return x;
+}
+
+static Value* ap2PrimFun3(const PrimFun3 fun3, Value* arg1, Value* arg2) {
+  // TODO would this all be easier with memcpy?
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vFUN;
+  x->primFun.type = PRIMFUN3;
+  x->primFun.f3 = fun3;
+  x->primFun.f3.arg1 = arg1;
+  x->primFun.f3.arg2 = arg2;
   return x;
 }
 
@@ -102,7 +134,50 @@ static Value* kcomb(Value* x, Value* _) {
 
 static Value* icomb(Value* x) { return x; }
 
-Value* funcToClo(Func func) {
+Value* apply1(Value* f, Value* arg) {
+  Value* v = NULL;
+  v = require(vFUN, f);
+  if (v == NULL) {
+    switch (f->primFun.type) {
+    case PRIMFUN1:
+      v = f->primFun.f1(arg);
+      break;
+    case PRIMFUN2:
+      if (f->primFun.f2.arg1 == NULL) {
+        v = ap1PrimFun2(f->primFun.f2, arg);
+      } else {
+        v = f->primFun.f2.fun2(f->primFun.f2.arg1, arg);
+      }
+      break;
+    case PRIMFUN3:
+      if (f->primFun.f3.arg1 == NULL && f->primFun.f3.arg2 == NULL) {
+        v = ap1PrimFun3(f->primFun.f3, arg);
+      } else if (f->primFun.f3.arg1 != NULL && f->primFun.f3.arg2 == NULL) {
+        v = ap2PrimFun3(f->primFun.f3, f->primFun.f3.arg1, arg);
+      } else if (f->primFun.f3.arg1 != NULL && f->primFun.f3.arg2 != NULL) {
+        v = f->primFun.f3.fun3(f->primFun.f3.arg1, f->primFun.f3.arg2, arg);
+      } else {
+        int UNEXPECTED_PRIMFUN3_STATE = 0;
+        assert(UNEXPECTED_PRIMFUN3_STATE);
+      }
+      break;
+    default:
+      int UNHANDLED_PRIMFUN_TAG = 0;
+      assert(UNHANDLED_PRIMFUN_TAG);
+    }
+  }
+  return v;
+}
+
+static Value* bcomb(Value* f, Value* g, Value* x) {
+  Value* v = apply1(g, x);
+  if (v->type != vERROR) {
+    v = apply1(f, v);
+  }
+  return v;
+}
+
+Value* funcToClo(Func func) { // TODO misnamed
   Value* v = NULL;
   switch (func) {
   case fADD:
@@ -117,6 +192,9 @@ Value* funcToClo(Func func) {
   case fICOMB:
     v = primFun1(icomb);
     break;
+  case fBCOMB:
+    v = primFun3(bcomb);
+    break;
   default:
     int UNHANDLED_FUNC_TAG = 0;
     assert(UNHANDLED_FUNC_TAG);
@@ -124,28 +202,12 @@ Value* funcToClo(Func func) {
   return v;
 }
 
-Value* apply1(Value* f, Expr* exprArg, Cons* args) {
+Value* apply1By1(Value* f, Expr* exprArg, Cons* args) {
   Value* v = NULL;
-  v = require(vFUN, f);
-  if (v == NULL) {
-    Value* arg = eval(exprArg);
-    switch (f->primFun.type) {
-    case PRIMFUN1:
-      v = f->primFun.f1(arg);
-      break;
-    case PRIMFUN2:
-      if (f->primFun.f2.arg1 == NULL) {
-        v = ap1PrimFun2(f->primFun.f2, arg);
-      } else {
-        v = f->primFun.f2.fun2(f->primFun.f2.arg1, arg);
-      }
-      break;
-    default:
-      int UNHANDLED_PRIMFUN_TAG = 0;
-      assert(UNHANDLED_PRIMFUN_TAG);
-    }
+  v = apply1(f, eval(exprArg));
+  if (v->type != vERROR) {
     if (args != NULL) {
-      v = apply1(v, (Expr*)args->head, args->tail);
+      v = apply1By1(v, (Expr*)args->head, args->tail);
     }
   }
   return v;
@@ -157,7 +219,7 @@ Value* apply(Func func, Cons* args) {
   if (args == NULL) {
     v = f;
   } else {
-    v = apply1(f, (Expr*)args->head, args->tail);
+    v = apply1By1(f, (Expr*)args->head, args->tail);
   }
   return v;
 }
