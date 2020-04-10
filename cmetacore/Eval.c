@@ -116,6 +116,18 @@ static Value* add(Value* x, Value* y) {
   return v;
 }
 
+static Value* sub(Value* x, Value* y) {
+  Value* v = NULL;
+  v = require(vINT, x);
+  if (v == NULL) {
+    v = require(vINT, y);
+    if (v == NULL) {
+      v = vInt(x->intValue - y->intValue);
+    }
+  }
+  return v;
+}
+
 static Value* mult(Value* x, Value* y) {
   Value* v = NULL;
   v = require(vINT, x);
@@ -123,6 +135,18 @@ static Value* mult(Value* x, Value* y) {
     v = require(vINT, y);
     if (v == NULL) {
       v = vInt(x->intValue * y->intValue);
+    }
+  }
+  return v;
+}
+
+static Value* mod(Value* x, Value* y) {
+  Value* v = NULL;
+  v = require(vINT, x);
+  if (v == NULL) {
+    v = require(vINT, y);
+    if (v == NULL) {
+      v = vInt(x->intValue % y->intValue);
     }
   }
   return v;
@@ -194,8 +218,14 @@ Value* toClosable(Func func) {
   case fADD:
     v = primFun2(add);
     break;
+  case fSUB:
+    v = primFun2(sub);
+    break;
   case fMULT:
     v = primFun2(mult);
+    break;
+  case fMOD:
+    v = primFun2(mod);
     break;
   case fKCOMB:
     v = primFun2(kcomb);

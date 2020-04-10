@@ -32,6 +32,8 @@ int yyerror(const char *msg) {
 [0-9]+             { sscanf(yytext, "%d", &yylval->value); return TOKEN_NUMBER; }
 "*"                { yylval->func = fMULT; return TOKEN_FUNC; }
 "+"                { yylval->func = fADD; return TOKEN_FUNC; }
+"-"                { yylval->func = fSUB; return TOKEN_FUNC; }
+"%"                { yylval->func = fMOD; return TOKEN_FUNC; }
 "k"                { yylval->func = fKCOMB; return TOKEN_FUNC; }
 "i"                { yylval->func = fICOMB; return TOKEN_FUNC; }
 "b"                { yylval->func = fBCOMB; return TOKEN_FUNC; }
