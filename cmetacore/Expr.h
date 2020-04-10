@@ -5,7 +5,7 @@
 
 typedef enum Func
 {
- fADD, fMULT, fKCOMB, fICOMB, fBCOMB
+ fADD, fMULT, fKCOMB, fICOMB, fBCOMB, fCCOMB
 } Func;
 
 typedef enum ExprTag
