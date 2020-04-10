@@ -29,7 +29,7 @@ int yyerror(Expr **expr, yyscan_t scanner, const char *msg) {
   char* string;
   Expr* expr;
   Func func;
-  Cons* args;
+  Cons* apply;
 }
 
 %token TOKEN_LPAREN "("
@@ -39,7 +39,7 @@ int yyerror(Expr **expr, yyscan_t scanner, const char *msg) {
 %token <string> TOKEN_STRING "string"
 
 %type <expr> expr
-%type <args> args
+%type <apply> apply
 
 %%
 
@@ -48,16 +48,16 @@ input
 ;
 
 expr
-: TOKEN_LPAREN expr[F] args[A] TOKEN_RPAREN {
-  $$ = ap($F, $A);
+: TOKEN_LPAREN apply[A] TOKEN_RPAREN {
+  $$ = ap($A);
 }
 | TOKEN_NUMBER { $$ = num($1); }
 | TOKEN_STRING { $$ = str($1); }
 | TOKEN_FUNC { $$ = fun($1); }
 ;
 
-args
-: expr[H] args[T] { $$ = cons($H, $T); }
+apply
+: expr[H] apply[T] { $$ = cons($H, $T); }
 | expr { $$ = cons($1, NULL); }
 ;
 

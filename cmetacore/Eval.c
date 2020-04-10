@@ -177,6 +177,17 @@ static Value* bcomb(Value* f, Value* g, Value* x) {
   return v;
 }
 
+static Value* scomb(Value* f, Value* g, Value* x) {
+  Value* v = apply1(f, x);
+  if (v->type != vERROR) {
+    Value* v2 = apply1(g, x);
+    if (v2->type != vERROR) {
+      v = apply1(v, v2);
+    }
+  }
+  return v;
+}
+
 Value* toClosable(Func func) {
   Value* v = NULL;
   switch (func) {
@@ -194,6 +205,9 @@ Value* toClosable(Func func) {
     break;
   case fBCOMB:
     v = primFun3(bcomb);
+    break;
+  case fSCOMB:
+    v = primFun3(scomb);
     break;
   default:
     int UNHANDLED_FUNC_TAG = 0;

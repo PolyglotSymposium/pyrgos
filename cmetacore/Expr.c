@@ -23,13 +23,13 @@ Expr* str(char* s)
   return x;
 }
 
-Expr* ap(Expr* f, Cons* args)
+Expr* ap(Cons* apply)
 {
   Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
   assert(x != NULL);
   x->type = eAPPLY;
-  x->applyF = f;
-  x->args = args;
+  x->applyF = (Expr*)apply->head;
+  x->args = apply->tail;
   return x;
 }
 
