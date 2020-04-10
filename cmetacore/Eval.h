@@ -1,10 +1,11 @@
 #ifndef __EVAL_H__
 #define __EVAL_H__
 
+#include <stdbool.h>
 #include <stdio.h>
 
 typedef enum ValueTag {
-  vINT, vSTRING, vERROR, vFUN
+  vINT, vSTRING, vBOOL, vERROR, vFUN
 } ValueTag;
 
 typedef struct Value Value;
@@ -63,6 +64,7 @@ struct Value {
   union {
     int intValue;
     char* cString;
+    bool boolValue;
     PrimFun primFun;
     Error error;
   };
