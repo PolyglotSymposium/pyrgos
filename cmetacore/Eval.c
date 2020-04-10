@@ -4,6 +4,7 @@
 #include <gc.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 static Error typeError(const ValueTag required, const ValueTag actual) {
   TypeError typeError = { .requiredType = required, .actualType = actual };
@@ -32,6 +33,14 @@ static Value* vStr(char* s) {
   assert(x != NULL);
   x->type = vSTRING;
   x->cString = s;
+  return x;
+}
+
+static Value* vBool(bool value) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vBOOL;
+  x->boolValue = value;
   return x;
 }
 
@@ -128,6 +137,18 @@ static Value* mult(Value* x, Value* y) {
   return v;
 }
 
+static Value* eq(Value* x, Value* y) {
+  Value* v = NULL;
+  v = require(vINT, x);
+  if (v == NULL) {
+    v = require(vINT, y);
+    if (v == NULL) {
+      v = vBool(x->intValue == y->intValue);
+    }
+  }
+  return v;
+}
+
 static Value* kcomb(Value* x, Value* _) {
   return x;
 }
@@ -205,6 +226,9 @@ Value* toClosable(Func func) {
   case fMULT:
     v = primFun2(mult);
     break;
+  case fEQ:
+    v = primFun2(eq);
+    break;
   case fKCOMB:
     v = primFun2(kcomb);
     break;
@@ -274,6 +298,7 @@ static void printType(FILE* stream, ValueTag type) {
   switch (type) {
   case vINT: fprintf(stream, "integer"); break;
   case vSTRING: fprintf(stream, "string"); break;
+  case vBOOL: fprintf(stream, "boolean"); break;
   case vERROR: fprintf(stream, "error"); break;
   case vFUN: fprintf(stream, "closure"); break;
   default: fprintf(stream, "unrecognized (%i)", type); break;
@@ -297,8 +322,9 @@ static void printError(FILE* stream, const Error error) {
 void printValue(FILE* stream, Value* v) {
   switch (v->type) {
   case vINT: fprintf(stream, "%i", v->intValue); break;
-  case vERROR: printError(stream, v->error); break;
   case vSTRING: fprintf(stream, "\"%s\"", v->cString); break;
+  case vBOOL: fprintf(stream, "%i", v->boolValue); break;
+  case vERROR: printError(stream, v->error); break;
   case vFUN: fprintf(stream, "[closure]"); break;
   default:
     int UNHANDLED_VALUE_TAG = 0;

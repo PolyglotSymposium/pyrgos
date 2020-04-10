@@ -1,6 +1,7 @@
 #include "Cons.h"
 #include "Expr.h"
 #include <gc.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -20,6 +21,15 @@ Expr* str(char* s)
   assert(x != NULL);
   x->type = eSTRING;
   x->cString = s;
+  return x;
+}
+
+Expr* truth(bool value)
+{
+  Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
+  assert(x != NULL);
+  x->type = eBOOL;
+  x->boolValue = value;
   return x;
 }
 

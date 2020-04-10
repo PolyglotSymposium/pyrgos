@@ -2,15 +2,16 @@
 #define __EXPR_H__
 
 #include "Cons.h"
+#include <stdbool.h>
 
 typedef enum Func
 {
- fADD, fMULT, fKCOMB, fICOMB, fBCOMB, fSCOMB, fCCOMB
+ fADD, fMULT, fEQ, fKCOMB, fICOMB, fBCOMB, fSCOMB, fCCOMB
 } Func;
 
 typedef enum ExprTag
 {
- eINT, eAPPLY, eSTRING, eFUN
+ eINT, eAPPLY, eSTRING, eBOOL, eFUN
 } ExprTag;
 
 typedef struct Expr {
@@ -22,12 +23,14 @@ typedef struct Expr {
     Func func;
     int intValue;
     char* cString;
+    bool boolValue;
   };
   ExprTag type;
 } Expr;
 
 Expr* num(int);
 Expr* str(char*);
+Expr* truth(bool);
 Expr* ap(Cons*);
 Expr* fun(Func);
 
