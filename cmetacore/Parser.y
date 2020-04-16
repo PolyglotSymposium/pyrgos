@@ -28,15 +28,15 @@ int yyerror(Expr **expr, yyscan_t scanner, const char *msg) {
   int value;
   char* string;
   Expr* expr;
-  Func func;
+  Symbol name;
   Cons* apply;
 }
 
 %token TOKEN_LPAREN "("
 %token TOKEN_RPAREN ")"
-%token <func> TOKEN_FUNC "func"
 %token <value> TOKEN_NUMBER "number"
 %token <string> TOKEN_STRING "string"
+%token <name> TOKEN_NAME "name"
 
 %type <expr> expr
 %type <apply> apply
@@ -53,7 +53,7 @@ expr
 }
 | TOKEN_NUMBER { $$ = num($1); }
 | TOKEN_STRING { $$ = str($1); }
-| TOKEN_FUNC { $$ = fun($1); }
+| TOKEN_NAME { $$ = name($1); }
 ;
 
 apply

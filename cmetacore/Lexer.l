@@ -2,6 +2,7 @@
 
 #include "Expr.h"
 #include "Parser.h"
+#include "Symbol.h"
 
 #include <stdio.h>
 
@@ -28,26 +29,18 @@ int yyerror(const char *msg) {
 
 %%
 
-[ \r\n\t]*         { continue; }
-[0-9]+             { sscanf(yytext, "%d", &yylval->value); return TOKEN_NUMBER; }
-"*"                { yylval->func = fMULT; return TOKEN_FUNC; }
-"+"                { yylval->func = fADD; return TOKEN_FUNC; }
-"-"                { yylval->func = fSUB; return TOKEN_FUNC; }
-"%"                { yylval->func = fMOD; return TOKEN_FUNC; }
-"="                { yylval->func = fEQ; return TOKEN_FUNC; }
-"k"                { yylval->func = fKCOMB; return TOKEN_FUNC; }
-"i"                { yylval->func = fICOMB; return TOKEN_FUNC; }
-"b"                { yylval->func = fBCOMB; return TOKEN_FUNC; }
-"s"                { yylval->func = fSCOMB; return TOKEN_FUNC; }
-"c"                { yylval->func = fCCOMB; return TOKEN_FUNC; }
-"("                { return TOKEN_LPAREN; }
-")"                { return TOKEN_RPAREN; }
-\"                 { BEGIN STRING; }
-<STRING>[^\\"\n]*  { strbuf = strdup(yytext); }
-<STRING>\"         { yylval->string = strbuf; strbuf = NULL;
-                     BEGIN 0; return TOKEN_STRING; }
-<STRING>\\         { yyerror("escape sequences not implemented in strings"); }
-<STRING>\n         { yyerror("string not terminated before EOL"); }
-<STRING><<EOF>>    { yyerror("string not terminated before EOF"); }
+[ \r\n\t]*                       { continue; }
+[0-9]+                           { sscanf(yytext, "%d", &yylval->value); return TOKEN_NUMBER; }
+[a-z\-+/*?!]{1,12}[0-9\-+/*?!]?  { yylval->name = compressSymbol(yytext); return TOKEN_NAME; }
+[a-z\-+/*?!]{0,11}_[0-9\-+/*?!]  { yylval->name = compressSymbol(yytext); return TOKEN_NAME; }
+"("                              { return TOKEN_LPAREN; }
+")"                              { return TOKEN_RPAREN; }
+\"                               { BEGIN STRING; }
+<STRING>[^\\"\n]*                { strbuf = strdup(yytext); }
+<STRING>\"                       { yylval->string = strbuf; strbuf = NULL;
+                                   BEGIN 0; return TOKEN_STRING; }
+<STRING>\\                       { yyerror("escape sequences not implemented in strings"); }
+<STRING>\n                       { yyerror("string not terminated before EOL"); }
+<STRING><<EOF>>                  { yyerror("string not terminated before EOF"); }
 
 %%

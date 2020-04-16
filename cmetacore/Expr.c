@@ -2,7 +2,6 @@
 #include "Expr.h"
 #include <gc.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 
@@ -43,11 +42,11 @@ Expr* ap(Cons* apply)
   return x;
 }
 
-Expr* fun(Func f)
+Expr* name(Symbol name)
 {
   Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
   assert(x != NULL);
-  x->type = eFUN;
-  x->func = f;
+  x->type = eNAME;
+  x->name = name;
   return x;
 }
