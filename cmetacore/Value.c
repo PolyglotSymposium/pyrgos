@@ -3,8 +3,38 @@
 #include "Value.h"
 
 Error typeError(const ValueTag required, const ValueTag actual) {
+  Error error;
+  error.type = eTYPE;
   TypeError typeError = { .requiredType = required, .actualType = actual };
-  Error error = { typeError, eTYPE };
+  error.typeError = typeError;
+  return error;
+}
+
+Error undefined(const Symbol name) {
+  Error error;
+  error.type = eUNDEFINED;
+  error.name = name;
+  return error;
+}
+
+Error noSuchForm(const Symbol name) {
+  Error error;
+  error.type = eNOSUCHFORM;
+  error.name = name;
+  return error;
+}
+
+Error tooManyArgs(const Symbol name) {
+  Error error;
+  error.type = eTOOMANYARGS;
+  error.name = name;
+  return error;
+}
+
+Error tooFewArgs(const Symbol name) {
+  Error error;
+  error.type = eTOOMANYARGS;
+  error.name = name;
   return error;
 }
 
@@ -16,7 +46,37 @@ Value* vError(const Error error) {
   return x;
 }
 
-Value* vInt(int value) {
+Value* vTuple2(Value* item1, Value* item2) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vTUPLE2;
+  x->t2.item1 = item1;
+  x->t2.item2 = item2;
+  return x;
+}
+
+Value* vTuple3(Value* item1, Value* item2, Value* item3) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vTUPLE3;
+  x->t3.item1 = item1;
+  x->t3.item2 = item2;
+  x->t3.item3 = item3;
+  return x;
+}
+
+Value* vTuple4(Value* item1, Value* item2, Value* item3, Value* item4) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vTUPLE4;
+  x->t4.item1 = item1;
+  x->t4.item2 = item2;
+  x->t4.item3 = item3;
+  x->t4.item4 = item4;
+  return x;
+}
+
+Value* vInt(const int value) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);
   x->type = vINT;
@@ -32,11 +92,19 @@ Value* vStr(char* s) {
   return x;
 }
 
-Value* vBool(bool value) {
+Value* vBool(const bool value) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);
   x->type = vBOOL;
   x->boolValue = value;
+  return x;
+}
+
+Value* vSymbol(const Symbol symbol) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vSYMBOL;
+  x->symbol = symbol;
   return x;
 }
 
@@ -104,7 +172,11 @@ Value* ap2PrimFun3(const PrimFun3 fun3, Value* arg1, Value* arg2) {
 Value* require(ValueTag type, Value* x) {
   Value* v = NULL;
   if (x->type != type) {
-    v = vError(typeError(type, x->type));
+    if (x->type == vERROR) {
+      v = x;
+    } else {
+      v = vError(typeError(type, x->type));
+    }
   }
   return v;
 }

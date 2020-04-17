@@ -32,13 +32,15 @@ int yyerror(Expr **expr, yyscan_t scanner, const char *msg) {
   Cons* apply;
 }
 
-%token TOKEN_LPAREN "("
-%token TOKEN_RPAREN ")"
-%token <value> TOKEN_NUMBER "number"
+%token          TOKEN_LPAREN "("
+%token          TOKEN_RPAREN ")"
+%token          TOKEN_LSQBRK "["
+%token          TOKEN_RSQBRK "]"
+%token <value>  TOKEN_NUMBER "number"
 %token <string> TOKEN_STRING "string"
-%token <name> TOKEN_NAME "name"
+%token <name>   TOKEN_NAME   "name"
 
-%type <expr> expr
+%type <expr>  expr
 %type <apply> apply
 
 %%
@@ -48,12 +50,12 @@ input
 ;
 
 expr
-: TOKEN_LPAREN apply[A] TOKEN_RPAREN {
-  $$ = ap($A);
-}
-| TOKEN_NUMBER { $$ = num($1); }
-| TOKEN_STRING { $$ = str($1); }
-| TOKEN_NAME { $$ = name($1); }
+: TOKEN_LPAREN apply[A] TOKEN_RPAREN                  { $$ = ap($A); }
+| TOKEN_LSQBRK TOKEN_NAME[N] apply[A] TOKEN_RSQBRK    { $$ = form($N, $A); }
+| TOKEN_LSQBRK TOKEN_NAME[N] TOKEN_RSQBRK             { $$ = form($N, NULL); }
+| TOKEN_NUMBER                                        { $$ = num($1); }
+| TOKEN_STRING                                        { $$ = str($1); }
+| TOKEN_NAME                                          { $$ = name($1); }
 ;
 
 apply

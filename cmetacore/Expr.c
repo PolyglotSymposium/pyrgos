@@ -50,3 +50,13 @@ Expr* name(Symbol name)
   x->name = name;
   return x;
 }
+
+Expr* form(Symbol name, Cons* args)
+{
+  Expr* x = (Expr*)GC_MALLOC(sizeof(Expr));
+  assert(x != NULL);
+  x->type = eFORM;
+  x->form.name = name;
+  x->form.args = args;
+  return x;
+}

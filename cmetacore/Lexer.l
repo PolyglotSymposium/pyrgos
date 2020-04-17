@@ -35,6 +35,8 @@ int yyerror(const char *msg) {
 [a-z\-+/*?!]{0,11}_[0-9\-+/*?!]  { yylval->name = compressSymbol(yytext); return TOKEN_NAME; }
 "("                              { return TOKEN_LPAREN; }
 ")"                              { return TOKEN_RPAREN; }
+"["                              { return TOKEN_LSQBRK; }
+"]"                              { return TOKEN_RSQBRK; }
 \"                               { BEGIN STRING; }
 <STRING>[^\\"\n]*                { strbuf = strdup(yytext); }
 <STRING>\"                       { yylval->string = strbuf; strbuf = NULL;

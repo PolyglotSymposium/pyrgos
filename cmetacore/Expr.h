@@ -7,8 +7,13 @@
 
 typedef enum ExprTag
 {
- eINT, eAPPLY, eSTRING, eBOOL, eNAME
+ eINT, eAPPLY, eSTRING, eBOOL, eNAME, eFORM
 } ExprTag;
+
+typedef struct Form {
+  Symbol name;
+  Cons* args;
+} Form;
 
 typedef struct Expr {
   union {
@@ -16,6 +21,7 @@ typedef struct Expr {
       struct Expr* applyF;
       Cons* args;
     };
+    Form form;
     int intValue;
     char* cString;
     bool boolValue;
@@ -29,5 +35,6 @@ Expr* str(char*);
 Expr* truth(bool);
 Expr* ap(Cons*);
 Expr* name(Symbol);
+Expr* form(Symbol, Cons*);
 
 #endif /* __EXPR_H__ */
