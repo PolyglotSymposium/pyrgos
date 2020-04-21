@@ -46,37 +46,7 @@ Value* vError(const Error error) {
   return x;
 }
 
-Value* vTuple2(Value* item1, Value* item2) {
-  Value* x = (Value*)GC_MALLOC(sizeof(Value));
-  assert(x != NULL);
-  x->type = vTUPLE2;
-  x->t2.item1 = item1;
-  x->t2.item2 = item2;
-  return x;
-}
-
-Value* vTuple3(Value* item1, Value* item2, Value* item3) {
-  Value* x = (Value*)GC_MALLOC(sizeof(Value));
-  assert(x != NULL);
-  x->type = vTUPLE3;
-  x->t3.item1 = item1;
-  x->t3.item2 = item2;
-  x->t3.item3 = item3;
-  return x;
-}
-
-Value* vTuple4(Value* item1, Value* item2, Value* item3, Value* item4) {
-  Value* x = (Value*)GC_MALLOC(sizeof(Value));
-  assert(x != NULL);
-  x->type = vTUPLE4;
-  x->t4.item1 = item1;
-  x->t4.item2 = item2;
-  x->t4.item3 = item3;
-  x->t4.item4 = item4;
-  return x;
-}
-
-Value* vInt(const int value) {
+Value* vInt(int value) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);
   x->type = vINT;

@@ -1,11 +1,8 @@
 #ifndef __VALUE_H__
 #define __VALUE_H__
 
-#include "Symbol.h"
-
-typedef enum ValueTag
-{
- vINT, vSTRING, vBOOL, vERROR, vFUN, vTUPLE2, vTUPLE3, vTUPLE4, vSYMBOL
+typedef enum ValueTag {
+  vINT, vSTRING, vBOOL, vERROR, vFUN
 } ValueTag;
 
 typedef struct Value Value;
@@ -62,24 +59,6 @@ typedef struct PrimFun {
   PrimFunTag type;
 } PrimFun;
 
-typedef struct Tuple2 {
-  Value* item1;
-  Value* item2;
-} Tuple2;
-
-typedef struct Tuple3 {
-  Value* item1;
-  Value* item2;
-  Value* item3;
-} Tuple3;
-
-typedef struct Tuple4 {
-  Value* item1;
-  Value* item2;
-  Value* item3;
-  Value* item4;
-} Tuple4;
-
 struct Value {
   union {
     int intValue;
@@ -87,27 +66,15 @@ struct Value {
     bool boolValue;
     PrimFun primFun;
     Error error;
-    Tuple2 t2;
-    Tuple3 t3;
-    Tuple4 t4;
-    Symbol symbol;
   };
   ValueTag type;
 };
 
 Error typeError(const ValueTag required, const ValueTag actual);
-Error undefined(const Symbol);
-Error noSuchForm(const Symbol);
-Error tooManyArgs(const Symbol);
-Error tooFewArgs(const Symbol);
 Value* vError(const Error);
-Value* vInt(const int);
+Value* vInt(int);
 Value* vStr(char*);
-Value* vBool(const bool);
-Value* vSymbol(const Symbol);
-Value* vTuple2(Value*, Value*);
-Value* vTuple3(Value*, Value*, Value*);
-Value* vTuple4(Value*, Value*, Value*, Value*);
+Value* vBool(bool);
 Value* primFun1(Value* (*) (Value*));
 Value* primFun2(Value* (*) (Value*, Value*));
 Value* primFun3(Value* (*) (Value*, Value*, Value*));

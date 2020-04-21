@@ -157,36 +157,6 @@ void printValue(FILE* stream, Value* v) {
   case vBOOL: fprintf(stream, "%i", v->boolValue); break;
   case vERROR: printError(stream, v->error); break;
   case vFUN: fprintf(stream, "[closure]"); break;
-  case vTUPLE2:
-    fprintf(stream, "(t_2 ");
-    printValue(stream, v->t2.item1);
-    fprintf(stream, " ");
-    printValue(stream, v->t2.item2);
-    fprintf(stream, ")");
-    break;
-  case vTUPLE3:
-    fprintf(stream, "(t_3 ");
-    printValue(stream, v->t3.item1);
-    fprintf(stream, " ");
-    printValue(stream, v->t3.item2);
-    fprintf(stream, " ");
-    printValue(stream, v->t3.item3);
-    fprintf(stream, ")");
-    break;
-  case vTUPLE4:
-    fprintf(stream, "(t_4 ");
-    printValue(stream, v->t4.item1);
-    fprintf(stream, " ");
-    printValue(stream, v->t4.item2);
-    fprintf(stream, " ");
-    printValue(stream, v->t4.item3);
-    fprintf(stream, " ");
-    printValue(stream, v->t4.item4);
-    fprintf(stream, ")");
-    break;
-  case vSYMBOL:
-    fprintf(stream, "'%s", decompressSymbol(v->symbol));
-    break;
   default:
     int UNHANDLED_VALUE_TAG = 0;
     assert(UNHANDLED_VALUE_TAG);
