@@ -1,4 +1,3 @@
-#include "Expr.h"
 #include "Eval.h"
 #include "Primitives.h"
 
@@ -6,104 +5,46 @@
 #include <assert.h>
 #include <stdbool.h>
 
-static Value* apply1By1(Value* f, Expr* exprArg, Cons* args) {
+Value* matchForm(Value* isForm) {
   Value* v = NULL;
-  v = apply1(f, eval(exprArg));
-  if (v->type != vERROR) {
-    if (args != NULL) {
-      v = apply1By1(v, (Expr*)args->head, args->tail);
-    }
-  }
-  return v;
-}
-
-static Value* apply(Value* f, Cons* args) {
-  Value* v = NULL;
-  if (args == NULL) {
-    v = f;
-  } else {
-    v = apply1By1(f, (Expr*)args->head, args->tail);
-  }
-  return v;
-}
-
-Value* quoteExpr(Expr* e) {
-  Value* v = NULL;
-  switch (e->type) {
-  case eINT:
-    v = vTuple2(vSymbol(19880 /* int */), vInt(e->intValue));
-    break;
-  case eSTRING:
-    v = vTuple2(vSymbol(215238258 /* string */), vStr(e->cString));
-    break;
-  case eAPPLY:
-    // 25542112 /* apply */
-    {
-      int QUOTE_APPLY_NOT_IMPLEMENTED_YET = 0;
-      assert(QUOTE_APPLY_NOT_IMPLEMENTED_YET);
-    }
-    break;
-  case eNAME:
-    v = vSymbol(e->name);
-    break;
-  case eFORM:
-    {
-      // 411077 /* form */
-      int QUOTE_FORM_NOT_IMPLEMENTED_YET = 0;
-      assert(QUOTE_FORM_NOT_IMPLEMENTED_YET);
-    }
-    break;
-  default:
-    int UNHANDLED_EXPR_TAG = 0;
-    assert(UNHANDLED_EXPR_TAG);
-    break;
-  }
-  return v;
-}
-
-Value* quote(Form form) {
-  Value* v = NULL;
-  if (form.args == NULL) {
-    v = vError(tooFewArgs(form.name));
-  } else if (form.args->tail == NULL) {
-    v = quoteExpr((Expr*)(form.args->head));
-  } else {
-    v = vError(tooManyArgs(form.name));
-  }
-  return v;
-}
-
-Value* matchForm(const Form form) {
-  Value* v = NULL;
-  switch (form.name) {
-  case 4831888 /* quote */: v = quote(form); break;
+  switch (isForm->strukt.name) {
+  case 4831888 /* quote */: v = isForm; break; /* quote is the identity macro */
   default: break;
   }
   return v;
 }
 
-Value* eval(Expr* e) {
+Value* eval(Value* e) {
   Value* v = NULL;
   switch (e->type) {
-  case eINT:
-    v = vInt(e->intValue);
+  case vINT:
+    v = e;
     break;
-  case eSTRING:
-    v = vStr(e->cString);
+  case vSTRING:
+    v = e;
     break;
-  case eAPPLY:
-    v = apply(eval(e->applyF), e->args);
+  case vBOOL:
+    v = e;
     break;
-  case eNAME:
-    v = matchPrim(e->name);
+  case vERROR:
+    v = e;
+    break;
+  case vFUN:
+    v = e;
+    break;
+  case vPAIR:
+    v = apply1(eval(e->pair.first), eval(e->pair.second));
+    break;
+  case vSYMBOL:
+    v = matchPrim(e->symbol);
     if (v == NULL) {
-      v = vError(undefined(e->name));
+      v = vError(undefined(e->symbol));
     }
     break;
-  case eFORM:
-    v = matchForm(e->form);
+  case vSTRUCT:
+    v = matchForm(e);
     if (v == NULL) {
-      v = vError(noSuchForm(e->form.name));
+      v = vError(noSuchForm(e->strukt.name));
     }
     break;
   default:
@@ -120,6 +61,9 @@ static void printType(FILE* stream, ValueTag type) {
   case vBOOL: fprintf(stream, "boolean"); break;
   case vERROR: fprintf(stream, "error"); break;
   case vFUN: fprintf(stream, "closure"); break;
+  case vSYMBOL: fprintf(stream, "symbol"); break;
+  case vPAIR: fprintf(stream, "pair"); break;
+  case vSTRUCT: fprintf(stream, "struct"); break;
   default: fprintf(stream, "unrecognized (%i)", type); break;
   }
 }
@@ -150,6 +94,13 @@ static void printError(FILE* stream, const Error error) {
   }
 }
 
+void printValues(FILE* stream, size_t nValues, Value** values) {
+  for (size_t i = 0; i < nValues; i++) {
+    fprintf(stream, " ");
+    printValue(stream, values[i]);
+  }
+}
+
 void printValue(FILE* stream, Value* v) {
   switch (v->type) {
   case vINT: fprintf(stream, "%i", v->intValue); break;
@@ -157,6 +108,20 @@ void printValue(FILE* stream, Value* v) {
   case vBOOL: fprintf(stream, "%i", v->boolValue); break;
   case vERROR: printError(stream, v->error); break;
   case vFUN: fprintf(stream, "[closure]"); break;
+  case vSYMBOL: fprintf(stream, "%s", decompressSymbol(v->symbol)); break;
+  case vPAIR:
+    fprintf(stream, "(");
+    printValue(stream, v->pair.first);
+    fprintf(stream, " ");
+    printValue(stream, v->pair.second);
+    fprintf(stream, ")");
+    break;
+  case vSTRUCT:
+    fprintf(stream, "[");
+    fprintf(stream, "%s", decompressSymbol(v->strukt.name));
+    printValues(stream, v->strukt.nFields, v->strukt.fields);
+    fprintf(stream, "]");
+    break;
   default:
     int UNHANDLED_VALUE_TAG = 0;
     assert(UNHANDLED_VALUE_TAG);

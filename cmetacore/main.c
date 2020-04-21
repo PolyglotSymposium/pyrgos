@@ -1,14 +1,13 @@
-#include "Expr.h"
 #include "Eval.h"
 #include "Parser.h"
 #include "Lexer.h"
 #include <assert.h>
 
-int yyparse(Expr** expr, yyscan_t scanner);
+int yyparse(Value** expr, yyscan_t scanner);
 
-Expr* getAST(const char *code)
+Value* getAST(const char *code)
 {
-  Expr* expr = NULL;
+  Value* expr = NULL;
   yyscan_t scanner = 0;
   YY_BUFFER_STATE state = 0;
   if (yylex_init(&scanner)) return NULL;
@@ -29,11 +28,11 @@ int main(int argc, char* argv[])
     getline(&code, &len, stdin);
     assert(code != NULL);
   }
-  Expr* e = getAST(code);
+  Value* e = getAST(code);
   code = NULL;
   assert(e != NULL);
-  Value* value = eval(e);
-  assert(value != NULL);
-  printValue(stdout, value);
+  e = eval(e);
+  assert(e != NULL);
+  printValue(stdout, e);
   return 0;
 }

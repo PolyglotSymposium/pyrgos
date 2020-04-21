@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "Value.h"
 
-Value* eval(Expr*);
+Value* eval(Value*);
 
 void printValue(FILE*, Value*);
 

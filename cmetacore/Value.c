@@ -78,6 +78,59 @@ Value* vSymbol(const Symbol symbol) {
   return x;
 }
 
+Pair pair(Value* first, Value* second) {
+  Pair p;
+  p.first = first;
+  p.second = second;
+  return p;
+}
+
+Value* vPair(Pair p) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vPAIR;
+  x->pair = p;
+  return x;
+}
+
+Struct strukt(Symbol name, size_t nFields, Value** fields) {
+  Struct x;
+  x.name = name;
+  x.nFields = nFields;
+  x.fields = fields;
+  return x;
+}
+
+Value* vStruct(Struct s) {
+  Value* x = (Value*)GC_MALLOC(sizeof(Value));
+  assert(x != NULL);
+  x->type = vSTRUCT;
+  x->strukt = s;
+  return x;
+}
+
+Value* buildPairs(const Cons* const rest) {
+  Value* x = NULL;
+  for (const Cons* c = rest->tail; c != NULL; c = c->tail) {
+    x = vPair(pair(x, (Value*)rest->head));
+  }
+  return x;
+}
+
+Value* buildStruct(Symbol name, Cons* fields) {
+  size_t nFields = length(fields);
+  Value** f = NULL;
+  if (fields != NULL) {
+    f = (Value**)GC_MALLOC(nFields);
+    size_t offset = 0;
+    for (Cons* c = fields; c != NULL; c = c->tail) {
+      f[offset] = (Value*)(c->head);
+      offset++;
+    }
+  }
+  return vStruct(strukt(name, nFields, f));
+}
+
 Value* primFun1(Value* (*fun1) (Value*)) {
   Value* x = (Value*)GC_MALLOC(sizeof(Value));
   assert(x != NULL);

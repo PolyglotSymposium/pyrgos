@@ -2,7 +2,7 @@
 #
 #     sudo apt install libgc-dev
 
-FILES		= Symbol.c Value.c Primitives.c Cons.c Lexer.c Parser.c Expr.c Eval.c main.c
+FILES		= Symbol.c Value.c Primitives.c Cons.c Lexer.c Parser.c Eval.c main.c
 CC			= g++
 CFLAGS	= -Wall -g -ansi -DYY_NO_UNPUT=1
 
