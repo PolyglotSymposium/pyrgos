@@ -110,9 +110,9 @@ Value* vStruct(Struct s) {
 }
 
 Value* buildPairs(const Cons* const rest) {
-  Value* x = NULL;
+  Value* x = (Value*)rest->head;
   for (const Cons* c = rest->tail; c != NULL; c = c->tail) {
-    x = vPair(pair(x, (Value*)rest->head));
+    x = vPair(pair(x, (Value*)c->head));
   }
   return x;
 }
