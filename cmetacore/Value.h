@@ -7,28 +7,8 @@
 
 typedef enum ValueTag
 {
- vINT, vSTRING, vBOOL, vERROR, vFUN, vSYMBOL, vPAIR, vSTRUCT
+ vBOOL, vFUN
 } ValueTag;
-
-typedef struct Value Value;
-
-typedef struct TypeError {
-  ValueTag requiredType;
-  ValueTag actualType;
-} TypeError;
-
-typedef enum ErrorTag
-{
- eTYPE, eUNDEFINED, eNOSUCHFORM, eTOOMANYARGS, eTOOFEWARGS
-} ErrorTag;
-
-typedef struct Error {
-  union {
-    TypeError typeError;
-    Symbol name;
-  };
-  ErrorTag type;
-} Error;
 
 typedef enum PrimFunTag
 {
@@ -64,48 +44,10 @@ typedef struct PrimFun {
   PrimFunTag type;
 } PrimFun;
 
-typedef struct Struct {
-  Symbol name;
-  size_t nFields;
-  Value** fields;
-} Struct;
-
-typedef struct Pair {
-  Value* first;
-  Value* second;
-} Pair;
-
-struct Value {
-  union {
-    int intValue;
-    char* cString;
-    bool boolValue;
-    PrimFun primFun;
-    Struct strukt;
-    Error error;
-    Symbol symbol;
-    Pair pair;
-  };
-  ValueTag type;
-};
-
-Error typeError(const ValueTag required, const ValueTag actual);
-Error undefined(const Symbol);
-Error noSuchForm(const Symbol);
-Error tooManyArgs(const Symbol);
-Error tooFewArgs(const Symbol);
-Value* vError(const Error);
-Value* vInt(int);
-Value* vStr(char*);
 Value* vBool(bool);
-Value* vSymbol(const Symbol);
 Value* primFun1(Value* (*) (Value*));
 Value* primFun2(Value* (*) (Value*, Value*));
 Value* primFun3(Value* (*) (Value*, Value*, Value*));
-Pair pair(Value*, Value*);
-Value* vPair(Pair);
-Struct strukt(Symbol, size_t, Value**);
-Value* vStruct(Struct);
 
 Value* buildPairs(const Cons* const);
 Value* buildStruct(Symbol, Cons*);
