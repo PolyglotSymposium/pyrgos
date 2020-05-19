@@ -1,12 +1,10 @@
 #ifndef __EVAL_H__
 #define __EVAL_H__
 
-#include <stdbool.h>
-#include <stdio.h>
-#include "Value.h"
+#include "Struct.h"
 
-Value* eval(Value*);
+Struct* eval(Struct*);
 
-void printValue(FILE*, Value*);
+void printValue(FILE*, Struct*);
 
 #endif

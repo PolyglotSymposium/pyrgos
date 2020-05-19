@@ -49,6 +49,46 @@ Symbol asErrorCode(Struct* s) {
   return (Symbol)get_field(s, 0);
 }
 
-void printError(FILE* stream, Struct* s) {
-  fprintf(stream, "%i", asError(s));
+void printError(FILE* stream, Struct* error) {
+  switch (asErrorCode(error)) {
+  case TYPE_ERROR_SYMBOL:
+    fprintf(
+      stream,
+      "required type %s but was type %s",
+      decompressSymbol(get_field(error, 1)),
+      decompressSymbol(get_field(error, 2))
+    );
+    break;
+  case UNDEFINED_ERROR_SYMBOL:
+    fprintf(
+      stream,
+      "undefined identifier: %s",
+      decompressSymbol(get_field(error, 1))
+    );
+    break;
+  case NO_SUCH_FORM_ERROR_SYMBOL:
+    fprintf(
+      stream,
+      "no special form defined by: %s",
+      decompressSymbol(get_field(error, 1))
+    );
+    break;
+  case TOO_MANY_ARGS_ERROR_SYMBOL:
+    fprintf(
+      stream,
+      "too many arguments for: %s",
+      decompressSymbol(get_field(error, 1))
+    );
+    break;
+  case TOO_FEW_ARGS_ERROR_SYMBOL:
+    fprintf(
+      stream,
+      "too few arguments for: %s",
+      decompressSymbol(get_field(error, 1))
+    );
+    break;
+  default:
+    int UNHANDLED_ERROR_TAG = 0;
+    assert(UNHANDLED_ERROR_TAG);
+  }
 }

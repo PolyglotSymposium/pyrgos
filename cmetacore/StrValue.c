@@ -1,6 +1,4 @@
-#ifndef __STR_VALUE_H__
-#define __STR_VALUE_H__
-
+#include "StrValue.h"
 #include "Struct.h"
 
 Symbol STR_SYMBOL = 18034; /* str */
@@ -16,5 +14,3 @@ char* asStr(Struct* s) {
 void printStr(FILE* stream, Struct* s) {
   fprintf(stream, "%s", asStr(s));
 }
-
-#endif
