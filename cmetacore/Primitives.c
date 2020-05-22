@@ -72,6 +72,20 @@ static Struct* mult(Struct* x, Struct* y) {
   return v;
 }
 
+static Struct* strEq(Struct* x, Struct* y) {
+  Struct* v = NULL;
+  v = require(STR_SYMBOL, x);
+  if (v == NULL) {
+    v = require(STR_SYMBOL, y);
+    if (strcmp(asStr(x), asStr(y))) {
+      v = FALSE_STRUCT;
+    } else {
+      v = TRUE_STRUCT; // strcmp returns 0 if equal
+    }
+  }
+  return v;
+}
+
 static Struct* natEq(Struct* x, Struct* y) {
   Struct* v = NULL;
   v = require(NAT_SYMBOL, x);
@@ -171,6 +185,7 @@ Struct* matchPrim(Symbol name) {
   case 19543500    /* monus   */: p = newPrimFun2(monus  ); break;
   case 5865881363  /* type-of */: p = newPrimFun1(type_of); break;
   case 32754191373 /* nat-eq? */: p = newPrimFun2(natEq  ); break;
+  case 32754189938 /* str-eq? */: p = newPrimFun2(strEq  ); break;
   case TRUE_SYMBOL              : p = TRUE_STRUCT         ; break;
   case FALSE_SYMBOL             : p = FALSE_STRUCT        ; break;
   default                       :                           break;
