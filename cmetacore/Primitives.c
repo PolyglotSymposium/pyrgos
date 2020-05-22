@@ -12,6 +12,11 @@
 #include "StructValue.h"
 #include "SymbolValue.h"
 
+static Struct* type_of(Struct* x) {
+  Symbol type = get_tag(x);
+  return newSymbol(type);
+}
+
 static Struct* require(Symbol tag, Struct* x) {
   Struct* v = NULL;
   Symbol actualTag = get_tag(x);
@@ -160,9 +165,11 @@ Struct* matchPrim(Symbol name) {
   case 18          /* s       */: p = newPrimFun3(scomb  ); break;
   case 27          /* +       */: p = newPrimFun2(add    ); break;
   case 29          /* *       */: p = newPrimFun2(mult   ); break;
-  //case 98449       /* read    */: p =
+  //case 98449       /* read    */: p =                     ; break;
+  //case 361124      /* eval    */: p =                     ; break;
   case 735474      /* show    */: p = newPrimFun1(show   ); break;
   case 19543500    /* monus   */: p = newPrimFun2(monus  ); break;
+  case 5865881363  /* type-of */: p = newPrimFun1(type_of); break;
   case 32754191373 /* nat-eq? */: p = newPrimFun2(natEq  ); break;
   case TRUE_SYMBOL              : p = TRUE_STRUCT         ; break;
   case FALSE_SYMBOL             : p = FALSE_STRUCT        ; break;
