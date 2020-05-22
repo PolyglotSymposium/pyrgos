@@ -42,6 +42,7 @@ Struct* eval(Struct* e) {
     assert(v != NULL);
     break;
   default             :
+    fprintf(stderr, "Unknown expression type: %s\n", decompressSymbol(get_tag(e)));
     int UNHANDLED_EXPR_TAG = 0;
     assert(UNHANDLED_EXPR_TAG);
   }

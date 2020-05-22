@@ -204,7 +204,8 @@ void printValue(FILE* stream, Struct* e) {
   case SYMBOL_SYMBOL  : printSymbol(stream, e)            ; break;
   case PAIR_SYMBOL    : printPair(stream, printValue, e)  ; break;
   case STRUCT_SYMBOL  : printStruct(stream, printValue, e); break;
-  default:
+  default             :
+    fprintf(stderr, "unknown expr tag %s\n", decompressSymbol(get_tag(e)));
     int UNHANDLED_EXPR_TAG = 0;
     assert(UNHANDLED_EXPR_TAG);
   }
