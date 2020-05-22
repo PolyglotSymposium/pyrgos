@@ -189,6 +189,22 @@ static Struct* ccomb(Struct* f, Struct* x, Struct* y) {
   return v;
 }
 
+static Struct* field(Struct* i, Struct* s) {
+  Struct* v = require(STRUCT_SYMBOL, s);
+  if (v == NULL) {
+    v = require(NAT_SYMBOL, i);
+    if (v == NULL) {
+      Struct* x = dequote(s);
+      size_t n = asNat(i);
+      v = (Struct*)get_field(x, n);
+      if (v == NULL) {
+        v = too_short(get_tag(x), get_size(x), n);
+      }
+    }
+  }
+  return v;
+}
+
 void printValue(FILE* stream, Struct* e) {
   switch (get_tag(e)) {
   case NAT_SYMBOL     : printNat(stream, e)               ; break;
@@ -246,6 +262,7 @@ Struct* matchPrim(Symbol name) {
   case 32754191373      /* nat-eq?     */: p = newPrimFun2(natEq      ); break;
   case 32754189938      /* str-eq?     */: p = newPrimFun2(strEq      ); break;
   case 1048133876161    /* bool-eq?    */: p = newPrimFun2(boolEq     ); break;
+  case 3681061522566    /* get-field   */: p = newPrimFun2(field      ); break;
   case 1073289088774930 /* symbol-eq?  */: p = newPrimFun2(symbolEq   ); break;
   case 5392652055496306 /* struct-size */: p = newPrimFun1(struct_size); break;
   case TRUE_SYMBOL                       : p = TRUE_STRUCT             ; break;

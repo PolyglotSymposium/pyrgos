@@ -5,6 +5,7 @@
 #include "Struct.h"
 
 Struct* typeError(Symbol required, Symbol actual);
+Struct* too_short(Symbol tag, size_t len, size_t n);
 Struct* undefined(Symbol);
 Struct* noSuchForm(Symbol);
 Struct* malformed(Symbol);
