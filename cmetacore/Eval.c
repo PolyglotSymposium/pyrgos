@@ -34,9 +34,15 @@ Struct* eval(Struct* e) {
   case PRIMFUN3_SYMBOL:
   case CLOTHIRD_SYMBOL:
   case TWOTHIRD_SYMBOL:
-  case ERROR_SYMBOL   : v = e                             ; break;
-  case PAIR_SYMBOL    : v = apply(asFirst(e), asSecond(e)); break;
-  case STRUCT_SYMBOL  : v = matchForm(dequote(e))         ; break;
+  case ERROR_SYMBOL   :
+    v = e;
+    break;
+  case PAIR_SYMBOL    :
+    v = apply(eval(asFirst(e)), eval(asSecond(e)));
+    break;
+  case STRUCT_SYMBOL  :
+    v = matchForm(dequote(e));
+    break;
   case SYMBOL_SYMBOL  :
     v = matchPrim(asSymbol(e));
     if (v == NULL) { v = undefined(asSymbol(e)); }
