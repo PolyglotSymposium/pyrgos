@@ -9,5 +9,5 @@ Symbol asSymbol(Struct* s) {
 }
 
 void printSymbol(FILE* stream, Struct* s) {
-  fprintf(stream, "%lu", asSymbol(s));
+  fprintf(stream, "%s", decompressSymbol(asSymbol(s)));
 }
