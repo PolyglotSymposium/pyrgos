@@ -28,10 +28,18 @@ Struct* atomic_struct(Symbol tag) {
   return new_struct(tag, 0, NULL);
 }
 
+void* singleton_payload(Struct* s) {
+  assert(s != NULL);
+  return (void*)s->fields;
+}
+
 void* get_field(Struct* s, size_t n) {
   assert(s != NULL);
   void* x = NULL;
   if (s->size > n) {
+    if (s->size == 1) {
+      return singleton_payload(s);
+    }
     x = s->fields[n];
   }
   return x;
@@ -45,11 +53,6 @@ Symbol get_tag(Struct* s) {
 size_t get_size(Struct* s) {
   assert(s != NULL);
   return s->size;
-}
-
-void* singleton_payload(Struct* s) {
-  assert(s != NULL);
-  return (void*)s->fields;
 }
 
 unsigned long value_payload(Struct* s) {

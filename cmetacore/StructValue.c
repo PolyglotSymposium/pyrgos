@@ -11,6 +11,10 @@ Struct* structFromNameAndPairs(Symbol, Struct*) {
   return NULL;
 }
 
+Struct* structFromNameAnd1(Symbol tag, Struct* x) {
+  return quote(singleton_struct(tag, (void*)x));
+}
+
 Struct* structFromName(Symbol tag) {
   return quote(atomic_struct(tag));
 }

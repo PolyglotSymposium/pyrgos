@@ -16,13 +16,19 @@ struct Struct* matchForm(Struct* form) {
   Struct* x = NULL;
   Symbol tag = get_tag(form);
   switch (tag) {
-  case 4831888 /* quote */: x = (Struct*)get_field(form, 1); break;
-  default: x = noSuchForm(tag); break;
+  case 4831888 /* quote */:
+    x = (Struct*)get_field(form, 0);
+    assert(x != NULL);
+    break;
+  default:
+    x = noSuchForm(tag);
+    break;
   }
   return x;
 }
 
 Struct* eval(Struct* e) {
+  assert(e != NULL);
   Struct* v = NULL;
   switch (get_tag(e)) {
   case NAT_SYMBOL     :
@@ -39,6 +45,7 @@ Struct* eval(Struct* e) {
     break;
   case PAIR_SYMBOL    :
     v = apply(eval(asFirst(e)), eval(asSecond(e)));
+    assert(v != NULL);
     break;
   case STRUCT_SYMBOL  :
     v = matchForm(dequote(e));
@@ -46,6 +53,7 @@ Struct* eval(Struct* e) {
   case SYMBOL_SYMBOL  :
     v = matchPrim(asSymbol(e));
     if (v == NULL) { v = undefined(asSymbol(e)); }
+    assert(v != NULL);
     break;
   default             :
     int UNHANDLED_EXPR_TAG = 0;

@@ -5,6 +5,7 @@
 #include "Struct.h"
 
 Struct* structFromNameAndPairs(Symbol, Struct*);
+Struct* structFromNameAnd1(Symbol, Struct*);
 Struct* structFromName(Symbol);
 Struct* quote(Struct*);
 const Symbol STRUCT_SYMBOL = 640304754 /* struct */;
