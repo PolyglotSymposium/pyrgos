@@ -1,7 +1,6 @@
 #ifndef __METACORE_STRUCT_VALUE_H__
 #define __METACORE_STRUCT_VALUE_H__
 
-#include <assert.h>
 #include <stdio.h>
 #include "Struct.h"
 

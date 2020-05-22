@@ -2,11 +2,10 @@
 #include <assert.h>
 #include "Error.h"
 
-const Symbol TYPE_ERROR_SYMBOL          = 614130019090195   ; /* type-error   */
-const Symbol UNDEFINED_ERROR_SYMBOL     = 617911392830361012; /* undefined-er */
-const Symbol NO_SUCH_FORM_ERROR_SYMBOL  = 173829976459200973; /* nosuchform-e */
-const Symbol TOO_MANY_ARGS_ERROR_SYMBOL = 174029086159669988; /* excessargs-e */
-const Symbol TOO_FEW_ARGS_ERROR_SYMBOL  = 174029086279252435; /* toofewargs-e */
+const Symbol TYPE_ERROR_SYMBOL         = 614130019090195   ; /* type-error   */
+const Symbol UNDEFINED_ERROR_SYMBOL    = 617911392830361012; /* undefined-er */
+const Symbol NO_SUCH_FORM_ERROR_SYMBOL = 173829976459200973; /* nosuchform-e */
+const Symbol INAPPLICABLE_ERROR_SYMBOL = 628869139782926760; /* inappl-error */
 
 Struct* typeError(Symbol required, Symbol actual) {
   Symbol* s = (Symbol*)GC_MALLOC(sizeof(Symbol)*3);
@@ -30,16 +29,9 @@ Struct* noSuchForm(Symbol x) {
   return new_struct(ERROR_SYMBOL, 2, (void**)s);
 }
 
-Struct* tooManyArgs(Symbol x) {
+Struct* inapplicable(Symbol x) {
   Symbol* s = (Symbol*)GC_MALLOC(sizeof(Symbol)*2);
-  s[0] = TOO_MANY_ARGS_ERROR_SYMBOL;
-  s[1] = x;
-  return new_struct(ERROR_SYMBOL, 2, (void**)s);
-}
-
-Struct* tooFewArgs(Symbol x) {
-  Symbol* s = (Symbol*)GC_MALLOC(sizeof(Symbol)*2);
-  s[0] = TOO_FEW_ARGS_ERROR_SYMBOL;
+  s[0] = INAPPLICABLE_ERROR_SYMBOL;
   s[1] = x;
   return new_struct(ERROR_SYMBOL, 2, (void**)s);
 }
@@ -72,17 +64,10 @@ void printError(FILE* stream, Struct* error) {
       decompressSymbol((Symbol)get_field(error, 1))
     );
     break;
-  case TOO_MANY_ARGS_ERROR_SYMBOL:
+  case INAPPLICABLE_ERROR_SYMBOL:
     fprintf(
       stream,
-      "too many arguments for value of type: %s",
-      decompressSymbol((Symbol)get_field(error, 1))
-    );
-    break;
-  case TOO_FEW_ARGS_ERROR_SYMBOL:
-    fprintf(
-      stream,
-      "too few arguments for: %s",
+      "cannot apply value which is not a function but a %s",
       decompressSymbol((Symbol)get_field(error, 1))
     );
     break;
