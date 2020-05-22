@@ -8,24 +8,10 @@
 #include "Pair.h"
 #include "StructValue.h"
 #include "SymbolValue.h"
+#include "Forms.h"
 #include <gc.h>
 #include <assert.h>
 #include <stdio.h>
-
-struct Struct* matchForm(Struct* form) {
-  Struct* x = NULL;
-  Symbol tag = get_tag(form);
-  switch (tag) {
-  case 4831888 /* quote */:
-    x = (Struct*)get_field(form, 0);
-    assert(x != NULL);
-    break;
-  default:
-    x = noSuchForm(tag);
-    break;
-  }
-  return x;
-}
 
 Struct* eval(Struct* e) {
   assert(e != NULL);

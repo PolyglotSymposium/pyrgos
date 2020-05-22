@@ -7,6 +7,7 @@
 Struct* typeError(Symbol required, Symbol actual);
 Struct* undefined(Symbol);
 Struct* noSuchForm(Symbol);
+Struct* malformed(Symbol);
 Struct* inapplicable(Symbol);
 const Symbol ERROR_SYMBOL = 18302500; /* error */
 Symbol asErrorCode(Struct*);

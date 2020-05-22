@@ -55,6 +55,11 @@ size_t get_size(Struct* s) {
   return s->size;
 }
 
+void** get_fields(Struct* s) {
+  assert(s != NULL);
+  return s->fields;
+}
+
 unsigned long value_payload(Struct* s) {
   assert(s != NULL);
   return (unsigned long)s->fields;

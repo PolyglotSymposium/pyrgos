@@ -10,6 +10,7 @@ Struct* new_struct(Symbol, size_t, void**);
 Struct* singleton_struct(Symbol, void*);
 Struct* value_struct(Symbol, unsigned long);
 Struct* atomic_struct(Symbol);
+void** get_fields(Struct*);
 void* get_field(Struct*, size_t);
 Symbol get_tag(Struct*);
 size_t get_size(Struct*);
