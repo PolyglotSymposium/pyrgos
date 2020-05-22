@@ -13,8 +13,12 @@
 #include "SymbolValue.h"
 
 static Struct* type_of(Struct* x) {
+  Struct* t = NULL;
   Symbol type = get_tag(x);
-  return newSymbol(type);
+  if (type == ERROR_SYMBOL)
+       { t = x; }
+  else { t = newSymbol(type); }
+  return t;
 }
 
 static Struct* require(Symbol tag, Struct* x) {
