@@ -54,30 +54,3 @@ Struct* eval(Struct* e) {
   return v;
 }
 
-void printValues(FILE* stream, size_t nValues, Struct** values) {
-  for (size_t i = 0; i < nValues; i++) {
-    fprintf(stream, " ");
-    printValue(stream, values[i]);
-  }
-}
-
-void printValue(FILE* stream, Struct* e) {
-  switch (get_tag(e)) {
-  case NAT_SYMBOL     : printNat(stream, e)               ; break;
-  case STR_SYMBOL     : printStr(stream, e)               ; break;
-  case BOOL_SYMBOL    : printBool(stream, e)              ; break;
-  case ERROR_SYMBOL   : printError(stream, e)             ; break;
-  case PRIMFUN1_SYMBOL:
-  case PRIMFUN2_SYMBOL:
-  case CLOHALF_SYMBOL :
-  case PRIMFUN3_SYMBOL:
-  case CLOTHIRD_SYMBOL:
-  case TWOTHIRD_SYMBOL: printPrimFun(stream, e)           ; break;
-  case SYMBOL_SYMBOL  : printSymbol(stream, e)            ; break;
-  case PAIR_SYMBOL    : printPair(stream, printValue, e)  ; break;
-  case STRUCT_SYMBOL  : printStruct(stream, printValue, e); break;
-  default:
-    int UNHANDLED_EXPR_TAG = 0;
-    assert(UNHANDLED_EXPR_TAG);
-  }
-}

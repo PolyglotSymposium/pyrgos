@@ -6,6 +6,4 @@
 
 Struct* eval(Struct*);
 
-void printValue(FILE*, Struct*);
-
 #endif

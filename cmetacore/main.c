@@ -1,3 +1,4 @@
+#include "Primitives.h"
 #include "Eval.h"
 #include "Parser.h"
 #include "Lexer.h"
@@ -25,14 +26,11 @@ int main(int argc, char* argv[])
     code = argv[1];
   } else {
     size_t len = 0;
-    getline(&code, &len, stdin);
-    assert(code != NULL);
+    getline(&code, &len, stdin); assert(code != NULL);
   }
-  Struct* e = getAST(code);
+  Struct* e = getAST(code); assert(e != NULL);
   code = NULL;
-  assert(e != NULL);
-  e = eval(e);
-  assert(e != NULL);
+  e = eval(e); assert(e != NULL);
   printValue(stdout, e);
   return 0;
 }

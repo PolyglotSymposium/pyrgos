@@ -10,5 +10,6 @@ char* asStr(Struct* s) {
 }
 
 void printStr(FILE* stream, Struct* s) {
+  // TODO need to escape " &c.
   fprintf(stream, "\"%s\"", asStr(s));
 }

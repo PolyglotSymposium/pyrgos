@@ -1,11 +1,16 @@
+#include <stdlib.h>
 #include <gc.h>
 #include <assert.h>
-#include "Struct.h"
-#include "Error.h"
-#include "Symbol.h"
+#include <string.h>
+#include "Primitives.h"
+#include "Str.h"
 #include "Nat.h"
-#include "PrimFun.h"
 #include "Bool.h"
+#include "Error.h"
+#include "PrimFun.h"
+#include "Pair.h"
+#include "StructValue.h"
+#include "SymbolValue.h"
 
 static Struct* require(Symbol tag, Struct* x) {
   Struct* v = NULL;
@@ -109,6 +114,42 @@ static Struct* ccomb(Struct* f, Struct* x, Struct* y) {
   return v;
 }
 
+void printValue(FILE* stream, Struct* e) {
+  switch (get_tag(e)) {
+  case NAT_SYMBOL     : printNat(stream, e)               ; break;
+  case STR_SYMBOL     : printStr(stream, e)               ; break;
+  case BOOL_SYMBOL    : printBool(stream, e)              ; break;
+  case ERROR_SYMBOL   : printError(stream, e)             ; break;
+  case PRIMFUN1_SYMBOL:
+  case PRIMFUN2_SYMBOL:
+  case CLOHALF_SYMBOL :
+  case PRIMFUN3_SYMBOL:
+  case CLOTHIRD_SYMBOL:
+  case TWOTHIRD_SYMBOL: printPrimFun(stream, e)           ; break;
+  case SYMBOL_SYMBOL  : printSymbol(stream, e)            ; break;
+  case PAIR_SYMBOL    : printPair(stream, printValue, e)  ; break;
+  case STRUCT_SYMBOL  : printStruct(stream, printValue, e); break;
+  default:
+    int UNHANDLED_EXPR_TAG = 0;
+    assert(UNHANDLED_EXPR_TAG);
+  }
+}
+
+Struct* show(Struct* e) {
+  char* buffer = NULL;
+  size_t sizeloc = 0;
+  // https://www.gnu.org/software/libc/manual/html_node/String-Streams.html
+  FILE* memStream = open_memstream(&buffer, &sizeloc);
+  printValue(memStream, e);
+  fclose(memStream);
+  // Kludge to marry GC with open_memstream
+  // Perhaps better to use a Boehm ropes-based approach in the future
+  char* gcBuffer = (char*)GC_MALLOC(sizeloc+1); // +1 is for NUL at end
+  strcpy(gcBuffer, buffer);
+  free(buffer); buffer = NULL;
+  return newStr(gcBuffer);
+}
+
 Struct* matchPrim(Symbol name) {
   Struct* p = NULL;
   switch (name) {
@@ -119,6 +160,8 @@ Struct* matchPrim(Symbol name) {
   case 18          /* s       */: p = newPrimFun3(scomb  ); break;
   case 27          /* +       */: p = newPrimFun2(add    ); break;
   case 29          /* *       */: p = newPrimFun2(mult   ); break;
+  //case 98449       /* read    */: p =
+  case 735474      /* show    */: p = newPrimFun1(show   ); break;
   case 19543500    /* monus   */: p = newPrimFun2(monus  ); break;
   case 32754191373 /* nat-eq? */: p = newPrimFun2(natEq  ); break;
   case TRUE_SYMBOL              : p = TRUE_STRUCT         ; break;
