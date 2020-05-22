@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "SymbolValue.h"
+#include "StructValue.h"
 #include "Forms.h"
 #include "Error.h"
 
@@ -17,15 +18,15 @@ static Struct* constructForm(Struct* form) {
   Struct* x = NULL;
   size_t size = get_size(form);
   if (size > 0) {
-    Struct** payload = (Struct**)get_fields(form);
-    Struct* shouldBeTag = payload[0];
+    Struct* shouldBeTag = (Struct*)get_field(form, 0);
     if (get_tag(shouldBeTag) == SYMBOL_SYMBOL) {
       Symbol tag = asSymbol(shouldBeTag);
       switch (size) {
-      case 1 : x = atomic_struct(tag)                      ; break;
-      case 2 : x = singleton_struct(tag, (void*)payload[1]); break;
-      default: x = new_struct(tag, size-1, (void**)payload+1)      ; break;
+      case 1 : x = atomic_struct(tag                         ); break;
+      case 2 : x = singleton_struct(tag,   get_field(form, 1)); break;
+      default: x = new_struct(tag, size-1, get_fields(form)+1); break;
       }
+      x = quote(x);
     }
   }
   if (x == NULL) {
