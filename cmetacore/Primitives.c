@@ -5,6 +5,7 @@
 #include "Symbol.h"
 #include "Nat.h"
 #include "PrimFun.h"
+#include "Bool.h"
 
 static Struct* require(Symbol tag, Struct* x) {
   Struct* v = NULL;
@@ -66,8 +67,10 @@ static Struct* natEq(Struct* x, Struct* y) {
   v = require(NAT_SYMBOL, x);
   if (v == NULL) {
     v = require(NAT_SYMBOL, y);
-    if (v == NULL) {
-      v = newBool(asNat(x) == asNat(y));
+    if (asNat(x) == asNat(y)) {
+      v = TRUE;
+    } else {
+      v = FALSE;
     }
   }
   return v;
@@ -82,7 +85,7 @@ static Struct* icomb(Struct* x) { return x; }
 static Struct* bcomb(Struct* f, Struct* g, Struct* x) {
   Struct* v = apply(g, x);
   if (get_tag(v) != ERROR_SYMBOL) {
-    v = apply1(f, v);
+    v = apply(f, v);
   }
   return v;
 }
@@ -109,17 +112,18 @@ static Struct* ccomb(Struct* f, Struct* x, Struct* y) {
 Struct* matchPrim(Symbol name) {
   Struct* p = NULL;
   switch (name) {
-  case 1           /* b       */: p = primFun3(bcomb  ); break;
-  case 2           /* c       */: p = primFun3(ccomb  ); break;
-  case 8           /* i       */: p = primFun1(icomb  ); break;
-  case 10          /* k       */: p = primFun2(kcomb  ); break;
-  case 18          /* s       */: p = primFun3(scomb  ); break;
-  case 27          /* +       */: p = primFun2(add    ); break;
-  case 29          /* *       */: p = primFun2(mult   ); break;
-  case 19543500    /* monus   */: p = primFun2(monus  ); break;
-  case 4874453137  /* require */: p = primFun2(require); break;
-  case 32754191373 /* nat-eq? */: p = primFun2(natEq  ); break;
-  default: break;
+  case 1           /* b       */: p = newPrimFun3(bcomb  ); break;
+  case 2           /* c       */: p = newPrimFun3(ccomb  ); break;
+  case 8           /* i       */: p = newPrimFun1(icomb  ); break;
+  case 10          /* k       */: p = newPrimFun2(kcomb  ); break;
+  case 18          /* s       */: p = newPrimFun3(scomb  ); break;
+  case 27          /* +       */: p = newPrimFun2(add    ); break;
+  case 29          /* *       */: p = newPrimFun2(mult   ); break;
+  case 19543500    /* monus   */: p = newPrimFun2(monus  ); break;
+  case 32754191373 /* nat-eq? */: p = newPrimFun2(natEq  ); break;
+  case TRUE_SYMBOL              : p = TRUE                ; break;
+  case FALSE_SYMBOL             : p = FALSE               ; break;
+  default                       :                           break;
   }
   return p;
 }

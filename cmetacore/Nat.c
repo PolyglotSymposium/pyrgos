@@ -9,5 +9,5 @@ unsigned long asNat(Struct* s) {
 }
 
 void printNat(FILE* stream, Struct* s) {
-  fprintf(stream, "%i", asNat(s));
+  fprintf(stream, "%lu", asNat(s));
 }

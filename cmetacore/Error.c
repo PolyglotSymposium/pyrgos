@@ -75,7 +75,7 @@ void printError(FILE* stream, Struct* error) {
   case TOO_MANY_ARGS_ERROR_SYMBOL:
     fprintf(
       stream,
-      "too many arguments for: %s",
+      "too many arguments for value of type: %s",
       decompressSymbol((Symbol)get_field(error, 1))
     );
     break;

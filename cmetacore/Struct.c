@@ -1,4 +1,5 @@
 #include "Struct.h"
+#include <assert.h>
 #include <gc.h>
 
 struct Struct {
@@ -8,7 +9,7 @@ struct Struct {
 };
 
 Struct* new_struct(Symbol tag, size_t size, void** fields) {
-  Struct* x = GC_MALLOC(sizeof(Struct));
+  Struct* x = (Struct*)GC_MALLOC(sizeof(Struct));
   x->tag = tag;
   x->size = size;
   x->fields = fields;
@@ -16,11 +17,11 @@ Struct* new_struct(Symbol tag, size_t size, void** fields) {
 }
 
 Struct* singleton_struct(Symbol tag, void* x) {
-  return newStruct(tag, 1, (void**)x);
+  return new_struct(tag, 1, (void**)x);
 }
 
 Struct* value_struct(Symbol tag, unsigned long x) {
-  return newStruct(tag, 1, (void**)x);
+  return new_struct(tag, 1, (void**)x);
 }
 
 void* get_field(Struct* s, size_t n) {

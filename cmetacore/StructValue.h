@@ -4,7 +4,7 @@
 #include "Struct.h"
 
 Struct* quote(Struct*);
-Symbol STRUCT_SYMBOL = 640304754 /* struct */;
+const Symbol STRUCT_SYMBOL = 640304754 /* struct */;
 Struct* dequote(Struct*);
 void printStruct(FILE*, void(*)(FILE*, Struct*), Struct*);
 

@@ -1,6 +1,7 @@
 #ifndef __STR_H__
 #define __STR_H__
 
+#include <stdio.h>
 #include "Struct.h"
 
 Struct* newStr(char*);

@@ -2,11 +2,14 @@
 
 #include "Nat.h"
 #include "Str.h"
+#include "Pair.h"
+#include "Symbol.h"
+#include "Struct.h"
 #include "SymbolValue.h"
 #include "Parser.h"
 #include "Lexer.h"
 
-int yyerror(Value** expr, yyscan_t scanner, const char* msg) {
+int yyerror(Struct** expr, yyscan_t scanner, const char* msg) {
   fprintf(stderr, "Parser: %s\n", msg);
   exit(1);
   return 0;
@@ -23,14 +26,14 @@ int yyerror(Value** expr, yyscan_t scanner, const char* msg) {
 
 %define api.pure
 %lex-param   { yyscan_t scanner }
-%parse-param { Value** expr }
+%parse-param { Struct** expr }
 %parse-param { yyscan_t scanner }
 
 %union {
   int value;
   char* string;
-  Struct* expr;
   Symbol name;
+  Struct* expr;
   Struct* apply;
 }
 
@@ -52,7 +55,7 @@ input
 ;
 
 expr
-: TOKEN_LPAREN apply[A] TOKEN_RPAREN                  { $$ = buildPairs($A); }
+: TOKEN_LPAREN apply[A] TOKEN_RPAREN                  { $$ = $A; }
 | TOKEN_LSQBRK TOKEN_NAME[N] apply[A] TOKEN_RSQBRK    { $$ = buildStruct($N, $A); }
 | TOKEN_LSQBRK TOKEN_NAME[N] TOKEN_RSQBRK             { $$ = buildStruct($N, NULL); }
 | TOKEN_NUMBER                                        { $$ = newNat($1); }
@@ -61,8 +64,10 @@ expr
 ;
 
 apply
-: expr[H] apply[T] { $$ = newPair($H, $T); }
-| expr { $$ = newPair($1, NULL); }
+// TODO not at all sure that this will work
+// Likely to have left-recursive problems here
+: apply[H] expr[T] { $$ = newPair($H, $T); }
+| expr[H] expr[T] { $$ = newPair($H, $T); }
 ;
 
 %%

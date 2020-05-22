@@ -1,12 +1,6 @@
 #include <gc.h>
-#include "PrimFun1.h"
-
-Symbol PRIMFUN1_SYMBOL    = 1152921972953719343 /* prim-fun_1   */;
-Symbol PRIMFUN2_SYMBOL    = 2305843477560566319 /* prim-fun_2   */;
-Symbol CLOHALF_SYMBOL     = 492942044167        /* half-clo     */;
-Symbol PRIMFUN3_SYMBOL    = 3458764982167413295 /* prim-fun_3   */;
-Symbol CLOTHIRD_SYMBOL    = 516887134896492974  /* onethird-clo */;
-Symbol CLOTWOTHIRD_SYMBOL = 516887134896503507  /* twothird-clo */;
+#include "Error.h"
+#include "PrimFun.h"
 
 Struct* newPrimFun1(Struct* (*f) (Struct*)) {
   return singleton_struct(PRIMFUN1_SYMBOL, (void*)f);
@@ -15,16 +9,6 @@ Struct* newPrimFun1(Struct* (*f) (Struct*)) {
 Struct* newPrimFun2(Struct* (*f) (Struct*, Struct*)) {
   return singleton_struct(PRIMFUN2_SYMBOL, (void*)f);
 }
-
-//Value* ap1PrimFun2(const PrimFun2 fun2, Value* arg1) {
-//  Value* x = (Value*)GC_MALLOC(sizeof(Value));
-//  assert(x != NULL);
-//  x->type = vFUN;
-//  x->primFun.type = PRIMFUN2;
-//  x->primFun.f2 = fun2;
-//  x->primFun.f2.arg1 = arg1;
-//  return x;
-//}
 
 static Struct* newCloHalf(Struct* (*f) (Struct*, Struct*), Struct* x) {
   void** s = (void**)GC_MALLOC(sizeof(void*)*2);
@@ -37,24 +21,14 @@ Struct* newPrimFun3(Struct* (*f) (Struct*, Struct*, Struct*)) {
   return singleton_struct(PRIMFUN3_SYMBOL, (void*)f);
 }
 
-static Struct* newCloOneThird(Struct* (*f) (Struct*, Struct*), Struct* x) {
+static Struct* newCloOneThird(Struct* (*f) (Struct*, Struct*, Struct*), Struct* x) {
   void** s = (void**)GC_MALLOC(sizeof(void*)*2);
   s[0] = (void*)f;
   s[1] = (void*)x;
   return new_struct(CLOTHIRD_SYMBOL, 2, s);
 }
 
-//Value* ap1PrimFun3(const PrimFun3 fun3, Value* arg1) {
-//  Value* x = (Value*)GC_MALLOC(sizeof(Value));
-//  assert(x != NULL);
-//  x->type = vFUN;
-//  x->primFun.type = PRIMFUN3;
-//  x->primFun.f3 = fun3;
-//  x->primFun.f3.arg1 = arg1;
-//  return x;
-//}
-
-static Struct* newCloTwoThird(Struct* (*f) (Struct*, Struct*), Struct* x, Struct* y) {
+static Struct* newCloTwoThird(Struct* (*f) (Struct*, Struct*, Struct*), Struct* x, Struct* y) {
   void** s = (void**)GC_MALLOC(sizeof(void*)*3);
   s[0] = (void*)f;
   s[1] = (void*)x;
@@ -62,56 +36,60 @@ static Struct* newCloTwoThird(Struct* (*f) (Struct*, Struct*), Struct* x, Struct
   return new_struct(CLOTHIRD_SYMBOL, 3, s);
 }
 
-// Value* ap2PrimFun3(const PrimFun3 fun3, Value* arg1, Value* arg2) {
-//   Value* x = (Value*)GC_MALLOC(sizeof(Value));
-//   assert(x != NULL);
-//   x->type = vFUN;
-//   x->primFun.type = PRIMFUN3;
-//   x->primFun.f3 = fun3;
-//   x->primFun.f3.arg1 = arg1;
-//   x->primFun.f3.arg2 = arg2;
-//   return x;
-// }
+static Struct* apPrimFun1(Struct* closure, Struct* x) {
+  Struct* (*f) (Struct*) = (Struct* (*) (Struct*))singleton_payload(closure);
+  return f(x);
+}
 
-//struct Struct* apply1(Struct* f, Struct* arg) {
-//  Struct* v = NULL;
-//  v = require(vFUN, f);
-//  if (v == NULL) {
-//    switch (f->primFun.type) {
-//    case PRIMFUN1:
-//      v = f->primFun.f1(arg);
-//      break;
-//    case PRIMFUN2:
-//      if (f->primFun.f2.arg1 == NULL) {
-//        v = ap1PrimFun2(f->primFun.f2, arg);
-//      } else {
-//        v = f->primFun.f2.fun2(f->primFun.f2.arg1, arg);
-//      }
-//      break;
-//    case PRIMFUN3:
-//      if (f->primFun.f3.arg1 == NULL && f->primFun.f3.arg2 == NULL) {
-//        v = ap1PrimFun3(f->primFun.f3, arg);
-//      } else if (f->primFun.f3.arg1 != NULL && f->primFun.f3.arg2 == NULL) {
-//        v = ap2PrimFun3(f->primFun.f3, f->primFun.f3.arg1, arg);
-//      } else if (f->primFun.f3.arg1 != NULL && f->primFun.f3.arg2 != NULL) {
-//        v = f->primFun.f3.fun3(f->primFun.f3.arg1, f->primFun.f3.arg2, arg);
-//      } else {
-//        int UNEXPECTED_PRIMFUN3_STATE = 0;
-//        assert(UNEXPECTED_PRIMFUN3_STATE);
-//      }
-//      break;
-//    default:
-//      int UNHANDLED_PRIMFUN_TAG = 0;
-//      assert(UNHANDLED_PRIMFUN_TAG);
-//    }
-//  }
-//  return v;
-//}
+static Struct* apPrimFun2(Struct* closure, Struct* x) {
+  Struct* (*f) (Struct*, Struct*);
+  f = (Struct* (*) (Struct*, Struct*))singleton_payload(closure);
+  return newCloHalf(f, x);
+}
 
-Struct* apply(Struct* maybeF, Struct* maybeX) {
-  return NULL;
+static Struct* apPrimFun3(Struct* closure, Struct* x) {
+  Struct* (*f) (Struct*, Struct*, Struct*);
+  f = (Struct* (*) (Struct*, Struct*, Struct*))singleton_payload(closure);
+  return newCloOneThird(f, x);
+}
+
+static Struct* apCloHalf(Struct* closure, Struct* y) {
+  Struct* (*f) (Struct*, Struct*);
+  f = (Struct* (*) (Struct*, Struct*))get_field(closure, 0);
+  Struct* x = (Struct*)get_field(closure, 1);
+  return f(x, y);
+}
+
+static Struct* apOneThird(Struct* closure, Struct* y) {
+  Struct* (*f) (Struct*, Struct*, Struct*);
+  f = (Struct* (*) (Struct*, Struct*, Struct*))get_field(closure, 0);
+  Struct* x = (Struct*)get_field(closure, 1);
+  return newCloTwoThird(f, x, y);
+}
+
+static Struct* apTwoThird(Struct* closure, Struct* z) {
+  Struct* (*f) (Struct*, Struct*, Struct*);
+  f = (Struct* (*) (Struct*, Struct*, Struct*))get_field(closure, 0);
+  Struct* x = (Struct*)get_field(closure, 1);
+  Struct* y = (Struct*)get_field(closure, 2);
+  return f(x, y, z);
+}
+
+Struct* apply(Struct* f, Struct* arg) {
+  Struct* x = NULL;
+  Symbol tag = get_tag(f);
+  switch (tag) {
+  case PRIMFUN1_SYMBOL: x = apPrimFun1(f, arg); break;
+  case PRIMFUN2_SYMBOL: x = apPrimFun2(f, arg); break;
+  case CLOHALF_SYMBOL : x = apCloHalf(f, arg) ; break;
+  case PRIMFUN3_SYMBOL: x = apPrimFun3(f, arg); break;
+  case CLOTHIRD_SYMBOL: x = apOneThird(f, arg); break;
+  case TWOTHIRD_SYMBOL: x = apTwoThird(f, arg); break;
+  default             : x = tooManyArgs(tag)  ; break;
+  }
+  return x;
 }
 
 void printPrimFun(FILE* stream, Struct* f) {
-  return NULL;
+  fprintf(stream, "<#closure>");
 }

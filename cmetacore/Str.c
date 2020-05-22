@@ -2,11 +2,11 @@
 #include "Struct.h"
 
 Struct* newStr(char* s) {
-  return newStruct(STR_SYMBOL, 1, (void**)s);
+  return singleton_struct(STR_SYMBOL, (void*)s);
 }
 
 char* asStr(Struct* s) {
-  return (char*)get_payload(s);
+  return (char*)singleton_payload(s);
 }
 
 void printStr(FILE* stream, Struct* s) {

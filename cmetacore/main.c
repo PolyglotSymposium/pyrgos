@@ -3,11 +3,11 @@
 #include "Lexer.h"
 #include <assert.h>
 
-int yyparse(Value** expr, yyscan_t scanner);
+int yyparse(Struct** expr, yyscan_t scanner);
 
-Value* getAST(const char *code)
+Struct* getAST(const char *code)
 {
-  Value* expr = NULL;
+  Struct* expr = NULL;
   yyscan_t scanner = 0;
   YY_BUFFER_STATE state = 0;
   if (yylex_init(&scanner)) return NULL;
@@ -28,7 +28,7 @@ int main(int argc, char* argv[])
     getline(&code, &len, stdin);
     assert(code != NULL);
   }
-  Value* e = getAST(code);
+  Struct* e = getAST(code);
   code = NULL;
   assert(e != NULL);
   e = eval(e);
