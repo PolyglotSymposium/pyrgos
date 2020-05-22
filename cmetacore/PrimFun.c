@@ -33,7 +33,7 @@ static Struct* newCloTwoThird(Struct* (*f) (Struct*, Struct*, Struct*), Struct* 
   s[0] = (void*)f;
   s[1] = (void*)x;
   s[2] = (void*)y;
-  return new_struct(CLOTHIRD_SYMBOL, 3, s);
+  return new_struct(TWOTHIRD_SYMBOL, 3, s);
 }
 
 static Struct* apPrimFun1(Struct* closure, Struct* x) {
@@ -91,5 +91,5 @@ Struct* apply(Struct* f, Struct* arg) {
 }
 
 void printPrimFun(FILE* stream, Struct* f) {
-  fprintf(stream, "<#closure>");
+  fprintf(stream, "<#%s>", decompressSymbol(get_tag(f)));
 }
