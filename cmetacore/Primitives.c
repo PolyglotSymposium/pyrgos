@@ -34,6 +34,22 @@ static Struct* require(Symbol tag, Struct* x) {
   return v;
 }
 
+static Struct* tag_of(Struct* x) {
+  Struct* v = require(STRUCT_SYMBOL, x);
+  if (v == NULL) {
+    v = newSymbol(get_tag(dequote(x)));
+  }
+  return v;
+}
+
+static Struct* struct_size(Struct* x) {
+  Struct* v = require(STRUCT_SYMBOL, x);
+  if (v == NULL) {
+    v = newNat(get_size(dequote(x)));
+  }
+  return v;
+}
+
 static Struct* add(Struct* x, Struct* y) {
   Struct* v = NULL;
   v = require(NAT_SYMBOL, x);
@@ -213,25 +229,27 @@ Struct* show(Struct* e) {
 Struct* matchPrim(Symbol name) {
   Struct* p = NULL;
   switch (name) {
-  case 1                /* b          */: p = newPrimFun3(bcomb   ); break;
-  case 2                /* c          */: p = newPrimFun3(ccomb   ); break;
-  case 8                /* i          */: p = newPrimFun1(icomb   ); break;
-  case 10               /* k          */: p = newPrimFun2(kcomb   ); break;
-  case 18               /* s          */: p = newPrimFun3(scomb   ); break;
-  case 27               /* +          */: p = newPrimFun2(add     ); break;
-  case 29               /* *          */: p = newPrimFun2(mult    ); break;
-  //case 98449          /* read       */: p =                      ; break;
-  //case 361124         /* eval       */: p =                      ; break;
-  case 735474           /* show       */: p = newPrimFun1(show    ); break;
-  case 19543500         /* monus      */: p = newPrimFun2(monus   ); break;
-  case 5865881363       /* type-of    */: p = newPrimFun1(type_of ); break;
-  case 32754191373      /* nat-eq?    */: p = newPrimFun2(natEq   ); break;
-  case 32754189938      /* str-eq?    */: p = newPrimFun2(strEq   ); break;
-  case 1048133876161    /* bool-eq?   */: p = newPrimFun2(boolEq  ); break;
-  case 1073289088774930 /* symbol-eq? */: p = newPrimFun2(symbolEq); break;
-  case TRUE_SYMBOL                      : p = TRUE_STRUCT          ; break;
-  case FALSE_SYMBOL                     : p = FALSE_STRUCT         ; break;
-  default                               :                          ; break;
+  case 1                /* b           */: p = newPrimFun3(bcomb      ); break;
+  case 2                /* c           */: p = newPrimFun3(ccomb      ); break;
+  case 8                /* i           */: p = newPrimFun1(icomb      ); break;
+  case 10               /* k           */: p = newPrimFun2(kcomb      ); break;
+  case 18               /* s           */: p = newPrimFun3(scomb      ); break;
+  case 27               /* +           */: p = newPrimFun2(add        ); break;
+  case 29               /* *           */: p = newPrimFun2(mult       ); break;
+  //case 98449          /* read        */: p =                         ; break;
+  //case 361124         /* eval        */: p =                         ; break;
+  case 735474           /* show        */: p = newPrimFun1(show       ); break;
+  case 19543500         /* monus       */: p = newPrimFun2(monus      ); break;
+  case 183310355        /* tag-of      */: p = newPrimFun1(tag_of     ); break;
+  case 5865881363       /* type-of     */: p = newPrimFun1(type_of    ); break;
+  case 32754191373      /* nat-eq?     */: p = newPrimFun2(natEq      ); break;
+  case 32754189938      /* str-eq?     */: p = newPrimFun2(strEq      ); break;
+  case 1048133876161    /* bool-eq?    */: p = newPrimFun2(boolEq     ); break;
+  case 1073289088774930 /* symbol-eq?  */: p = newPrimFun2(symbolEq   ); break;
+  case 5392652055496306 /* struct-size */: p = newPrimFun1(struct_size); break;
+  case TRUE_SYMBOL                       : p = TRUE_STRUCT             ; break;
+  case FALSE_SYMBOL                      : p = FALSE_STRUCT            ; break;
+  default                                :                             ; break;
   }
   return p;
 }
