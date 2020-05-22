@@ -1,8 +1,12 @@
-#ifndef __STRUCT_VALUE_H__
-#define __STRUCT_VALUE_H__
+#ifndef __METACORE_STRUCT_VALUE_H__
+#define __METACORE_STRUCT_VALUE_H__
 
+#include <assert.h>
+#include <stdio.h>
 #include "Struct.h"
 
+Struct* structFromNameAndPairs(Symbol, Struct*);
+Struct* structFromName(Symbol);
 Struct* quote(Struct*);
 const Symbol STRUCT_SYMBOL = 640304754 /* struct */;
 Struct* dequote(Struct*);

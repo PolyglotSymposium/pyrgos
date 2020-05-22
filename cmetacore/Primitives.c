@@ -68,9 +68,9 @@ static Struct* natEq(Struct* x, Struct* y) {
   if (v == NULL) {
     v = require(NAT_SYMBOL, y);
     if (asNat(x) == asNat(y)) {
-      v = TRUE;
+      v = TRUE_STRUCT;
     } else {
-      v = FALSE;
+      v = FALSE_STRUCT;
     }
   }
   return v;
@@ -121,8 +121,8 @@ Struct* matchPrim(Symbol name) {
   case 29          /* *       */: p = newPrimFun2(mult   ); break;
   case 19543500    /* monus   */: p = newPrimFun2(monus  ); break;
   case 32754191373 /* nat-eq? */: p = newPrimFun2(natEq  ); break;
-  case TRUE_SYMBOL              : p = TRUE                ; break;
-  case FALSE_SYMBOL             : p = FALSE               ; break;
+  case TRUE_SYMBOL              : p = TRUE_STRUCT         ; break;
+  case FALSE_SYMBOL             : p = FALSE_STRUCT        ; break;
   default                       :                           break;
   }
   return p;

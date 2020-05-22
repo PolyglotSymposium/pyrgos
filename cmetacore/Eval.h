@@ -1,5 +1,5 @@
-#ifndef __EVAL_H__
-#define __EVAL_H__
+#ifndef __METACORE_EVAL_H__
+#define __METACORE_EVAL_H__
 
 #include <stdio.h>
 #include "Struct.h"

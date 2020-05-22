@@ -1,5 +1,5 @@
-#ifndef __SYMBOL_VALUE_H__
-#define __SYMBOL_VALUE_H__
+#ifndef __METACORE_SYMBOL_VALUE_H__
+#define __METACORE_SYMBOL_VALUE_H__
 
 #include <stdio.h>
 #include "Struct.h"

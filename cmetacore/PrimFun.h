@@ -1,5 +1,5 @@
-#ifndef __PRIM_FUN_H__
-#define __PRIM_FUN_H__
+#ifndef __METACORE_PRIM_FUN_H__
+#define __METACORE_PRIM_FUN_H__
 
 #include <stdio.h>
 #include "Struct.h"

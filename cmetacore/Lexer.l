@@ -1,5 +1,7 @@
 %{
 
+#include "Symbol.h"
+#include "Struct.h"
 #include "Parser.h"
 #include "Symbol.h"
 

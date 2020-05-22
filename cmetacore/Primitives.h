@@ -1,5 +1,5 @@
-#ifndef __PRIMITIVES_H__
-#define __PRIMITIVES_H__
+#ifndef __METACORE_PRIMITIVES_H__
+#define __METACORE_PRIMITIVES_H__
 
 #include "Symbol.h"
 #include "Struct.h"

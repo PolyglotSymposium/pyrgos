@@ -1,11 +1,12 @@
 %{
 
+#include "Symbol.h"
+#include "Struct.h"
 #include "Nat.h"
 #include "Str.h"
 #include "Pair.h"
-#include "Symbol.h"
-#include "Struct.h"
 #include "SymbolValue.h"
+#include "StructValue.h"
 #include "Parser.h"
 #include "Lexer.h"
 
@@ -56,8 +57,8 @@ input
 
 expr
 : TOKEN_LPAREN apply[A] TOKEN_RPAREN                  { $$ = $A; }
-| TOKEN_LSQBRK TOKEN_NAME[N] apply[A] TOKEN_RSQBRK    { $$ = buildStruct($N, $A); }
-| TOKEN_LSQBRK TOKEN_NAME[N] TOKEN_RSQBRK             { $$ = buildStruct($N, NULL); }
+| TOKEN_LSQBRK TOKEN_NAME[N] apply[A] TOKEN_RSQBRK    { $$ = structFromNameAndPairs($N, $A); }
+| TOKEN_LSQBRK TOKEN_NAME[N] TOKEN_RSQBRK             { $$ = structFromName($N); }
 | TOKEN_NUMBER                                        { $$ = newNat($1); }
 | TOKEN_STRING                                        { $$ = newStr($1); }
 | TOKEN_NAME                                          { $$ = newSymbol($1); }

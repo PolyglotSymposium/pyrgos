@@ -1,5 +1,5 @@
-#ifndef __STR_H__
-#define __STR_H__
+#ifndef __METACORE_STR_H__
+#define __METACORE_STR_H__
 
 #include <stdio.h>
 #include "Struct.h"

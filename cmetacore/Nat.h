@@ -1,5 +1,5 @@
-#ifndef __NAT_H__
-#define __NAT_H__
+#ifndef __METACORE_NAT_H__
+#define __METACORE_NAT_H__
 
 #include <stdio.h>
 #include "Struct.h"

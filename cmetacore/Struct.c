@@ -24,6 +24,10 @@ Struct* value_struct(Symbol tag, unsigned long x) {
   return new_struct(tag, 1, (void**)x);
 }
 
+Struct* atomic_struct(Symbol tag) {
+  return new_struct(tag, 0, NULL);
+}
+
 void* get_field(Struct* s, size_t n) {
   assert(s != NULL);
   void* x = NULL;

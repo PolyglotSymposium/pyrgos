@@ -1,5 +1,5 @@
-#ifndef __ERROR_H__
-#define __ERROR_H__
+#ifndef __METACORE_ERROR_H__
+#define __METACORE_ERROR_H__
 
 #include <stdio.h>
 #include "Struct.h"

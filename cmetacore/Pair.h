@@ -1,5 +1,5 @@
-#ifndef __PAIR_H__
-#define __PAIR_H__
+#ifndef __METACORE_PAIR_H__
+#define __METACORE_PAIR_H__
 
 #include <stdio.h>
 #include "Struct.h"

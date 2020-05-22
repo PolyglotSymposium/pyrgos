@@ -1,5 +1,5 @@
-#ifndef __SYMBOL_H__
-#define __SYMBOL_H__
+#ifndef __METACORE_SYMBOL_H__
+#define __METACORE_SYMBOL_H__
 
 /*
   I assert:
