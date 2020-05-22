@@ -4,7 +4,7 @@
 #include "Struct.h"
 
 Struct* newNat(unsigned long);
-Symbol NAT_SYMBOL;
+const Symbol NAT_SYMBOL = 19469; /* nat */
 unsigned long asNat(Struct*);
 void printNat(FILE*, Struct*);
 

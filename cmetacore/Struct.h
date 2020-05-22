@@ -1,6 +1,7 @@
 #ifndef __STRUCT_H__
 #define __STRUCT_H__
 
+#include <stddef.h>
 #include "Symbol.h"
 
 typedef struct Struct Struct;

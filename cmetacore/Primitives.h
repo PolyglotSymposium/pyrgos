@@ -2,8 +2,8 @@
 #define __PRIMITIVES_H__
 
 #include "Symbol.h"
-#include "Value.h"
+#include "Struct.h"
 
-Value* matchPrim(Symbol);
+Struct* matchPrim(Symbol);
 
 #endif

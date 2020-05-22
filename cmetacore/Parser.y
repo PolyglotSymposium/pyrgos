@@ -1,6 +1,8 @@
 %{
 
-#include "Value.h"
+#include "Nat.h"
+#include "Str.h"
+#include "SymbolValue.h"
 #include "Parser.h"
 #include "Lexer.h"
 
@@ -27,9 +29,9 @@ int yyerror(Value** expr, yyscan_t scanner, const char* msg) {
 %union {
   int value;
   char* string;
-  Value* expr;
+  Struct* expr;
   Symbol name;
-  Cons* apply;
+  Struct* apply;
 }
 
 %token          TOKEN_LPAREN "("
@@ -53,14 +55,14 @@ expr
 : TOKEN_LPAREN apply[A] TOKEN_RPAREN                  { $$ = buildPairs($A); }
 | TOKEN_LSQBRK TOKEN_NAME[N] apply[A] TOKEN_RSQBRK    { $$ = buildStruct($N, $A); }
 | TOKEN_LSQBRK TOKEN_NAME[N] TOKEN_RSQBRK             { $$ = buildStruct($N, NULL); }
-| TOKEN_NUMBER                                        { $$ = vInt($1); }
-| TOKEN_STRING                                        { $$ = vStr($1); }
-| TOKEN_NAME                                          { $$ = vSymbol($1); }
+| TOKEN_NUMBER                                        { $$ = newNat($1); }
+| TOKEN_STRING                                        { $$ = newStr($1); }
+| TOKEN_NAME                                          { $$ = newSymbol($1); }
 ;
 
 apply
-: expr[H] apply[T] { $$ = cons($H, $T); }
-| expr { $$ = cons($1, NULL); }
+: expr[H] apply[T] { $$ = newPair($H, $T); }
+| expr { $$ = newPair($1, NULL); }
 ;
 
 %%
