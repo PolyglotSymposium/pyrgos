@@ -85,6 +85,7 @@ Struct* apply(Struct* f, Struct* arg) {
   case PRIMFUN3_SYMBOL: x = apPrimFun3(f, arg); break;
   case CLOTHIRD_SYMBOL: x = apOneThird(f, arg); break;
   case TWOTHIRD_SYMBOL: x = apTwoThird(f, arg); break;
+  case ERROR_SYMBOL   : x = f                 ; break;
   default             : x = inapplicable(tag) ; break;
   }
   return x;
