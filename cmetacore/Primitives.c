@@ -195,6 +195,7 @@ void printValue(FILE* stream, Struct* e) {
 }
 
 Struct* show(Struct* e) {
+  if (get_tag(e) == ERROR_SYMBOL) return e;
   char* buffer = NULL;
   size_t sizeloc = 0;
   // https://www.gnu.org/software/libc/manual/html_node/String-Streams.html
