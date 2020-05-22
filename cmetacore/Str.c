@@ -10,5 +10,5 @@ char* asStr(Struct* s) {
 }
 
 void printStr(FILE* stream, Struct* s) {
-  fprintf(stream, "%s", asStr(s));
+  fprintf(stream, "\"%s\"", asStr(s));
 }
