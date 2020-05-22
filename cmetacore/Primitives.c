@@ -77,10 +77,12 @@ static Struct* strEq(Struct* x, Struct* y) {
   v = require(STR_SYMBOL, x);
   if (v == NULL) {
     v = require(STR_SYMBOL, y);
-    if (strcmp(asStr(x), asStr(y))) {
-      v = FALSE_STRUCT;
-    } else {
-      v = TRUE_STRUCT; // strcmp returns 0 if equal
+    if (v == NULL) {
+      if (strcmp(asStr(x), asStr(y))) {
+        v = FALSE_STRUCT;
+      } else {
+        v = TRUE_STRUCT; // strcmp returns 0 if equal
+      }
     }
   }
   return v;
@@ -91,10 +93,12 @@ static Struct* natEq(Struct* x, Struct* y) {
   v = require(NAT_SYMBOL, x);
   if (v == NULL) {
     v = require(NAT_SYMBOL, y);
-    if (asNat(x) == asNat(y)) {
-      v = TRUE_STRUCT;
-    } else {
-      v = FALSE_STRUCT;
+    if (v == NULL) {
+      if (asNat(x) == asNat(y)) {
+        v = TRUE_STRUCT;
+      } else {
+        v = FALSE_STRUCT;
+      }
     }
   }
   return v;
