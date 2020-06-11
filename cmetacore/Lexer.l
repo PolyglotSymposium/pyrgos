@@ -4,6 +4,7 @@
 #include "Struct.h"
 #include "Parser.h"
 #include "Symbol.h"
+#include <stdlib.h>
 
 #include <stdio.h>
 
@@ -15,6 +16,7 @@ int yyerror(const char *msg) {
     strbuf = NULL;
   }
   fprintf(stderr, "Lexer: %s\n", msg);
+  exit(13836);
   return 0;
 }
 
@@ -45,5 +47,6 @@ int yyerror(const char *msg) {
 <STRING>\\                       { yyerror("escape sequences not implemented in strings"); }
 <STRING>\n                       { yyerror("string not terminated before EOL"); }
 <STRING><<EOF>>                  { yyerror("string not terminated before EOF"); }
+.                                { yyerror("invalid character in input stream"); }
 
 %%
