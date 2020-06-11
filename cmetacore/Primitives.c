@@ -255,6 +255,7 @@ Struct* matchPrim(Symbol name) {
   case 29               /* *           */: p = newPrimFun2(mult       ); break;
   //case 98449          /* read        */: p =                         ; break;
   //case 361124         /* eval        */: p =                         ; break;
+  case 565263           /* pair        */: p = newPrimFun2(newPair    ); break;
   case 735474           /* show        */: p = newPrimFun1(show       ); break;
   case 19543500         /* monus       */: p = newPrimFun2(monus      ); break;
   case 183310355        /* tag-of      */: p = newPrimFun1(tag_of     ); break;
