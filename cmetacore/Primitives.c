@@ -34,6 +34,18 @@ static Struct* require(Symbol tag, Struct* x) {
   return v;
 }
 
+static Struct* pair(Struct* x, Struct* y) {
+  Struct* v = NULL;
+  if (get_tag(x) == ERROR_SYMBOL) {
+    v = x;
+  } else if (get_tag(y) == ERROR_SYMBOL) {
+    v = y;
+  } else {
+    v = newPair(x, y);
+  }
+  return v;
+}
+
 static Struct* fst(Struct* x) {
   Struct* v = require(PAIR_SYMBOL, x);
   if (v == NULL) {
@@ -283,7 +295,7 @@ Struct* matchPrim(Symbol name) {
   case 5392652055496306    /* struct-size */: p = newPrimFun1(struct_size); break;
   case 1152921504606846976 /* _1          */: p = newPrimFun1(fst        ); break;
   case 2305843009213693952 /* _2          */: p = newPrimFun1(snd        ); break;
-  case PAIR_SYMBOL                          : p = newPrimFun2(newPair    ); break;
+  case PAIR_SYMBOL                          : p = newPrimFun2(pair       ); break;
   case TRUE_SYMBOL                          : p = TRUE_STRUCT             ; break;
   case FALSE_SYMBOL                         : p = FALSE_STRUCT            ; break;
   default                                   :                             ; break;
