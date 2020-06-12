@@ -35,7 +35,6 @@ int yyerror(Struct** expr, yyscan_t scanner, const char* msg) {
   char* string;
   Symbol name;
   Struct* expr;
-  Struct* apply;
 }
 
 %token          TOKEN_LPAREN "("
@@ -46,8 +45,9 @@ int yyerror(Struct** expr, yyscan_t scanner, const char* msg) {
 %token <string> TOKEN_STRING "string"
 %token <name>   TOKEN_NAME   "name"
 
-%type <expr>  expr
-%type <apply> apply
+%type <expr> expr
+%type <expr> apply
+%type <expr> formArgs
 
 %%
 
@@ -57,17 +57,21 @@ input
 
 expr
 : TOKEN_LPAREN apply[A] TOKEN_RPAREN                  { $$ = $A; }
-| TOKEN_LSQBRK TOKEN_NAME[N] apply[A] TOKEN_RSQBRK    { $$ = structFromNameAndPairs($N, $A); }
-| TOKEN_LSQBRK TOKEN_NAME[N] expr[E] TOKEN_RSQBRK     { $$ = structFromNameAnd1($N, $E); }
+| TOKEN_LSQBRK TOKEN_NAME[N] formArgs[A] TOKEN_RSQBRK    { $$ = structFromNameAndPairs($N, $A); }
 | TOKEN_LSQBRK TOKEN_NAME[N] TOKEN_RSQBRK             { $$ = structFromName($N); }
 | TOKEN_NUMBER                                        { $$ = newNat($1); }
 | TOKEN_STRING                                        { $$ = newStr($1); }
 | TOKEN_NAME                                          { $$ = newSymbol($1); }
 ;
 
+formArgs
+: expr[H] formArgs[T] { $$ = newPair($H, $T); }
+| expr[E] { $$ = $E; }
+;
+
 apply
-: apply[H] expr[T] { $$ = newPair($H, $T); }
-| expr[H] expr[T] { $$ = newPair($H, $T); }
+: apply[L] expr[R] { $$ = newPair($L, $R); }
+| expr[L] expr[R] { $$ = newPair($L, $R); }
 ;
 
 %%
