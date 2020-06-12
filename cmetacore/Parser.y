@@ -66,7 +66,7 @@ expr
 
 formArgs
 : expr[H] formArgs[T] { $$ = newPair($H, $T); }
-| expr[E] { $$ = $E; }
+| expr[H] { $$ = newPair($H, NULL); }
 ;
 
 apply

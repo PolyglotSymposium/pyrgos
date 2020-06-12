@@ -8,17 +8,23 @@ Struct* quote(Struct* form) {
 }
 
 Struct* structFromNameAndPairs(Symbol tag, Struct* x) {
-  size_t size = 1;
-  for (Struct* right = x; get_tag(right) == PAIR_SYMBOL; right = asSecond(right)) {
+  Struct* s = NULL;
+  size_t size = 0;
+  for (Struct* right = x; right != NULL; right = asSecond(right)) {
     size++;
   }
-  Struct** payload = (Struct**)GC_MALLOC(sizeof(Struct*)*size);
-  Struct* p = x;
-  for (size_t i = 0; i < size; i++) {
-    payload[i] = asFirst(p);
-    p = asSecond(p);
+  if (size == 1) {
+    s = singleton_struct(tag, asFirst(x));
+  } else {
+    Struct** payload = (Struct**)GC_MALLOC(sizeof(Struct*)*size);
+    Struct* p = x;
+    for (size_t i = 0; i < size; i++) {
+      payload[i] = asFirst(p);
+      p = asSecond(p);
+    }
+    s = new_struct(tag, size, (void**)payload);
   }
-  return quote(new_struct(tag, size, (void**)payload));
+  return quote(s);
 }
 
 Struct* structFromName(Symbol tag) {
