@@ -11,9 +11,8 @@
 #include "Lexer.h"
 
 int yyerror(Struct** expr, yyscan_t scanner, const char* msg) {
-  fprintf(stderr, "Parser: %s\n", msg);
-  exit(1);
-  return 0;
+  //fprintf(stderr, "Parser: %s\n", msg);
+  return 1;
 }
 
 %}

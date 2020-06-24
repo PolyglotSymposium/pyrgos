@@ -11,6 +11,7 @@
 #include "Pair.h"
 #include "StructValue.h"
 #include "SymbolValue.h"
+#include "StructParser.h"
 
 static Struct* type_of(Struct* x) {
   Struct* t = NULL;
@@ -44,6 +45,22 @@ static Struct* pair(Struct* x, Struct* y) {
     v = newPair(x, y);
   }
   return v;
+}
+
+static Struct* parse(Struct* x) {
+  Struct* v = require(STR_SYMBOL, x);
+  if (v == NULL) {
+    v = chars_to_struct(asStr(x));
+    if (v == NULL) {
+      // TODO define Maybe distinctly
+      v = atomic_struct(6887296461 /* nothing */);
+    } else {
+      v = singleton_struct(641673 /* just */, v);
+    }
+    v = quote(v);
+  }
+  return v;
+
 }
 
 static Struct* fst(Struct* x) {
@@ -284,6 +301,7 @@ Struct* matchPrim(Symbol name) {
   //case 98449             /* read        */: p =                         ; break;
   //case 361124            /* eval        */: p =                         ; break;
   case 735474              /* show        */: p = newPrimFun1(show       ); break;
+  case 4801551             /* parse       */: p = newPrimFun1(parse      ); break;
   case 19543500            /* monus       */: p = newPrimFun2(monus      ); break;
   case 183310355           /* tag-of      */: p = newPrimFun1(tag_of     ); break;
   case 5865881363          /* type-of     */: p = newPrimFun1(type_of    ); break;

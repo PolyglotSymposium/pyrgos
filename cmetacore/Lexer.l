@@ -15,9 +15,8 @@ int yyerror(const char *msg) {
     free(strbuf);
     strbuf = NULL;
   }
-  fprintf(stderr, "Lexer: %s\n", msg);
-  exit(13836);
-  return 0;
+  //fprintf(stderr, "Lexer: %s\n", msg);
+  return 1;
 }
 
 %}
