@@ -6,26 +6,6 @@
 #include "Forms.h"
 #include "Error.h"
 
-static Struct* ifForm(Struct* form) {
-  Struct* x = NULL;
-  if (get_size(form) == 3) {
-    x = (Struct*)get_field(form, 0);
-    x = eval(x);
-    Symbol condTag = get_tag(x);
-    if (condTag != ERROR_SYMBOL) {
-      if (condTag == BOOL_SYMBOL) {
-        x = (Struct*)get_field(form, 2-((Symbol)value_payload(x) == TRUE_SYMBOL));
-        x = eval(x);
-      } else {
-        x = malformed(get_tag(form));
-      }
-    }
-  } else {
-    x = malformed(get_tag(form));
-  }
-  return x;
-}
-
 static Struct* quoteForm(Struct* form) {
   Struct* x = NULL;
   if (get_size(form) == 1) {
@@ -61,7 +41,6 @@ Struct* matchForm(Struct* form) {
   Struct* x = NULL;
   Symbol tag = get_tag(form);
   switch (tag) {
-  case 168            /* if        */: x = ifForm(form)       ; break;
   case 4831888        /* quote     */: x = quoteForm(form)    ; break;
   case 20981506192834 /* construct */: x = constructForm(form); break;
   default                            : x = noSuchForm(tag)    ; break;
