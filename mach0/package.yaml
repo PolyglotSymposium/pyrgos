@@ -1,0 +1,39 @@
+name:                mach0
+version:             0.0.0.1
+github:              "kazark/mach0"
+license:             MIT
+author:              "Keith Pinson"
+maintainer:          "kazark@zoho.com"
+copyright:           "2020 Keith Pinson"
+
+extra-source-files:
+- README.md
+
+dependencies:
+- base >= 4.7 && < 5
+- transformers
+
+library:
+  source-dirs: src
+
+executables:
+  mach0-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - mach0
+
+tests:
+  mach0-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - mach0
