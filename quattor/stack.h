@@ -9,6 +9,7 @@ Stack* make_stack();
 
 void push_val(Stack*, size_t);
 void push_ptr(Stack*, void*);
+bool pop(Stack*, void*);
 size_t pop_val(Stack*);
 void* pop_ptr(Stack*);
 
