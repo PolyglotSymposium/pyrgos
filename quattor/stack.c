@@ -1,105 +1,92 @@
 #include "stack.h"
 #include <assert.h>
 #define METADATA_WORD 0
-#define TOP_INDEX 1
-#define PTR_NEXT 2
-// offset = metadata word + top index + pointer to next segment
-#define OFFSET 3
+#define PTR_NEXT 1
+// offset = metadata word + pointer to next segment
+#define OFFSET 2
+#define SEGMENT_EMPTY (OFFSET-1)
 #define SIZE 64 // Sorry 32-bit architectures
+#define SEGMENT_FULL (SEGMENT_EMPTY + SIZE)
 
-struct Stack {};
+struct Stack {
+  size_t* extra;
+  size_t top;
+  size_t* segment;
+};
+
+static size_t* make_segment() {
+  size_t* segment = (size_t*)malloc(sizeof(size_t)*SIZE+OFFSET);
+  segment[METADATA_WORD] = 0;
+  segment[PTR_NEXT] = (size_t)NULL;
+  return segment;
+}
 
 Stack* make_stack() {
-  size_t* stack = (size_t*)malloc(sizeof(size_t)*SIZE+OFFSET);
-  stack[METADATA_WORD] = 0;
-  stack[TOP_INDEX] = OFFSET - 1; // denotes empty
-  stack[PTR_NEXT] = (size_t)NULL;
-  return (Stack*)stack;
+  Stack* stack = (Stack*)malloc(sizeof(Stack));
+  stack->extra = NULL;
+  stack->top = SEGMENT_EMPTY;
+  stack->segment = make_segment();
+  return stack;
 }
 
-static Stack* expand_stack(Stack* stack) {
-  Stack* new_segment = make_stack();
-  ((Stack**)new_segment)[PTR_NEXT] = stack;
-  return new_segment;
-}
-
-static Stack* next_segment(Stack* stack) {
-  return ((Stack**)stack)[PTR_NEXT];
-}
-
-static size_t stack_top(Stack* stack) {
-  return ((size_t*)stack)[TOP_INDEX];
-}
-
-static void set_stack_top(Stack* stack, size_t x) {
-  ((size_t*)stack)[TOP_INDEX] = x;
-}
-
-static size_t seg_meta(Stack* stack) {
-  return ((size_t*)stack)[METADATA_WORD];
-}
-
-static void push_seg_meta_val(Stack* stack) {
-  ((size_t*)stack)[METADATA_WORD] = ((size_t*)stack)[METADATA_WORD] << 1;
-}
-
-static void push_seg_meta_ptr(Stack* stack) {
-  ((size_t*)stack)[METADATA_WORD] = (((size_t*)stack)[METADATA_WORD] << 1) | 1;
-}
-
-static bool pop_seg_meta(Stack* stack) {
-  size_t meta = seg_meta(stack);
-  bool is_ptr = meta & 1;
-  ((size_t*)stack)[METADATA_WORD] = meta >> 1;
-  return is_ptr;
-}
-
-static bool stack_segment_full(Stack* stack) {
-  size_t length = stack_top(stack) + 1;
-  return length >= SIZE + OFFSET;
+static Stack expand_stack(Stack stack) {
+  size_t* new_segment = NULL;
+  if (stack.extra == NULL) {
+    new_segment = make_segment();
+  } else {
+    assert((size_t*)stack.extra[PTR_NEXT] == NULL);
+    new_segment = stack.extra;
+  }
+  new_segment[PTR_NEXT] = (size_t)stack.segment;
+  Stack new_stack = {
+    .extra = NULL,
+    .top = SEGMENT_EMPTY,
+    .segment = new_segment
+  };
+  return new_stack;
 }
 
 void push_val(Stack* stack, size_t x) {
-  if (stack_segment_full(stack)) {
-    stack = expand_stack(stack);
+  if (stack->top >= SEGMENT_FULL) {
+    *stack = expand_stack(*stack);
   }
-  size_t top = stack_top(stack);
-  ((size_t*) stack)[top+1] = x;
-  set_stack_top(stack, top+1);
-  push_seg_meta_val(stack);
+  stack->segment[stack->top+1] = x;
+  stack->top = stack->top + 1;
+  stack->segment[METADATA_WORD] = stack->segment[METADATA_WORD] << 1;
 }
 
 void push_ptr(Stack* stack, void* x) {
-  if (stack_segment_full(stack)) {
-    stack = expand_stack(stack);
+  if (stack->top >= SEGMENT_FULL) {
+    *stack = expand_stack(*stack);
   }
-  size_t top = stack_top(stack);
-  ((size_t*) stack)[top+1] = (size_t)x;
-  set_stack_top(stack, top+1);
-  push_seg_meta_ptr(stack);
+  stack->segment[stack->top+1] = (size_t)x;
+  stack->top = stack->top + 1;
+  stack->segment[METADATA_WORD] = (stack->segment[METADATA_WORD] << 1) | 1;
 }
 
-static bool segment_empty(Stack* stack) {
-  return stack_top(stack) < OFFSET;
-}
-
-static Stack* shrink_stack(Stack* stack) {
-  // TODO we could get thrashing at this point if the code hangs out around
-  // the boundary of two segments a lot. :(
-  Stack* next = next_segment(stack);
+static Stack shrink_stack(Stack stack) {
+  size_t* next = (size_t*)stack.segment[PTR_NEXT];
   assert(next != NULL);
-  free(stack); // TODO optimization: push to the side instead?
-  return next;
+  if (stack.extra == NULL) {
+    stack.segment[PTR_NEXT] = (size_t)NULL;
+    stack.extra = stack.segment;
+  } else {
+    free(stack.segment);
+  }
+  stack.top = SEGMENT_FULL;
+  stack.segment = next;
+  return stack;
 }
 
 bool pop(Stack* stack, void** out) {
-  if (segment_empty(stack)) {
-    stack = shrink_stack(stack);
+  if (stack->top == SEGMENT_EMPTY) {
+    *stack = shrink_stack(*stack);
   }
-  size_t top = stack_top(stack);
-  set_stack_top(stack, top-1);
-  bool is_ptr = pop_seg_meta(stack);
-  *out = ((void**) stack)[top];
+  *out = (void*)stack->segment[stack->top];
+  stack->top = stack->top - 1;
+  size_t meta = stack->segment[METADATA_WORD];
+  bool is_ptr = meta & 1;
+  stack->segment[METADATA_WORD] = meta >> 1;
   return is_ptr;
 }
 
