@@ -3,7 +3,7 @@ CC			= g++
 CFLAGS	= -Wall -g -ansi
 
 compile: $(FILES)
-	$(CC) $(CFLAGS) $(FILES) -o quattor -lgc
+	$(CC) $(CFLAGS) $(FILES) -o quattor
 
 clean:
 	rm -f *.o quattor
