@@ -5,16 +5,11 @@
 
 typedef struct Stack Stack;
 
-Stack* make_stack(size_t);
+Stack* make_stack();
 
-size_t pop(Stack*);
-void push(Stack*, size_t);
-void dup(Stack*);
-void drop(Stack*);
-void swap(Stack*);
-void over(Stack*);
-void apply1(Stack*, void* (*) (void*));
-void apply2(Stack*, void* (*) (void*, void*));
-//void apply3(Stack*, void* (*) (void*, void*, void*));
+void push_val(Stack*, size_t);
+void push_ptr(Stack*, void*);
+size_t pop_val(Stack*);
+void* pop_ptr(Stack*);
 
 #endif//__QUATTOR_STACK_H__
