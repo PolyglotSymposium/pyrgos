@@ -49,12 +49,14 @@ eInt = L.lexeme space L.decimal <&> EInt
 
 operators :: [[Operator Parser Expr]]
 operators =
-  [ [InfixN (symbol "<" $> ELess), InfixN (symbol "==" $> EEqual)]
-  , [InfixN (symbol "*" $> ETimes)]
-  , [InfixN (symbol "+" $> EPlus), InfixL (symbol "-" $> EMinus)]
   -- Brent Yorgey's hack for parsing function application
   -- https://github.com/mrkkrp/megaparsec/issues/245#issue-249916596
-  , [InfixN (symbol "" $> EApply)]
+  -- The naive solution leads to infinite left-recursion and eats up all your
+  -- computer's memory
+  [ [InfixN (symbol "" $> EApply)]
+  , [InfixN (symbol "*" $> EBinOp Times)]
+  , [InfixN (symbol "+" $> EBinOp Plus), InfixL (symbol "-" $> EBinOp Minus)]
+  , [InfixN (symbol "<" $> EBinOp Less), InfixN (symbol "==" $> EBinOp Equal)]
   ]
 
 terminalExpr :: Parser Expr

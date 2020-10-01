@@ -11,15 +11,13 @@ data Ty where
   TFunc :: Ty -> Ty -> Ty
   deriving Show
 
+data BinOp = Times | Plus | Minus | Equal | Less deriving Show
+
 data Expr where
   EVar :: Name -> Expr
   EInt :: Int -> Expr
   EBool :: Bool -> Expr
-  ETimes :: Expr -> Expr -> Expr
-  EPlus :: Expr -> Expr -> Expr
-  EMinus :: Expr -> Expr -> Expr
-  EEqual :: Expr -> Expr -> Expr
-  ELess :: Expr -> Expr -> Expr
+  EBinOp :: BinOp -> Expr -> Expr -> Expr
   EIf :: Expr -> Expr -> Expr -> Expr
   ELambda :: Name -> Expr -> Expr
   EApply :: Expr -> Expr -> Expr
