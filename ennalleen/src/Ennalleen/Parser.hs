@@ -45,7 +45,7 @@ eVar :: Parser Expr
 eVar = name <&> EVar
 
 eInt :: Parser Expr
-eInt = L.lexeme space L.decimal <&> EInt
+eInt = L.lexeme space L.decimal <&> (EAtom . AInt)
 
 operators :: [[Operator Parser Expr]]
 operators =

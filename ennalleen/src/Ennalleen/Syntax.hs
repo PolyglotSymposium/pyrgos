@@ -13,10 +13,14 @@ data Ty where
 
 data BinOp = Times | Plus | Minus | Equal | Less deriving Show
 
+data Atom where
+  ABool :: Bool -> Atom
+  AInt :: Int -> Atom
+  deriving Show
+
 data Expr where
   EVar :: Name -> Expr
-  EInt :: Int -> Expr
-  EBool :: Bool -> Expr
+  EAtom :: Atom -> Expr
   EBinOp :: BinOp -> Expr -> Expr -> Expr
   EIf :: Expr -> Expr -> Expr -> Expr
   ELambda :: Name -> Expr -> Expr
