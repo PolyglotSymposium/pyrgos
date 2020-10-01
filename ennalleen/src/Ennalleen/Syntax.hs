@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 module Ennalleen.Syntax where
 
-newtype Name = Name String -- TODO
+newtype Name = Name String -- TODO this is always the annoying part
 
 data Ty where
   TInt :: Ty
@@ -18,9 +18,6 @@ data Expr where
   EEqual :: Expr -> Expr -> Expr
   ELess :: Expr -> Expr -> Expr
   EIf :: Expr -> Expr -> Expr -> Expr
-  Fun :: Name -> Name -> Ty -> Ty -> Expr
-  Apply :: Expr -> Expr -> Expr
-
-data Command where
-  CExpr :: Expr -> Command
-  CLet :: Name -> Expr -> Command
+  ELambda :: Name -> Expr -> Expr
+  EApply :: Expr -> Expr -> Expr
+  ELet :: Name -> Expr -> Expr -> Expr

@@ -1,11 +1,11 @@
 module Ennalleen.Parser where
 
-import Control.Applicative ((<|>))
+import Data.Char (isAlpha)
 import Control.Monad.Combinators.Expr (Operator(..), makeExprParser)
-import Data.Functor (($>))
+import Data.Functor (($>), (<&>))
 import Data.Void (Void)
 import Ennalleen.Syntax
-import Text.Megaparsec (Parsec)
+import Text.Megaparsec
 import Text.Megaparsec.Char (space)
 import qualified Text.Megaparsec.Char.Lexer as L
 
@@ -14,14 +14,70 @@ type Parser = Parsec Void String
 symbol :: String -> Parser String
 symbol = L.symbol space
 
-tBoolP :: Parser Ty
-tBoolP = symbol "Bool" $> TBool
+keyword :: String -> Parser String
+keyword = symbol
 
-tIntP :: Parser Ty
-tIntP = symbol "Int" $> TInt
+tBool :: Parser Ty
+tBool = symbol "Bool" $> TBool
 
-terminalTypeP :: Parser Ty
-terminalTypeP = tBoolP <|> tIntP
+tInt :: Parser Ty
+tInt = symbol "Int" $> TInt
 
-typeP :: Parser Ty
-typeP = makeExprParser terminalTypeP [[InfixR (symbol "->" $> TFunc)]]
+terminalType :: Parser Ty
+terminalType = tBool <|> tInt
+
+ty :: Parser Ty
+-- TODO support parentheticals
+ty = makeExprParser terminalType [[InfixR (symbol "->" $> TFunc)]]
+
+name :: Parser Name
+-- TODO better identifier parsing
+name = takeWhile1P (Just "name") isAlpha <&> Name
+
+eLet :: Parser Expr
+eLet =
+  pure                ELet
+  <* keyword "let" <*> name
+  <* keyword "="   <*> expr
+  <* keyword "in"  <*> expr
+
+eVar :: Parser Expr
+eVar = name <&> EVar
+
+eInt :: Parser Expr
+eInt = L.decimal <&> EInt
+
+eBool :: Parser Expr
+eBool = (symbol "True" $> EBool True) <|> (symbol "False" $> EBool False)
+
+operators :: [[Operator Parser Expr]]
+operators =
+  [ [InfixN (symbol "<" $> ELess), InfixN (symbol "==" $> EEqual)]
+  , [InfixN (symbol "*" $> ETimes)]
+  , [InfixN (symbol "+" $> EPlus), InfixL (symbol "-" $> EMinus)]
+  -- Brent Yorgey's hack for parsing function application
+  -- https://github.com/mrkkrp/megaparsec/issues/245#issue-249916596
+  , [InfixN (symbol "" $> EApply)]
+  ]
+
+terminalExpr :: Parser Expr
+terminalExpr = eVar <|> eInt <|> eBool
+
+eIf :: Parser Expr
+eIf =
+  pure                  EIf
+  <* keyword "if"   <*> expr
+  <* keyword "then" <*> expr
+  <* keyword "else" <*> expr
+
+eLambda :: Parser Expr
+eLambda =
+  pure ELambda    <*> name
+  <* keyword "=>" <*> expr
+
+nonInfixExpr :: Parser Expr
+-- TODO support parentheticals
+nonInfixExpr = terminalExpr <|> eIf <|> eLambda <|> eLet
+
+expr :: Parser Expr
+expr = makeExprParser nonInfixExpr operators
