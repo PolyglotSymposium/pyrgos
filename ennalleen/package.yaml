@@ -20,6 +20,8 @@ description:         Please see the README on GitHub at <https://github.com/Poly
 
 dependencies:
 - base >= 4.7 && < 5
+- megaparsec
+- parser-combinators
 
 library:
   source-dirs: src

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ae848384e58ae1c6995de5ad15ccdf7aab6ee44973535551cfa277a47e61eb51
+-- hash: 11d22fe52298da6a953ba7d8c99c3f371c4d7b42bec0114b776f5d2e57a15525
 
 name:           ennalleen
 version:        0.0.0.1
@@ -27,6 +27,8 @@ source-repository head
 
 library
   exposed-modules:
+      Ennalleen.Parser
+      Ennalleen.Syntax
       Lib
   other-modules:
       Paths_ennalleen
@@ -34,6 +36,8 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , megaparsec
+    , parser-combinators
   default-language: Haskell2010
 
 executable ennalleen-exe
@@ -46,6 +50,8 @@ executable ennalleen-exe
   build-depends:
       base >=4.7 && <5
     , ennalleen
+    , megaparsec
+    , parser-combinators
   default-language: Haskell2010
 
 test-suite ennalleen-test
@@ -59,4 +65,6 @@ test-suite ennalleen-test
   build-depends:
       base >=4.7 && <5
     , ennalleen
+    , megaparsec
+    , parser-combinators
   default-language: Haskell2010
