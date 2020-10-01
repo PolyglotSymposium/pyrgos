@@ -24,7 +24,7 @@ tInt :: Parser Ty
 tInt = symbol "Int" $> TInt
 
 terminalType :: Parser Ty
-terminalType = tBool <|> tInt
+terminalType = try tBool <|> tInt
 
 ty :: Parser Ty
 -- TODO support parentheticals
@@ -32,23 +32,20 @@ ty = makeExprParser terminalType [[InfixR (symbol "->" $> TFunc)]]
 
 name :: Parser Name
 -- TODO better identifier parsing
-name = takeWhile1P (Just "name") isAlpha <&> Name
+name = L.lexeme space (takeWhile1P (Just "name") isAlpha) <&> Name
 
 eLet :: Parser Expr
 eLet =
   pure                ELet
-  <* keyword "let" <*> name
+  <* keyword "$let" <*> name
   <* keyword "="   <*> expr
-  <* keyword "in"  <*> expr
+  <* keyword "$in"  <*> expr
 
 eVar :: Parser Expr
 eVar = name <&> EVar
 
 eInt :: Parser Expr
-eInt = L.decimal <&> EInt
-
-eBool :: Parser Expr
-eBool = (symbol "True" $> EBool True) <|> (symbol "False" $> EBool False)
+eInt = L.lexeme space L.decimal <&> EInt
 
 operators :: [[Operator Parser Expr]]
 operators =
@@ -61,14 +58,14 @@ operators =
   ]
 
 terminalExpr :: Parser Expr
-terminalExpr = eVar <|> eInt <|> eBool
+terminalExpr = try eVar <|> eInt
 
 eIf :: Parser Expr
 eIf =
-  pure                  EIf
-  <* keyword "if"   <*> expr
-  <* keyword "then" <*> expr
-  <* keyword "else" <*> expr
+  pure                   EIf
+  <* keyword "$if"   <*> expr
+  <* keyword "$then" <*> expr
+  <* keyword "$else" <*> expr
 
 eLambda :: Parser Expr
 eLambda =
@@ -77,7 +74,7 @@ eLambda =
 
 nonInfixExpr :: Parser Expr
 -- TODO support parentheticals
-nonInfixExpr = terminalExpr <|> eIf <|> eLambda <|> eLet
+nonInfixExpr = try eIf <|> try eLambda <|> try eLet <|> terminalExpr
 
 expr :: Parser Expr
 expr = makeExprParser nonInfixExpr operators

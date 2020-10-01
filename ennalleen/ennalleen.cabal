@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 11d22fe52298da6a953ba7d8c99c3f371c4d7b42bec0114b776f5d2e57a15525
+-- hash: 17439d8de3d62677adbcb52252b06d86ace66dc4f97b062491681e0b9e7b08b0
 
 name:           ennalleen
 version:        0.0.0.1
@@ -29,7 +29,6 @@ library
   exposed-modules:
       Ennalleen.Parser
       Ennalleen.Syntax
-      Lib
   other-modules:
       Paths_ennalleen
   hs-source-dirs:
