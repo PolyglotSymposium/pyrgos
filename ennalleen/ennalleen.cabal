@@ -4,26 +4,26 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: cac39be81d4dcc938424ee0c884e1ed096ae3599678db8c74e36d5b113625123
+-- hash: ae848384e58ae1c6995de5ad15ccdf7aab6ee44973535551cfa277a47e61eb51
 
 name:           ennalleen
-version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/kazark/ennalleen#readme>
-homepage:       https://github.com/kazark/ennalleen#readme
-bug-reports:    https://github.com/kazark/ennalleen/issues
+version:        0.0.0.1
+description:    Please see the README on GitHub at <https://github.com/PolyglotSymposium/pyrgos/ennalleen#readme>
+homepage:       https://github.com/PolyglotSymposium/pyrgos#readme
+bug-reports:    https://github.com/PolyglotSymposium/pyrgos/issues
 author:         Keith Pinson
 maintainer:     kazark@zoho.com
-copyright:      2020 Keith Pinson
-license:        BSD3
+copyright:      2020 (c) Keith Pinson
+license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
-    ChangeLog.md
 
 source-repository head
   type: git
-  location: https://github.com/kazark/ennalleen
+  location: https://github.com/PolyglotSymposium/pyrgos
+  subdir: ennalleen
 
 library
   exposed-modules:

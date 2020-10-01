@@ -1,14 +1,13 @@
 name:                ennalleen
-version:             0.1.0.0
-github:              "kazark/ennalleen"
-license:             BSD3
+version:             0.0.0.1
+github:              "PolyglotSymposium/pyrgos/ennalleen"
+license:             MIT
 author:              "Keith Pinson"
 maintainer:          "kazark@zoho.com"
-copyright:           "2020 Keith Pinson"
+copyright:           "2020 (c) Keith Pinson"
 
 extra-source-files:
 - README.md
-- ChangeLog.md
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -17,7 +16,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/kazark/ennalleen#readme>
+description:         Please see the README on GitHub at <https://github.com/PolyglotSymposium/pyrgos/ennalleen#readme>
 
 dependencies:
 - base >= 4.7 && < 5
