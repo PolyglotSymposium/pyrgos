@@ -1,11 +1,12 @@
+{-# LANGUAGE TypeApplications #-}
 module Main where
 
+import Ennalleen.Syntax
 import Ennalleen.Parser
 import System.IO (hFlush, stdout)
-import Text.Megaparsec (parse, errorBundlePretty)
 
 parseAndPrint :: String -> String
-parseAndPrint = either errorBundlePretty show . parse expr "<input>"
+parseAndPrint = either id (show @Expr). parseExpr
 
 loop :: IO ()
 loop = do

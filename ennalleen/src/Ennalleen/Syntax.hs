@@ -1,17 +1,8 @@
 {-# LANGUAGE GADTs #-}
 module Ennalleen.Syntax where
 
-newtype Name =
-  Name String -- TODO this is always the annoying part
-  deriving Show
-
-data Ty where
-  TInt :: Ty
-  TBool :: Ty
-  TFunc :: Ty -> Ty -> Ty
-  deriving Show
-
-data BinOp = Times | Plus | Minus | Equal | Less deriving Show
+import Ennalleen.BaseSyntax
+import Ennalleen.Parser
 
 data Atom where
   ABool :: Bool -> Atom
@@ -27,3 +18,12 @@ data Expr where
   EApply :: Expr -> Expr -> Expr
   ELet :: Name -> Expr -> Expr -> Expr
   deriving Show
+
+instance ParsedExpr Expr where
+  injectLet = ELet
+  injectVar = EVar
+  injectInt = EAtom . AInt
+  injectLam = ELambda
+  injectIfT = EIf
+  injectAp = EApply
+  injectOp = EBinOp
