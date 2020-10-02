@@ -70,7 +70,7 @@ operators =
   -- https://github.com/mrkkrp/megaparsec/issues/245#issue-249916596
   -- The naive solution leads to infinite left-recursion and eats up all your
   -- computer's memory
-  [ [InfixN (symbol "" $> injectAppl)]
+  [ [InfixN (symbol "" $> injectApply)]
   , [InfixN (symbol "*" $> injectOp2 Times)]
   , [InfixN (symbol "+" $> injectOp2 Plus), InfixL (symbol "-" $> injectOp2 Minus)]
   , [InfixN (symbol "<" $> injectOp2 Less), InfixN (symbol "==" $> injectOp2 Equal)]

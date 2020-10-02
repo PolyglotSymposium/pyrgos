@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5c6d06a9ab6d4e8457dfa7a7adae84cdbbbf48234386c3609ae71d4ec805a595
+-- hash: a571592551e1e646423c6790b028b4819dd07827b0920314f415a91324c856b0
 
 name:           ennalleen
 version:        0.0.0.1
@@ -36,6 +36,7 @@ library
       src
   build-depends:
       base >=4.7 && <5
+    , free
     , megaparsec
     , mtl
     , parser-combinators
@@ -51,6 +52,7 @@ executable ennalleen-exe
   build-depends:
       base >=4.7 && <5
     , ennalleen
+    , free
     , megaparsec
     , mtl
     , parser-combinators
@@ -67,6 +69,7 @@ test-suite ennalleen-test
   build-depends:
       base >=4.7 && <5
     , ennalleen
+    , free
     , megaparsec
     , mtl
     , parser-combinators
