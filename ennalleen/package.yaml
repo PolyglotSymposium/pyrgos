@@ -22,6 +22,7 @@ dependencies:
 - base >= 4.7 && < 5
 - megaparsec
 - parser-combinators
+- mtl
 
 library:
   source-dirs: src

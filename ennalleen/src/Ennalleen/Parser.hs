@@ -1,11 +1,11 @@
-module Ennalleen.Parser (ParsedExpr(..), parseType, parseExpr) where
+module Ennalleen.Parser (parseType, parseExpr) where
 
 import Data.Char (isAlpha)
 import Data.Bifunctor (first)
 import Control.Monad.Combinators.Expr (Operator(..), makeExprParser)
 import Data.Functor (($>), (<&>))
 import Data.Void (Void)
-import Ennalleen.BaseSyntax
+import Ennalleen.Syntax
 {- One significant improvement to Haskell's module system would be the ability
    to mark imports private, so that the compiler would enforce you didn't
    re-export any of their types (or anything else). That is the real meaning of
@@ -22,15 +22,6 @@ import Ennalleen.BaseSyntax
 import Text.Megaparsec
 import Text.Megaparsec.Char (space)
 import qualified Text.Megaparsec.Char.Lexer as L
-
-class ParsedExpr a where
-  injectLet :: Name -> a -> a -> a
-  injectVar :: Name -> a
-  injectInt :: Int -> a
-  injectLam :: Name -> a -> a
-  injectIfT :: a -> a -> a -> a
-  injectAp :: a -> a -> a
-  injectOp :: BinOp -> a -> a -> a
 
 type Parser = Parsec Void String
 
@@ -67,38 +58,38 @@ eLet =
   <* keyword "="    <*> expr
   <* keyword "$in"  <*> expr
 
-eVar :: ParsedExpr a => Parser a
+eVar :: InjectLCFOAS a => Parser a
 eVar = name <&> injectVar
 
-eInt :: ParsedExpr a => Parser a
+eInt :: InjectInt a => Parser a
 eInt = L.lexeme space L.decimal <&> injectInt
 
-operators :: ParsedExpr a => [[Operator Parser a]]
+operators :: (InjectLCFOAS a, InjectOp2 a) => [[Operator Parser a]]
 operators =
   -- Brent Yorgey's hack for parsing function application
   -- https://github.com/mrkkrp/megaparsec/issues/245#issue-249916596
   -- The naive solution leads to infinite left-recursion and eats up all your
   -- computer's memory
-  [ [InfixN (symbol "" $> injectAp)]
-  , [InfixN (symbol "*" $> injectOp Times)]
-  , [InfixN (symbol "+" $> injectOp Plus), InfixL (symbol "-" $> injectOp Minus)]
-  , [InfixN (symbol "<" $> injectOp Less), InfixN (symbol "==" $> injectOp Equal)]
+  [ [InfixN (symbol "" $> injectAppl)]
+  , [InfixN (symbol "*" $> injectOp2 Times)]
+  , [InfixN (symbol "+" $> injectOp2 Plus), InfixL (symbol "-" $> injectOp2 Minus)]
+  , [InfixN (symbol "<" $> injectOp2 Less), InfixN (symbol "==" $> injectOp2 Equal)]
   ]
 
-terminalExpr :: ParsedExpr a => Parser a
+terminalExpr :: (InjectLCFOAS a, InjectInt a) => Parser a
 terminalExpr = try eVar <|> eInt
 
 eIf :: ParsedExpr a => Parser a
 eIf =
-  pure injectIfT
+  pure injectIf
   <* keyword "$if"   <*> expr
   <* keyword "$then" <*> expr
   <* keyword "$else" <*> expr
 
 eLambda :: ParsedExpr a => Parser a
 eLambda =
-  pure injectLam  <*> name
-  <* keyword "=>" <*> expr
+  pure injectLambda <*> name
+  <* keyword "=>"   <*> expr
 
 nonInfixExpr :: ParsedExpr a => Parser a
 -- TODO support parentheticals

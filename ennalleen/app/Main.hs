@@ -1,12 +1,11 @@
-{-# LANGUAGE TypeApplications #-}
 module Main where
 
-import Ennalleen.Syntax
+import Ennalleen.Syntax ()
 import Ennalleen.Parser
 import System.IO (hFlush, stdout)
 
 parseAndPrint :: String -> String
-parseAndPrint = either id (show @Expr). parseExpr
+parseAndPrint = either id id . parseExpr
 
 loop :: IO ()
 loop = do
