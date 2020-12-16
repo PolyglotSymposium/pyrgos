@@ -7,14 +7,18 @@ typedef struct VM VM;
 
 VM* make_vm();
 
-void qsymbol(VM*, size_t);
+void qsym(VM*, size_t);
+void qstr(VM*, const char* const);
+
 void qdup(VM*);
 void qdrop(VM*);
 void qswap(VM*);
 void qover(VM*);
 
 void qadd(VM*);
+void qcat(VM*);
 
 void qprsym(VM*);
+void qprstr(VM*);
 
 #endif//__QUATTOR_VM_H__

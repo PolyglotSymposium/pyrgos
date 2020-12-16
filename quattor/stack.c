@@ -107,6 +107,13 @@ size_t pop_val(Stack* stack) {
   return (size_t)x;
 }
 
+void* pop_ptr(Stack* stack) {
+  void* x = NULL;
+  bool x_is_ptr = pop(stack, &x);
+  assert(x_is_ptr);
+  return x;
+}
+
 size_t peek_val(Stack* stack) {
   void* x = NULL;
   bool x_is_ptr = peek(stack, &x);
@@ -114,9 +121,9 @@ size_t peek_val(Stack* stack) {
   return (size_t)x;
 }
 
-void* pop_ptr(Stack* stack) {
+const void* const peek_ptr(Stack* stack) {
   void* x = NULL;
-  bool x_is_ptr = pop(stack, &x);
+  bool x_is_ptr = peek(stack, &x);
   assert(x_is_ptr);
   return x;
 }

@@ -22,10 +22,17 @@ int main(int argc, char* argv[])
       qover(vm);
     } else if (strncmp(buffer, "add", 3) == 0) {
       qadd(vm);
+    } else if (strncmp(buffer, "cat", 3) == 0) {
+      qcat(vm);
     } else if (strncmp(buffer, "prsym", 5) == 0) {
       qprsym(vm);
+    } else if (strncmp(buffer, "prstr", 5) == 0) {
+      qprstr(vm);
     } else if (strncmp(buffer, "sym ", 4) == 0) {
-      qsymbol(vm, strtoul(buffer + 4, &end, 10));
+      qsym(vm, strtoul(buffer + 4, &end, 10));
+    } else if (strncmp(buffer, "str ", 4) == 0) {
+      buffer[strcspn(buffer, "\r\n")] = 0;
+      qstr(vm, buffer + 4);
     } else {
       fprintf(stderr, "ERROR: unable to parse: %s", buffer);
     }
