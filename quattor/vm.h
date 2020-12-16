@@ -19,6 +19,7 @@ void qadd(VM*);
 void qcat(VM*);
 
 void qprsym(VM*);
+void qprchr(VM*);
 void qprstr(VM*);
 
 #endif//__QUATTOR_VM_H__

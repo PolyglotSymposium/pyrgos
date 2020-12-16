@@ -1,5 +1,6 @@
 #include "vm.h"
 #include "stack.h"
+#include "tagged.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -20,14 +21,14 @@ void qsym(VM* vm, size_t x) {
 void qstr(VM* vm, const char* const x) {
   char* s = (char*)malloc(28);
   strcpy(s, x);
-  push_ptr(vm->stack, s);
+  push_ptr(vm->stack, tag_cstr(s));
 }
 
 void qdup(VM* vm) {
   void* x = NULL;
   bool is_ptr = peek(vm->stack, &x);
   if (is_ptr) {
-    push_ptr(vm->stack, strdup(x));
+    push_ptr(vm->stack, copy(x));
   } else {
     push_val(vm->stack, (size_t)x);
   }
@@ -74,7 +75,7 @@ void qover(VM* vm) {
     push_val(vm->stack, (size_t)y);
   }
   if (x_is_ptr) {
-    push_ptr(vm->stack, strdup(x));
+    push_ptr(vm->stack, copy(x));
   } else {
     push_val(vm->stack, (size_t)x);
   }
@@ -89,13 +90,17 @@ void qadd(VM* vm) {
 void qcat(VM* vm) {
   void* x = pop_ptr(vm->stack);
   const void* y = peek_ptr(vm->stack);
-  push_ptr(vm->stack, strcat(x, y));
+  push_ptr(vm->stack, tag_cstr(strcat(untag_cstr(x), untag_cstr(y))));
 }
 
 void qprsym(VM* vm) {
   fprintf(stdout, "%lu\n", peek_val(vm->stack));
 }
 
+void qprchr(VM* vm) {
+  fprintf(stdout, "%c\n", (int)peek_val(vm->stack));
+}
+
 void qprstr(VM* vm) {
-  fprintf(stdout, "%s\n", peek_ptr(vm->stack));
+  fprintf(stdout, "%s\n", untag_cstr(peek_ptr(vm->stack)));
 }

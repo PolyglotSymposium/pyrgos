@@ -28,6 +28,8 @@ int main(int argc, char* argv[])
       qprsym(vm);
     } else if (strncmp(buffer, "prstr", 5) == 0) {
       qprstr(vm);
+    } else if (strncmp(buffer, "prchr", 5) == 0) {
+      qprchr(vm);
     } else if (strncmp(buffer, "sym ", 4) == 0) {
       qsym(vm, strtoul(buffer + 4, &end, 10));
     } else if (strncmp(buffer, "str ", 4) == 0) {

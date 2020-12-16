@@ -1,4 +1,4 @@
-FILES		= stack.c vm.c main.c
+FILES		= stack.c pair.c tagged.c vm.c main.c
 CC			= gcc
 CFLAGS	= -Wall -g
 
