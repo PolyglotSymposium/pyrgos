@@ -24,8 +24,10 @@ int main(int argc, char* argv[])
       qadd(vm);
     } else if (strncmp(buffer, "prsym", 5) == 0) {
       qprsym(vm);
+    } else if (strncmp(buffer, "sym ", 4) == 0) {
+      qsymbol(vm, strtoul(buffer + 4, &end, 10));
     } else {
-      qsymbol(vm, strtoul(buffer, &end, 10));
+      fprintf(stderr, "ERROR: unable to parse: %s", buffer);
     }
   }
   return 0;

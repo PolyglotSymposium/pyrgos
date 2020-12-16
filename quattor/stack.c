@@ -78,6 +78,16 @@ static Stack shrink_stack(Stack stack) {
   return stack;
 }
 
+bool peek(Stack* stack, void** out) {
+  if (stack->top == SEGMENT_EMPTY) {
+    *stack = shrink_stack(*stack);
+  }
+  *out = (void*)stack->segment[stack->top];
+  size_t meta = stack->segment[METADATA_WORD];
+  bool is_ptr = meta & 1;
+  return is_ptr;
+}
+
 bool pop(Stack* stack, void** out) {
   if (stack->top == SEGMENT_EMPTY) {
     *stack = shrink_stack(*stack);
@@ -93,6 +103,13 @@ bool pop(Stack* stack, void** out) {
 size_t pop_val(Stack* stack) {
   void* x = NULL;
   bool x_is_ptr = pop(stack, &x);
+  assert(!x_is_ptr);
+  return (size_t)x;
+}
+
+size_t peek_val(Stack* stack) {
+  void* x = NULL;
+  bool x_is_ptr = peek(stack, &x);
   assert(!x_is_ptr);
   return (size_t)x;
 }

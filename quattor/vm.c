@@ -18,7 +18,7 @@ void qsymbol(VM* vm, size_t x) {
 
 void qdup(VM* vm) {
   void* x = NULL;
-  bool is_ptr = pop(vm->stack, x);
+  bool is_ptr = pop(vm->stack, &x);
   if (is_ptr) {
     push_ptr(vm->stack, x);
     // TODO duplicate
@@ -31,7 +31,7 @@ void qdup(VM* vm) {
 
 void qdrop(VM* vm) {
   void* x = NULL;
-  bool is_ptr = pop(vm->stack, x);
+  bool is_ptr = pop(vm->stack, &x);
   if (is_ptr) {
     // TODO deallocate
   }
@@ -39,9 +39,9 @@ void qdrop(VM* vm) {
 
 void qswap(VM* vm) {
   void* x = NULL;
-  bool x_is_ptr = pop(vm->stack, x);
+  bool x_is_ptr = pop(vm->stack, &x);
   void* y = NULL;
-  bool y_is_ptr = pop(vm->stack, y);
+  bool y_is_ptr = pop(vm->stack, &y);
   if (x_is_ptr) {
     push_ptr(vm->stack, x);
   } else {
@@ -56,9 +56,9 @@ void qswap(VM* vm) {
 
 void qover(VM* vm) {
   void* x = NULL;
-  bool x_is_ptr = pop(vm->stack, x);
+  bool x_is_ptr = pop(vm->stack, &x);
   void* y = NULL;
-  bool y_is_ptr = pop(vm->stack, y);
+  bool y_is_ptr = pop(vm->stack, &y);
   if (x_is_ptr) {
     push_ptr(vm->stack, x);
   } else {
@@ -84,5 +84,5 @@ void qadd(VM* vm) {
 }
 
 void qprsym(VM* vm) {
-  fprintf(stdout, "%lu\n", pop_val(vm->stack));
+  fprintf(stdout, "%lu\n", peek_val(vm->stack));
 }
