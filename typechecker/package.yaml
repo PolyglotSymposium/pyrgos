@@ -1,6 +1,6 @@
 name:                typechecker
 version:             0.1.0.0
-github:              "kazark/typechecker"
+github:              "kazark/pyrgos"
 license:             BSD3
 author:              "Keith Pinson"
 maintainer:          "kazark@zoho.com"
