@@ -10,4 +10,5 @@ main = do
   let lambda  = Lambda (Symbol "x") addition
   let expr = Appl (Annotate lambda addT) (IntLit 5)
   -- (x + _)(5)
-  putStrLn (show (synthesize (Context [(add, addT)]) expr))
+  let t = synthesize (Context [(add, addT)]) expr
+  putStrLn $ maybe "Failed to typecheck." (\x -> ": " ++ printType x) t

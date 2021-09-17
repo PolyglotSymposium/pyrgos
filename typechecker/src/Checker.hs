@@ -1,5 +1,8 @@
 module Checker
-    ( Context(..), Type(..), Expr(..), synthesize, Symbol(..)
+    ( Context(..)
+    , Symbol(..)
+    , Type(..), printType
+    , Expr(..), synthesize
     ) where
 
 import Control.Monad (guard)
@@ -9,7 +12,25 @@ data Type
   = TInt
   | TStr
   | TFun Type Type
-  deriving (Eq, Show)
+  deriving Eq
+
+isTFun :: Type -> Bool
+isTFun (TFun _ _) = True
+isTFun _ = False
+
+printType :: Type -> String
+printType TInt = "Int"
+printType TStr = "Str"
+printType (TFun a b) =
+  let
+    needParens = isTFun a
+    printA = printType a
+    printB = printType b
+    parenA =
+      if needParens
+      then "(" ++ printA ++ ")"
+      else printA
+  in parenA ++ " -> " ++ printB
 
 newtype Symbol = Symbol String deriving Eq
 
