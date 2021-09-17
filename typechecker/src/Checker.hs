@@ -1,4 +1,4 @@
-module Lib
+module Checker
     ( Context(..), Type(..), Expr(..), synthesize, Symbol(..)
     ) where
 

@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import Checker
 
 main :: IO ()
 main = do

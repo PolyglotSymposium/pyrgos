@@ -1,16 +1,16 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.3.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5a08c4e47937a5edf9214ca676050589058dc888d54d23f1ff5469814d403a17
+-- hash: 4482ddd9b3e368d7eaec8eff55bbf015477b36a308e7dc334c5182208d6174bf
 
 name:           typechecker
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/kazark/typechecker#readme>
-homepage:       https://github.com/kazark/typechecker#readme
-bug-reports:    https://github.com/kazark/typechecker/issues
+homepage:       https://github.com/kazark/pyrgos#readme
+bug-reports:    https://github.com/kazark/pyrgos/issues
 author:         Keith Pinson
 maintainer:     kazark@zoho.com
 copyright:      2020 Keith Pinson
@@ -23,11 +23,11 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/kazark/typechecker
+  location: https://github.com/kazark/pyrgos
 
 library
   exposed-modules:
-      Lib
+      Checker
   other-modules:
       Paths_typechecker
   hs-source-dirs:
