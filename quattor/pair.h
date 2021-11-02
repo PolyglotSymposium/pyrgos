@@ -1,11 +1,9 @@
 #ifndef __QUATTOR_PAIR_H__
 #define __QUATTOR_PAIR_H__
 
-#include <stdbool.h>
+#include "stack.h"
 
-typedef struct Pair Pair;
-
-Pair* make_pair(bool, void*, bool, void*);
-Pair* copy_pair(Pair*);
+void cons(Stack*);
+void uncons(Stack*);
 
 #endif//__QUATTOR_PAIR_H__

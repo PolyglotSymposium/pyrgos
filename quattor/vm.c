@@ -1,5 +1,6 @@
 #include "vm.h"
 #include "stack.h"
+#include "pair.h"
 #include "tagged.h"
 #include <stdio.h>
 #include <string.h>
@@ -91,6 +92,10 @@ void qadd(VM* vm) {
   size_t y = pop_val(vm->stack);
   push_val(vm->stack, x + y);
 }
+
+void qcons(VM *vm) { cons(vm->stack); }
+
+void quncons(VM* vm) { uncons(vm->stack); }
 
 void qcat(VM* vm) {
   void* x = pop_ptr(vm->stack);

@@ -21,6 +21,9 @@ void qswap(VM*);
 void qsymovr(VM*);
 void qstrovr(VM*);
 
+void qcons(VM*);
+void quncons(VM*);
+
 void qadd(VM*);
 void qcat(VM*);
 

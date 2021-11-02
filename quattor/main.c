@@ -29,6 +29,10 @@ int main(int argc, char* argv[])
       qadd(vm);
     } else if (strncmp(buffer, "cat", 3) == 0) {
       qcat(vm);
+    } else if (strncmp(buffer, "cons", 4) == 0) {
+      qcons(vm);
+    } else if (strncmp(buffer, "uncons", 6) == 0) {
+      quncons(vm);
     } else if (strncmp(buffer, "prsym", 5) == 0) {
       qprsym(vm);
     } else if (strncmp(buffer, "prstr", 5) == 0) {
