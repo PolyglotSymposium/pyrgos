@@ -1,35 +1,30 @@
 #include "pair.h"
+#include "tagged.h"
 #include <stdlib.h>
+#include <string.h>
 
 void* copy(void*);
 
+// TODO confirm size_of is has compacted the two bools
 struct Pair {
+  bool first_is_ptr;
+  bool second_is_ptr;
   void* first;
   void* second;
 };
 
-static Pair* tag_pair_ptr(Pair* pair, bool x_is_ptr, bool y_is_ptr) {
-  return pair; // TODO untag
-}
-
-static Pair* copy_pair_tag(Pair* dst, Pair* src) {
-  return pair; // TODO untag
-}
-
 Pair* make_pair(bool x_is_ptr, void* x, bool y_is_ptr, void* y) {
   Pair* pair = (Pair*)malloc(sizeof(Pair));
+  pair->first_is_ptr = x_is_ptr;
+  pair->second_is_ptr = y_is_ptr;
   pair->first = x;
   pair->second = y;
-  return tag_pair_ptr(pair, x_is_ptr, y_is_ptr);
-}
-
-Pair* pair_ptr(Pair* pair) {
-  return pair; // TODO untag
+  return tag_pair(pair);
 }
 
 Pair* copy_pair(Pair* pair) {
-  Pair* src = pair_ptr(pair);
+  Pair* src = untag_pair(pair);
   Pair* dst = (Pair*)malloc(sizeof(Pair));
   memcpy(dst, src, sizeof(Pair));
-  return tag_pair_ptr(dst, pair);
+  return tag_pair(dst);
 }

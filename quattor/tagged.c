@@ -45,20 +45,29 @@ void* untag_cstr(const void* const p) {
 
 void* untag_pair(const void* const p) {
   assert(is_pair(p));
-  return pair_ptr(untag(p));
+  return untag(p);
 }
 
-void* copy(void* p) {
+void* cstr_copy(const void* p) {
   void* out = NULL;
   switch ((size_t)p & UNMASK) {
-  case CSTR_TAG: out = strdup   (untag(p)); break;
-  case PAIR_TAG: out = copy_pair(untag(p)); break;
+  case CSTR_TAG: out = strdup(untag(p)); break;
   default:
     {
-      size_t UNKNOWN_TAG_POINTER = 1;
-      assert(UNKNOWN_TAG_POINTER);
+      size_t NOT_STR_POINTER = 1;
+      assert(NOT_STR_POINTER);
     }
-    break;
   }
   return out;
+}
+
+void cstr_free(void* p) {
+  switch ((size_t)p & UNMASK) {
+  case CSTR_TAG: free(untag(p)); break;
+  default:
+    {
+      size_t NOT_STR_POINTER = 1;
+      assert(NOT_STR_POINTER);
+    }
+  }
 }

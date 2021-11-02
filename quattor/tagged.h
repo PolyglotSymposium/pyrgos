@@ -10,6 +10,7 @@ bool is_pair(const void* const);
 void* untag_cstr(const void* const);
 void* untag_pair(const void* const);
 
-void* copy(void*);
+void* cstr_copy(const void*);
+void cstr_free(void*);
 
 #endif//__QUATTOR_TAGGED_POINTERS_H__

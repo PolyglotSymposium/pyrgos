@@ -24,22 +24,23 @@ void qstr(VM* vm, const char* const x) {
   push_ptr(vm->stack, tag_cstr(s));
 }
 
-void qdup(VM* vm) {
-  void* x = NULL;
-  bool is_ptr = peek(vm->stack, &x);
-  if (is_ptr) {
-    push_ptr(vm->stack, copy(x));
-  } else {
-    push_val(vm->stack, (size_t)x);
-  }
+void qstrdup(VM* vm) {
+  const void* x = peek_ptr(vm->stack);
+  push_ptr(vm->stack, cstr_copy(x));
 }
 
-void qdrop(VM* vm) {
-  void* x = NULL;
-  bool is_ptr = pop(vm->stack, &x);
-  if (is_ptr) {
-    free(x);
-  }
+void qsymdup(VM* vm) {
+  size_t x = peek_val(vm->stack);
+  push_val(vm->stack, x);
+}
+
+void qstrdrp(VM* vm) {
+  void* x = pop_ptr(vm->stack);
+  cstr_free(x);
+}
+
+void qsymdrp(VM* vm) {
+  pop_val(vm->stack);
 }
 
 void qswap(VM* vm) {
@@ -59,26 +60,30 @@ void qswap(VM* vm) {
   }
 }
 
-void qover(VM* vm) {
-  void* x = NULL;
-  bool x_is_ptr = pop(vm->stack, &x);
+void qstrovr(VM* vm) {
+  void* x = pop_ptr(vm->stack);
   void* y = NULL;
   bool y_is_ptr = pop(vm->stack, &y);
-  if (x_is_ptr) {
-    push_ptr(vm->stack, x);
-  } else {
-    push_val(vm->stack, (size_t)x);
-  }
+  push_ptr(vm->stack, cstr_copy(x));
   if (y_is_ptr) {
     push_ptr(vm->stack, y);
   } else {
     push_val(vm->stack, (size_t)y);
   }
-  if (x_is_ptr) {
-    push_ptr(vm->stack, copy(x));
+  push_ptr(vm->stack, x);
+}
+
+void qsymovr(VM* vm) {
+  size_t x = pop_val(vm->stack);
+  void *y = NULL;
+  bool y_is_ptr = pop(vm->stack, &y);
+  push_val(vm->stack, x);
+  if (y_is_ptr) {
+    push_ptr(vm->stack, y);
   } else {
-    push_val(vm->stack, (size_t)x);
+    push_val(vm->stack, (size_t)y);
   }
+  push_val(vm->stack, x);
 }
 
 void qadd(VM* vm) {

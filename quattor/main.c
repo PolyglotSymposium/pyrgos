@@ -11,15 +11,20 @@ int main(int argc, char* argv[])
   while (read(0, &buffer, 32) > 0) {
     if (strncmp(buffer, "quit", 4) == 0) {
       break;
-    }
-    if (strncmp(buffer, "dup", 3) == 0) {
-      qdup(vm);
-    } else if (strncmp(buffer, "drop", 4) == 0) {
-      qdrop(vm);
+    } else if (strncmp(buffer, "symdup", 6) == 0) {
+      qsymdup(vm);
+    } else if (strncmp(buffer, "strdup", 6) == 0) {
+      qstrdup(vm);
+    } else if (strncmp(buffer, "strdrp", 6) == 0) {
+      qstrdrp(vm);
+    } else if (strncmp(buffer, "symdrp", 6) == 0) {
+      qsymdrp(vm);
     } else if (strncmp(buffer, "swap", 4) == 0) {
       qswap(vm);
-    } else if (strncmp(buffer, "over", 4) == 0) {
-      qover(vm);
+    } else if (strncmp(buffer, "symovr", 6) == 0) {
+      qsymovr(vm);
+    } else if (strncmp(buffer, "strovr", 6) == 0) {
+      qstrovr(vm);
     } else if (strncmp(buffer, "add", 3) == 0) {
       qadd(vm);
     } else if (strncmp(buffer, "cat", 3) == 0) {

@@ -10,10 +10,16 @@ VM* make_vm();
 void qsym(VM*, size_t);
 void qstr(VM*, const char* const);
 
-void qdup(VM*);
-void qdrop(VM*);
+void qsymdup(VM*);
+void qstrdup(VM*);
+
+void qsymdrp(VM*);
+void qstrdrp(VM*);
+
 void qswap(VM*);
-void qover(VM*);
+
+void qsymovr(VM*);
+void qstrovr(VM*);
 
 void qadd(VM*);
 void qcat(VM*);
