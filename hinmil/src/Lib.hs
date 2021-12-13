@@ -1,4 +1,10 @@
-module Lib where
+module Lib
+  ( Term(..), printTerm
+  , Substitution(..), printSubst
+  , Substitutions, sub1, printSubsts
+  , UnificationFailure, printUFailure
+  , unify
+  ) where
 
 import Data.List.NonEmpty (NonEmpty(..), toList)
 import Data.List (intersperse)
@@ -14,7 +20,7 @@ printTerm (TyApp name args) = name ++ "(" ++ join (intersperse "," $ printTerm <
 
 data Substitution =
   -- | Substitute in the term when the name is matched.
-  Subst Term Name
+  Subst Term Name -- "<term>/<name>"
 
 printSubst :: Substitution -> String
 printSubst (Subst term name) = printTerm term ++ "/" ++ name
@@ -44,7 +50,7 @@ subs s (TyApp name args) = TyApp name $ fmap (subs s) args
 instance Semigroup Substitution where
   -- Substitutions on the right are applied to the terms in the substitutions on
   -- the left.
-  (Subst t2 v2) <> s1 = Subst (subs (sub1 s1) t2) v2
+  (Subst tL vL) <> sR = Subst (subs (sub1 sR) tL) vL
 
 instance Semigroup Substitutions where
   -- Substitutions from the right need to be applied to substitutions from the
@@ -59,20 +65,25 @@ instance Semigroup Substitutions where
 
 data UnificationFailure = ArityMismatch | CircularOccurence | TypeFunctionMismatch
 
+printUFailure :: UnificationFailure -> String
+printUFailure ArityMismatch = "arity mismatch"
+printUFailure CircularOccurence = "circular occurrence"
+printUFailure TypeFunctionMismatch = "type function mismatch"
+
 occurs :: Name -> Term -> Bool
-occurs v (TyApp _ ((TyVar vn) :| [])) = vn == v
-occurs v (TyApp name ((TyVar vn) :| (t:tt))) = if vn == v then True else occurs v (TyApp name (t :| tt))
+occurs v (TyApp _ (TyVar vn :| [])) = vn == v
+occurs v (TyApp name (TyVar vn :| (t:tt))) = if vn == v then True else occurs v (TyApp name (t :| tt))
 occurs v (TyApp _ (s :| [])) = occurs v s
 occurs v (TyApp name (s :| (t:tt))) = occurs v s || occurs v (TyApp name (t :| tt))
 occurs v (TyVar vn) = vn == v
 
 unify :: Term -> Term -> Either UnificationFailure Substitutions
-unify t1 t2 = iter (Substs []) t1 t2 where
+unify = iter (Substs []) where
   iter :: Substitutions -> Term -> Term -> Either UnificationFailure Substitutions
-  iter (Substs r) (TyVar v1) (TyVar v2) = Right $ Substs $ if (v1 == v2) then [] else (Subst t1 v2 : r)
-  iter (Substs r) (TyVar v) (TyApp _ _) =
+  iter (Substs r) t1@(TyVar v1) (TyVar v2) = Right $ Substs $ if (v1 == v2) then r else (Subst t1 v2 : r)
+  iter (Substs r) (TyVar v) t2@(TyApp _ _) =
     if occurs v t2 then Left CircularOccurence else Right $ Substs (Subst t2 v : r)
-  iter (Substs r) (TyApp _ _) (TyVar v) =
+  iter (Substs r) t1@(TyApp _ _) (TyVar v) =
     if occurs v t1 then Left CircularOccurence else Right $ Substs (Subst t1 v : r)
   iter r (TyApp name1 args1) (TyApp name2 args2) =
     if (name1 == name2)
