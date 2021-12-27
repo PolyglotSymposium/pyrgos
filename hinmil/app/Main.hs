@@ -4,9 +4,21 @@ import Lib
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
 
-printUResult :: Either UnificationFailure Substitutions -> String
-printUResult (Left failure) = "ERROR: " ++ printUFailure failure
-printUResult (Right substs) = "MGU: " ++ printSubsts substs
+printUResult :: String -> Either UnificationFailure Substitutions -> String
+printUResult name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
+printUResult name (Right substs) = name ++ " MGU: " ++ printSubsts substs
+
+compareSubstituted :: Term -> Term -> Substitutions -> String
+compareSubstituted term1 term2 ss
+  | subs ss term1 == subs ss term2 = "Unified!"
+  | otherwise = intercalate " "
+      [ "left: "
+      , printTerm $ subs ss term1
+      , "right:"
+      , printTerm $ subs ss term2
+      , "MGU:"
+      , printSubsts ss
+      ]
 
 s1 :: Substitutions
 s1 = sub1 $ Subst (TyVar "a") "x"
@@ -86,25 +98,15 @@ ex5Term2 =
 ex5 :: Either UnificationFailure Substitutions
 ex5 = unify ex5Term1 ex5Term2
 
-
-compareSubstituted :: Term -> Term -> Substitutions -> String
-compareSubstituted term1 term2 ss
-  | subs ss term1 == subs ss term2 = "Unified!"
-  | otherwise = intercalate " "
-      [ "left: "
-      , printTerm $ subs ss term1
-      , "right:"
-      , printTerm $ subs ss term2
-      , "MGU:"
-      , printSubsts ss
-      ]
-
-
 main :: IO ()
 main = do
-  putStrLn $ printUResult ex1
-  putStrLn $ printUResult ex2
-  putStrLn $ printUResult ex3
-  putStrLn $ printUResult ex4
-  putStrLn $ printUResult ex5
-  putStrLn $ either printUFailure (compareSubstituted ex5Term1 ex5Term2) ex5
+  putStrLn "SUBSTITUTION EXAMPLES:"
+  putStrLn $ "1: " ++ printSubsts sTotalL ++ " =? " ++ printSubsts sTotalR
+  putStrLn "UNIFICATION EXAMPLES:"
+  putStrLn $ printUResult "1:" ex1
+  putStrLn $ printUResult "2:" ex2
+  putStrLn $ printUResult "3:" ex3
+  putStrLn $ printUResult "4:" ex4
+  let ex5part1 = printUResult "5:" ex5
+  let ex5part2 = either printUFailure (compareSubstituted ex5Term1 ex5Term2) ex5
+  putStrLn $ ex5part1 ++ " -> " ++ ex5part2

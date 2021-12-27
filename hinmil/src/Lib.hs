@@ -37,14 +37,16 @@ sub1 s = Substs [s]
 -- | Substitutions closer to the head get precedence over ones closer to the
 -- | tail.
 subs :: Substitutions -> Term -> Term
+-- If we have no substitutions, return the same term.
+subs (Substs []) term = term
 -- If we have hit a leaf of our type AST, to wit, a type variable, then iterate
 -- through the substitutions, looking for a match on its name. If found,
 -- substitute in the corresponding term, and short-circuit.
-subs (Substs ss) term = foldr replace term ss where
-  replace :: Substitution -> Term -> Term
-  replace (Subst t1 v1) t@(TyVar name) =
-    if name == v1 then t1 else t
-  replace s (TyApp name args) = TyApp name $ fmap (subs $ Substs [s]) args
+subs (Substs (Subst t1 v1 : ss)) term@(TyVar name) =
+  if name == v1 then t1 else subs (Substs ss) term
+-- If we have hit a type application, apply all the substitutions to all the
+-- arguments of the type operator.
+subs s (TyApp name args) = TyApp name $ fmap (subs s) args
 
 instance Semigroup Substitution where
   -- Substitutions on the right are applied to the terms in the substitutions on
@@ -94,7 +96,7 @@ unify = iter (Substs []) where
     substitutions' <- iter (Substs []) (subs substs arg1) (subs substs arg2)
     case (arg1s, arg2s) of
       ([], []) ->
-        let Substs ss = substitutions' <> substs
+        let Substs ss = substs <> substitutions'
         in Right $ Substs $ reverse ss
       (arg1' : arg1s', arg2' : arg2s') ->
         let ss = substitutions' <> substs
