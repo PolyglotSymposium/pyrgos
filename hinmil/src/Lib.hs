@@ -99,7 +99,7 @@ unify = iter (Substs []) where
         let Substs ss = substs <> substitutions'
         in Right $ Substs $ reverse ss
       (arg1' : arg1s', arg2' : arg2s') ->
-        let ss = substitutions' <> substs
+        let ss = substs <> substitutions'
             args1 = arg1' :| arg1s'
             args2 = arg2' :| arg2s'
         in unify_args ss args1 args2
