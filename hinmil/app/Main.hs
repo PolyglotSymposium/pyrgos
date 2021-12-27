@@ -1,6 +1,7 @@
 module Main where
 
 import Lib
+import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
 
 printUResult :: Either UnificationFailure Substitutions -> String
@@ -69,6 +70,7 @@ ex5Term1 =
   let
     t1 = TyApp "Vector" (TyVar "A" :| [])
     t2 = TyVar "A"
+  -- Either[Vector[A], A]
   in TyApp "Either" (t1 :| [t2])
 
 ex5Term2 :: Term
@@ -76,12 +78,27 @@ ex5Term2 =
   let
     t1 = TyVar "B"
     t2 = TyApp "Maybe" (TyVar "C" :| [])
+  -- Either[B,Maybe[C]]
   in TyApp "Either" (t1 :| [t2])
 
 -- {Maybe[C]/A, Vector[Maybe[C]]/B}
 
 ex5 :: Either UnificationFailure Substitutions
 ex5 = unify ex5Term1 ex5Term2
+
+
+compareSubstituted :: Term -> Term -> Substitutions -> String
+compareSubstituted term1 term2 ss
+  | subs ss term1 == subs ss term2 = "Unified!"
+  | otherwise = intercalate " "
+      [ "left: "
+      , printTerm $ subs ss term1
+      , "right:"
+      , printTerm $ subs ss term2
+      , "MGU:"
+      , printSubsts ss
+      ]
+
 
 main :: IO ()
 main = do
@@ -90,3 +107,4 @@ main = do
   putStrLn $ printUResult ex3
   putStrLn $ printUResult ex4
   putStrLn $ printUResult ex5
+  putStrLn $ either printUFailure (compareSubstituted ex5Term1 ex5Term2) ex5
