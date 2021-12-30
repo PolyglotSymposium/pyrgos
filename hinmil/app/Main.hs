@@ -98,10 +98,34 @@ ex5Term2 =
 ex5 :: Either UnificationFailure Substitutions
 ex5 = unify ex5Term1 ex5Term2
 
+ex6Term1 :: Term
+ex6Term1 =
+  let
+    t1 = TyApp "Maybe" (TyVar "A" :| [])
+    t2 = TyVar "A"
+    t3 = TyApp "Either" (TyVar "A" :| [TyVar "E"])
+  -- Triple[Maybe[A],A,Either[A, E]]
+  in TyApp "Triple" (t1 :| [t2, t3])
+
+ex6Term2 :: Term
+ex6Term2 =
+  let
+    t1 = TyVar "B"
+    t2 = TyApp "Maybe"  (TyVar "C" :| [])
+    t3 = TyApp "Either" (TyVar "E" :| [TyVar "D"])
+  -- Triple[B,Maybe[C],Either[E,Maybe[D]]]
+  in TyApp "Triple" (t1 :| [t2, t3])
+
+ex6 :: Either UnificationFailure Substitutions
+ex6 = unify ex6Term1 ex6Term2
+
 main :: IO ()
 main = do
   putStrLn "SUBSTITUTION EXAMPLES:"
+  putStrLn "Associative:"
   putStrLn $ "1: " ++ printSubsts sTotalL ++ " =? " ++ printSubsts sTotalR
+  putStrLn "Not commutative:"
+  putStrLn $ "2: " ++ printSubsts (s3 <> s2 <> s1) ++ " != " ++ printSubsts (s1 <> s2 <> s3)
   putStrLn "UNIFICATION EXAMPLES:"
   putStrLn $ printUResult "1:" ex1
   putStrLn $ printUResult "2:" ex2
@@ -110,3 +134,7 @@ main = do
   let ex5part1 = printUResult "5:" ex5
   let ex5part2 = either printUFailure (compareSubstituted ex5Term1 ex5Term2) ex5
   putStrLn $ ex5part1 ++ " -> " ++ ex5part2
+  putStrLn "Fails if substitutions combine out of order"
+  let ex6part1 = printUResult "6:" ex6
+  let ex6part2 = either printUFailure (compareSubstituted ex6Term1 ex6Term2) ex6
+  putStrLn $ ex6part1 ++ " -> " ++ ex6part2
