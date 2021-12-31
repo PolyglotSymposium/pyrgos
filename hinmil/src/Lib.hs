@@ -79,28 +79,26 @@ occurs v (TyApp name (s :| (t:tt))) = occurs v s || occurs v (TyApp name (t :| t
 occurs v (TyVar vn) = vn == v
 
 unify :: Term -> Term -> Either UnificationFailure Substitutions
-unify = iter (Substs []) where
-  iter :: Substitutions -> Term -> Term -> Either UnificationFailure Substitutions
-  iter (Substs r) t1@(TyVar v1) (TyVar v2) = Right $ Substs $ if (v1 == v2) then r else (Subst t1 v2 : r)
-  iter (Substs r) (TyVar v) t2@(TyApp _ _) =
-    if occurs v t2 then Left CircularOccurence else Right $ Substs (Subst t2 v : r)
-  iter (Substs r) t1@(TyApp _ _) (TyVar v) =
-    if occurs v t1 then Left CircularOccurence else Right $ Substs (Subst t1 v : r)
-  iter r (TyApp name1 args1) (TyApp name2 args2) =
-    if (name1 == name2)
-    then unify_args r args1 args2
-    else Left TypeFunctionMismatch
+unify t1@(TyVar v1) (TyVar v2) = Right $ Substs $ if (v1 == v2) then [] else [(Subst t1 v2)]
+unify (TyVar v) t2@(TyApp _ _) =
+  if occurs v t2 then Left CircularOccurence else Right $ Substs [(Subst t2 v)]
+unify t1@(TyApp _ _) (TyVar v) =
+  if occurs v t1 then Left CircularOccurence else Right $ Substs [(Subst t1 v)]
+unify (TyApp name1 args1) (TyApp name2 args2) =
+  if (name1 == name2)
+  then unify_args (Substs []) args1 args2
+  else Left TypeFunctionMismatch
 
-  unify_args :: Substitutions -> NonEmpty Term -> NonEmpty Term -> Either UnificationFailure Substitutions
-  unify_args substs (arg1 :| arg1s) (arg2 :| arg2s) = do
-    substitutions' <- iter (Substs []) (subs substs arg1) (subs substs arg2)
-    case (arg1s, arg2s) of
-      ([], []) ->
-        let Substs ss = substs <> substitutions'
-        in Right $ Substs $ reverse ss
-      (arg1' : arg1s', arg2' : arg2s') ->
-        let ss = substitutions' <> substs
-            args1 = arg1' :| arg1s'
-            args2 = arg2' :| arg2s'
-        in unify_args ss args1 args2
-      (_, _)  -> Left ArityMismatch
+unify_args :: Substitutions -> NonEmpty Term -> NonEmpty Term -> Either UnificationFailure Substitutions
+unify_args substs (arg1 :| arg1s) (arg2 :| arg2s) = do
+  substitutions' <- unify (subs substs arg1) (subs substs arg2)
+  case (arg1s, arg2s) of
+    ([], []) ->
+      let Substs ss = substs <> substitutions'
+      in Right $ Substs $ reverse ss
+    (arg1' : arg1s', arg2' : arg2s') ->
+      let ss = substs <> substitutions'
+          args1 = arg1' :| arg1s'
+          args2 = arg2' :| arg2s'
+      in unify_args ss args1 args2
+    (_, _)  -> Left ArityMismatch
