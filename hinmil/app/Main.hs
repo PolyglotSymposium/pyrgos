@@ -112,7 +112,7 @@ ex6Term2 =
   let
     t1 = TyVar "B"
     t2 = TyApp "Maybe"  (TyVar "C" :| [])
-    t3 = TyApp "Either" (TyVar "E" :| [TyVar "D"])
+    t3 = TyApp "Either" (TyVar "E" :| [TyApp "Maybe" (TyVar "D" :| [])])
   -- Triple[B,Maybe[C],Either[E,Maybe[D]]]
   in TyApp "Triple" (t1 :| [t2, t3])
 
