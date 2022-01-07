@@ -9,7 +9,7 @@ module Lib
 
 import Data.List.NonEmpty (NonEmpty(..), toList)
 import Data.List (intersperse)
-import Control.Monad (join)
+import Control.Monad (join, guard)
 
 type Name = String
 
@@ -35,7 +35,8 @@ sub1 :: Substitution -> Substitutions
 sub1 s = Substs [s]
 
 -- | Substitutions closer to the head get precedence over ones closer to the
--- | tail.
+-- | tail. Substitutions are pre-expanded as they are composed so we do not need
+-- | to recursively apply them here.
 subs :: Substitutions -> Term -> Term
 -- If we have no substitutions, return the same term.
 subs (Substs []) term = term
@@ -48,38 +49,58 @@ subs (Substs (Subst t1 v1 : ss)) term@(TyVar name) =
 -- arguments of the type operator.
 subs s (TyApp name args) = TyApp name $ fmap (subs s) args
 
+-- | Compose two substitutions in order to produce one substitution (as opposed
+-- | to composing two sets of substitutions in order to produce a set of
+-- | substitutions) is a way of making the left substitution more concrete
+-- | (assuming that the two substitutions have any relationship). The
+-- | substitution on the right is absorbed into it. The need to still have it
+-- | stand alone is handled in the composition of sets of substitutions rather
+-- | than here.
+-- |
+-- | For composition of sets of substitutions, see the Substitutions Semigroup
+-- | below.
 instance Semigroup Substitution where
   -- Substitutions on the right are applied to the terms in the substitutions on
-  -- the left.
+  -- the left. Do not confuse right and left here with being nearer to the head
+  -- or tail in the whole set of substitutions.
   (Subst tL vL) <> sR = Subst (subs (sub1 sR) tL) vL
 
+-- | Composition of sets of substitutions
 instance Semigroup Substitutions where
   -- Substitutions from the right need to be applied to substitutions from the
   -- left before being concatenated with the them.
   -- Substitutions from the right become leftmost (highest-priority).
   Substs seed <> Substs foldee = Substs $ foldr oneSubst seed foldee where
     -- We take the next highest-precedence substitution from the right, make it
-    -- our new highest-precedence substitution, and apply it to all of the
-    -- existing lower-precedence substitutions.
+    -- our new highest-precedence substitution (with `:`), and apply it to all
+    -- of the existing lower-precedence substitutions (with `fmap` and `<>`).
     oneSubst :: Substitution -> [Substitution] -> [Substitution]
     oneSubst s ss = s : fmap (<> s) ss
 
-data UnificationFailure = ArityMismatch | CircularOccurence | TypeFunctionMismatch
+-- | The unification algorithm can fail three ways.
+data UnificationFailure =
+  -- Arity mismatch between two type applications
+  ArityMismatch         |
+  -- Expansion of substitutions would result in nontermination
+  CircularOccurence     |
+  -- We have no higher-order unification here so we can only unify type
+  -- functions that are literally the same, to wit, the same name.
+  TypeFunctionMismatch  --
 
 printUFailure :: UnificationFailure -> String
 printUFailure ArityMismatch = "arity mismatch"
 printUFailure CircularOccurence = "circular occurrence"
 printUFailure TypeFunctionMismatch = "type function mismatch"
 
+-- | Check for circular occurrence. Circularity would result in nontermination
+-- | of our typechecker and unsoundness of our type system.
 occurs :: Name -> Term -> Bool
-occurs v (TyApp _ (TyVar vn :| [])) = vn == v
-occurs v (TyApp name (TyVar vn :| (t:tt))) = if vn == v then True else occurs v (TyApp name (t :| tt))
-occurs v (TyApp _ (s :| [])) = occurs v s
-occurs v (TyApp name (s :| (t:tt))) = occurs v s || occurs v (TyApp name (t :| tt))
-occurs v (TyVar vn) = vn == v
+occurs name (TyVar vname) = name == vname
+occurs name (TyApp _ args) = any (occurs name) args
 
 unify :: Term -> Term -> Either UnificationFailure Substitutions
-unify t1@(TyVar v1) (TyVar v2) = Right $ Substs $ if (v1 == v2) then [] else [(Subst t1 v2)]
+unify t1@(TyVar v1) (TyVar v2) =
+  Right $ Substs $ guard (v1 == v2) *> [Subst t1 v2]
 unify (TyVar v) t2@(TyApp _ _) =
   if occurs v t2 then Left CircularOccurence else Right $ Substs [(Subst t2 v)]
 unify t1@(TyApp _ _) (TyVar v) =
