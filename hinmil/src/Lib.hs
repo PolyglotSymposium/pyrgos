@@ -126,15 +126,15 @@ unify term@(TyApp _ _) (TyVar name) = mustNotOccur name term
 unify (TyApp name1 args1) (TyApp name2 args2) = do
   () <- typeFunctionsMatch name1 name2
   args <- arityMatch args1 args2
-  Substs substs' <- foldM unifyArg (Substs []) args
-  -- TODO still don't understand the need for the reverse here
-  return $ Substs $ reverse substs'
+  unifyArgs args
+
+unifyArgs :: NonEmpty (Term, Term) -> Either UnificationFailure Substitutions
+unifyArgs = foldM unifyArg $ Substs []
 
 unifyArg :: Substitutions -> (Term, Term) -> Either UnificationFailure Substitutions
-unifyArg substs (arg1, arg2) = do
-  substitutions' <- unify (subs substs arg1) (subs substs arg2)
+unifyArg substs (arg1, arg2) =
   -- Order of substitutions composition critical
-  return $ substs <> substitutions'
+  (substs <>) <$> unify (subs substs arg1) (subs substs arg2)
 
 zipExact :: [a] -> [b] -> Maybe [(a, b)]
 zipExact (x : xs) (y : ys) = ((x, y) :) <$> zipExact xs ys
