@@ -1,6 +1,9 @@
 module Main where
 
-import Lib
+import TypeAST
+import Substitutions
+import Unification
+import Data.Foldable (for_)
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
 
@@ -19,27 +22,6 @@ compareSubstituted term1 term2 ss
       , "MGU:"
       , printSubsts ss
       ]
-
-s1 :: Substitutions
-s1 = sub1 $ Subst (TyVar "a") "x"
-
-s2 :: Substitutions
-s2 = sub1 $ Subst (TyApp "f" (TyVar "b" :| [TyVar "x"])) "y"
-
-s3 :: Substitutions
-s3 = sub1 $ Subst (TyApp "g" (TyVar "y" :| [TyVar "x", TyVar "a"])) "z"
-
-sLeft :: Substitutions
-sLeft = s3 <> s2
-
-sRight :: Substitutions
-sRight = s2 <> s1
-
-sTotalL :: Substitutions
-sTotalL = sLeft <> s1
-
-sTotalR :: Substitutions
-sTotalR = s3 <> sRight
 
 ex1Term1 :: Term
 ex1Term1 = TyVar "a"
@@ -119,13 +101,28 @@ ex6Term2 =
 ex6 :: Either UnificationFailure Substitutions
 ex6 = unify ex6Term1 ex6Term2
 
+substitutionExamples :: Maybe String
+substitutionExamples = do
+  s1' <- subst "x" $ TyVar "a"
+  s2' <- subst "y" $ TyApp "f" $ TyVar "b" :| [TyVar "x"]
+  s3' <- subst "z" $ TyApp "g" $ TyVar "y" :| [TyVar "x", TyVar "a"]
+  let s1 = sub1 s1'
+  let s2 = sub1 s2'
+  let s3 = sub1 s3'
+  let sLeft = s3 <> s2
+  let sRight = s2 <> s1
+  let sTotalL = sLeft <> s1
+  let sTotalR = s3 <> sRight
+  return $
+    "Associative:\n" ++
+    "1: " ++ printSubsts sTotalL ++ " =? " ++ printSubsts sTotalR ++ "\n" ++
+    "Not commutative:\n" ++
+    "2: " ++ printSubsts (s3 <> s2 <> s1) ++ " != " ++ printSubsts (s1 <> s2 <> s3)
+
 main :: IO ()
 main = do
   putStrLn "SUBSTITUTION EXAMPLES:"
-  putStrLn "Associative:"
-  putStrLn $ "1: " ++ printSubsts sTotalL ++ " =? " ++ printSubsts sTotalR
-  putStrLn "Not commutative:"
-  putStrLn $ "2: " ++ printSubsts (s3 <> s2 <> s1) ++ " != " ++ printSubsts (s1 <> s2 <> s3)
+  for_ substitutionExamples putStrLn
   putStrLn "UNIFICATION EXAMPLES:"
   putStrLn $ printUResult "1:" ex1
   putStrLn $ printUResult "2:" ex2

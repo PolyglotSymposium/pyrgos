@@ -1,25 +1,14 @@
-module Lib
-  ( Term(..), printTerm
-  , Substitution(..), printSubst
+module Substitutions
+  ( Substitution, subst, printSubst
   , Substitutions, sub1, printSubsts
-  , UnificationFailure, printUFailure
-  , unify
   , subs
   ) where
 
-import Data.Either.Combinators (maybeToRight)
+import Control.Monad (join, guard)
 import Data.Functor (($>))
-import Control.Monad (join, guard, foldM)
 import Data.List (intersperse)
-import Data.List.NonEmpty (NonEmpty(..), toList)
 
-type Name = String
-
-data Term = TyVar Name | TyApp Name (NonEmpty Term) deriving Eq
-
-printTerm :: Term -> String
-printTerm (TyVar name) = name
-printTerm (TyApp name args) = name ++ "(" ++ join (intersperse "," $ printTerm <$> toList args) ++ ")"
+import TypeAST
 
 data Substitution =
   -- | Substitute in the term when the name is matched.
@@ -79,20 +68,8 @@ instance Semigroup Substitutions where
     oneSubst :: Substitution -> [Substitution] -> [Substitution]
     oneSubst s ss = s : fmap (<> s) ss
 
--- | The unification algorithm can fail three ways.
-data UnificationFailure =
-  -- Arity mismatch between two type applications
-  ArityMismatch         |
-  -- Expansion of substitutions would result in nontermination
-  CircularOccurence     |
-  -- We have no higher-order unification here so we can only unify type
-  -- functions that are literally the same, to wit, the same name.
-  TypeFunctionMismatch  --
-
-printUFailure :: UnificationFailure -> String
-printUFailure ArityMismatch = "arity mismatch"
-printUFailure CircularOccurence = "circular occurrence"
-printUFailure TypeFunctionMismatch = "type function mismatch"
+instance Monoid Substitutions where
+  mempty = Substs []
 
 -- | Check for circular occurrence. Circularity would result in nontermination
 -- | of our typechecker and unsoundness of our type system.
@@ -100,46 +77,7 @@ occurs :: Name -> Term -> Bool
 occurs name (TyVar vname) = name == vname
 occurs name (TyApp _ args) = any (occurs name) args
 
-mustNotOccur :: Name -> Term -> Either UnificationFailure Substitutions
-mustNotOccur name term =
-  if occurs name term
-  then Left CircularOccurence
-  else Right $ sub1 $ Subst term name
-
-typeFunctionsMatch :: Name -> Name -> Either UnificationFailure ()
-typeFunctionsMatch name1 name2 =
-  if (name1 == name2)
-  then Right ()
-  else Left TypeFunctionMismatch
-
-arityMatch :: NonEmpty Term -> NonEmpty Term -> Either UnificationFailure (NonEmpty (Term, Term))
-arityMatch args1 args2 = maybeToRight ArityMismatch $ zipExactNEL args1 args2
-
-typeVarsMismatch :: Name -> Name -> Substitutions
-typeVarsMismatch name1 name2 =
-  Substs $ guard (name1 /= name2) $> Subst (TyVar name1) name2
-
-unify :: Term -> Term -> Either UnificationFailure Substitutions
-unify (TyVar name1) (TyVar name2) = return $ typeVarsMismatch name1 name2
-unify (TyVar name) term@(TyApp _ _) = mustNotOccur name term
-unify term@(TyApp _ _) (TyVar name) = mustNotOccur name term
-unify (TyApp name1 args1) (TyApp name2 args2) = do
-  () <- typeFunctionsMatch name1 name2
-  args <- arityMatch args1 args2
-  unifyArgs args
-
-unifyArgs :: NonEmpty (Term, Term) -> Either UnificationFailure Substitutions
-unifyArgs = foldM unifyArg $ Substs []
-
-unifyArg :: Substitutions -> (Term, Term) -> Either UnificationFailure Substitutions
-unifyArg substs (arg1, arg2) =
-  -- Order of substitutions composition critical
-  (substs <>) <$> unify (subs substs arg1) (subs substs arg2)
-
-zipExact :: [a] -> [b] -> Maybe [(a, b)]
-zipExact (x : xs) (y : ys) = ((x, y) :) <$> zipExact xs ys
-zipExact [] [] = Just []
-zipExact _ _ = Nothing
-
-zipExactNEL :: NonEmpty a -> NonEmpty b -> Maybe (NonEmpty (a, b))
-zipExactNEL (x :| xs) (y :| ys) = ((x, y) :|) <$> zipExact xs ys
+-- | Smart constructor of substitution that checks circular occurrence
+subst :: Name -> Term -> Maybe Substitution
+subst name term =
+  guard (not $ occurs name term) $> Subst term name

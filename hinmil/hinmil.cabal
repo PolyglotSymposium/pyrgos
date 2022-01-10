@@ -25,7 +25,11 @@ source-repository head
 
 library
   exposed-modules:
-      Lib
+      Data.List.Exact
+      Data.List.NonEmpty.Exact
+      Substitutions
+      TypeAST
+      Unification
   other-modules:
       Paths_hinmil
   hs-source-dirs:
