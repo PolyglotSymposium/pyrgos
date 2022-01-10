@@ -7,9 +7,11 @@ module Lib
   , subs
   ) where
 
-import Data.List.NonEmpty (NonEmpty(..), toList)
+import Data.Either.Combinators (maybeToRight)
+import Data.Functor (($>))
+import Control.Monad (join, guard, foldM)
 import Data.List (intersperse)
-import Control.Monad (join, guard)
+import Data.List.NonEmpty (NonEmpty(..), toList)
 
 type Name = String
 
@@ -98,28 +100,46 @@ occurs :: Name -> Term -> Bool
 occurs name (TyVar vname) = name == vname
 occurs name (TyApp _ args) = any (occurs name) args
 
-unify :: Term -> Term -> Either UnificationFailure Substitutions
-unify t1@(TyVar v1) (TyVar v2) =
-  Right $ Substs $ guard (v1 == v2) *> [Subst t1 v2]
-unify (TyVar v) t2@(TyApp _ _) =
-  if occurs v t2 then Left CircularOccurence else Right $ Substs [(Subst t2 v)]
-unify t1@(TyApp _ _) (TyVar v) =
-  if occurs v t1 then Left CircularOccurence else Right $ Substs [(Subst t1 v)]
-unify (TyApp name1 args1) (TyApp name2 args2) =
+mustNotOccur :: Name -> Term -> Either UnificationFailure Substitutions
+mustNotOccur name term =
+  if occurs name term
+  then Left CircularOccurence
+  else Right $ sub1 $ Subst term name
+
+typeFunctionsMatch :: Name -> Name -> Either UnificationFailure ()
+typeFunctionsMatch name1 name2 =
   if (name1 == name2)
-  then unify_args (Substs []) args1 args2
+  then Right ()
   else Left TypeFunctionMismatch
 
-unify_args :: Substitutions -> NonEmpty Term -> NonEmpty Term -> Either UnificationFailure Substitutions
-unify_args substs (arg1 :| arg1s) (arg2 :| arg2s) = do
+arityMatch :: NonEmpty Term -> NonEmpty Term -> Either UnificationFailure (NonEmpty (Term, Term))
+arityMatch args1 args2 = maybeToRight ArityMismatch $ zipExactNEL args1 args2
+
+typeVarsMismatch :: Name -> Name -> Substitutions
+typeVarsMismatch name1 name2 =
+  Substs $ guard (name1 /= name2) $> Subst (TyVar name1) name2
+
+unify :: Term -> Term -> Either UnificationFailure Substitutions
+unify (TyVar name1) (TyVar name2) = return $ typeVarsMismatch name1 name2
+unify (TyVar name) term@(TyApp _ _) = mustNotOccur name term
+unify term@(TyApp _ _) (TyVar name) = mustNotOccur name term
+unify (TyApp name1 args1) (TyApp name2 args2) = do
+  () <- typeFunctionsMatch name1 name2
+  args <- arityMatch args1 args2
+  Substs substs' <- foldM unifyArg (Substs []) args
+  -- TODO still don't understand the need for the reverse here
+  return $ Substs $ reverse substs'
+
+unifyArg :: Substitutions -> (Term, Term) -> Either UnificationFailure Substitutions
+unifyArg substs (arg1, arg2) = do
   substitutions' <- unify (subs substs arg1) (subs substs arg2)
-  case (arg1s, arg2s) of
-    ([], []) ->
-      let Substs ss = substs <> substitutions'
-      in Right $ Substs $ reverse ss
-    (arg1' : arg1s', arg2' : arg2s') ->
-      let ss = substs <> substitutions'
-          args1 = arg1' :| arg1s'
-          args2 = arg2' :| arg2s'
-      in unify_args ss args1 args2
-    (_, _)  -> Left ArityMismatch
+  -- Order of substitutions composition critical
+  return $ substs <> substitutions'
+
+zipExact :: [a] -> [b] -> Maybe [(a, b)]
+zipExact (x : xs) (y : ys) = ((x, y) :) <$> zipExact xs ys
+zipExact [] [] = Just []
+zipExact _ _ = Nothing
+
+zipExactNEL :: NonEmpty a -> NonEmpty b -> Maybe (NonEmpty (a, b))
+zipExactNEL (x :| xs) (y :| ys) = ((x, y) :|) <$> zipExact xs ys
