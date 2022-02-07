@@ -29,6 +29,7 @@ library
       Data.List.NonEmpty.Exact
       Substitutions
       TypeAST
+      TypeSchemes
       Unification
   other-modules:
       Paths_hinmil
