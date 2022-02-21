@@ -27,6 +27,7 @@ library
   exposed-modules:
       Data.List.Exact
       Data.List.NonEmpty.Exact
+      NewVar
       Substitutions
       TypeAST
       TypeSchemes
@@ -38,6 +39,7 @@ library
   build-depends:
       base >=4.7 && <5
     , either
+    , mtl
   default-language: Haskell2010
 
 executable hinmil-exe
@@ -51,6 +53,7 @@ executable hinmil-exe
       base >=4.7 && <5
     , either
     , hinmil
+    , mtl
   default-language: Haskell2010
 
 test-suite hinmil-test
@@ -65,4 +68,5 @@ test-suite hinmil-test
       base >=4.7 && <5
     , either
     , hinmil
+    , mtl
   default-language: Haskell2010

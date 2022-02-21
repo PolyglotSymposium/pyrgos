@@ -1,14 +1,15 @@
 module TypeSchemes where
 
-import Data.Foldable (foldl')
 import Data.Char (ord, chr)
+import Data.Foldable (foldl')
 import Data.Maybe (fromJust) -- Yes, I'm a bad person
+import Control.Monad.State
 
 import TypeAST
 import Substitutions
 
 data TypeScheme =
-  Forall String TypeScheme |
+  Forall Name TypeScheme |
   Type Term
 
 freeInType' :: [Name] -> [Name] -> Term -> [Name]
@@ -53,16 +54,6 @@ varNum (hh : tt) =
   then primes letter tt
   else -1
 
--- TODO clean this up later
-newVar :: Int -> (Int, String)
-newVar v =
-  let nv = v + 1
-      prime var' 0 = var'
-      prime var' n = prime (var' ++ "'") (n - 1)
-      primes = nv `div` 26
-      var = [chr (ord 'a' + nv `mod` 26)]
-  in (nv, prime var primes)
-
 lastVar :: Int -> [Name] -> Int
 lastVar nv vars =
   foldl' max nv $ varNum <$> vars
@@ -73,22 +64,25 @@ lastUsedSchemeVar nv = lastVar nv . varsInScheme
 lastFreeSchemeVar :: Int -> TypeScheme -> Int
 lastFreeSchemeVar nv = lastVar nv . freeInScheme
 
--- TODO clean up warnings
-schemeSubs :: Int -> [(Term, String)] -> TypeScheme -> (Int, TypeScheme)
-schemeSubs nv [] scheme = (nv, scheme)
-schemeSubs nv ((tvp @ (t, v)) : tvs) scheme =
-  let fvs = freeInType t
-      iter nv rnss (tvp @ (t,v)) ts@(Forall sv sts) =
-        if (sv == v)
-        then (nv, ts)
-        else if elem sv fvs
-        then
-          let (nv', newv) = newVar nv
-              (nv'', scheme') = iter nv' (sub1 (fromJust $ subst sv (TyVar newv)) <> rnss) tvp sts
-          in (nv'', Forall newv scheme')
-        else
-          let val (nv,scheme') = iter nv rnss tvp sts
-          in (nv, Forall sv scheme')
-      iter nv rnss tvp (Type term) = (nv, Type $ subs (sub1 (fromJust $ subst (snd tvp) (fst tvp))) $ subs rnss term)
-      (nv, scheme') = iter nv mempty tvp scheme
-  in schemeSubs nv tvs scheme'
+foldTypeScheme :: (Name -> a) -> (Term -> a) -> (a -> a -> a) -> TypeScheme -> a
+foldTypeScheme _ g _ (Type term) = g term
+foldTypeScheme f g h (Forall name scheme) = h (f name) $ foldTypeScheme f g h scheme
+
+schemeSubs :: Substitutions -> TypeScheme -> State Int TypeScheme
+schemeSubs substitutions tScheme =
+  foldSubstsM schemeSubs' tScheme substitutions where
+  schemeSubs' :: TypeScheme -> Substitution -> State Int TypeScheme
+  schemeSubs' scheme substitution =
+    iter (freeInType $ substTerm substitution) mempty substitution scheme
+  iter :: [Name] -> Substitutions -> Substitution -> TypeScheme -> State Int TypeScheme
+  iter fvs rnss substitution ts@(Forall alpha sts) =
+    if alpha == substName substitution
+    then return ts
+    else if elem alpha fvs
+    then do
+      newS <- newSubst alpha
+      ts' <- iter fvs (sub1 newS <> rnss) substitution sts
+      return $ Forall (substName newS) ts'
+    else Forall alpha <$> iter fvs rnss substitution sts
+  iter _ rnss substitution (Type term) =
+    return $ Type $ subs (sub1 substitution) $ subs rnss term

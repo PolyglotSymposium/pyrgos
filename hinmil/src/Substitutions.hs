@@ -1,14 +1,16 @@
 module Substitutions
-  ( Substitution, subst, printSubst
-  , Substitutions, sub1, printSubsts
+  ( Substitution, subst, newSubst, substName, substTerm, printSubst
+  , Substitutions, sub1, printSubsts, foldSubstsM
   , subs
   ) where
 
 import Control.Monad (join, guard)
+import Control.Monad.State
 import Data.Functor (($>))
 import Data.List (intersperse)
 
 import TypeAST
+import NewVar
 
 data Substitution =
   -- | Substitute in the term when the name is matched.
@@ -17,6 +19,12 @@ data Substitution =
 printSubst :: Substitution -> String
 printSubst (Subst term name) = printTerm term ++ "/" ++ name
 
+substName :: Substitution -> Name
+substName (Subst _ x) = x
+
+substTerm :: Substitution -> Term
+substTerm (Subst x _) = x
+
 newtype Substitutions = Substs [Substitution]
 
 printSubsts :: Substitutions -> String
@@ -24,6 +32,9 @@ printSubsts (Substs xs) = "[" ++ join (intersperse ", " $ printSubst <$> xs) ++ 
 
 sub1 :: Substitution -> Substitutions
 sub1 s = Substs [s]
+
+foldSubstsM :: Monad m => (a -> Substitution -> m a) -> a -> Substitutions -> m a
+foldSubstsM f x (Substs ss) = foldM f x ss
 
 -- | Substitutions closer to the head get precedence over ones closer to the
 -- | tail. Substitutions are pre-expanded as they are composed so we do not need
@@ -81,3 +92,10 @@ occurs name (TyApp _ args) = any (occurs name) args
 subst :: Name -> Term -> Maybe Substitution
 subst name term =
   guard (not $ occurs name term) $> Subst term name
+
+-- | Occurs check not needed since the variable is new. It "cannot" occur
+-- | therefore in the term.
+newSubst :: Name -> State Int Substitution
+newSubst name = do
+  x <- newVar
+  return $ Subst (TyVar x) name
