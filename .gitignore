@@ -6,3 +6,9 @@
 *.scm#*
 .#*.scm
 *.exe
+
+GPATH
+GRTAGS
+GTAGS
+dist-newstyle/
+.DS_Store

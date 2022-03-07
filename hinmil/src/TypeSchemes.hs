@@ -28,8 +28,16 @@ freeAndBoundInScheme' free bound (Type typ) =
 freeAndBoundInScheme :: TypeScheme -> ([Name], [Name])
 freeAndBoundInScheme = freeAndBoundInScheme' [] []
 
+freeInScheme' :: [Name] -> [String] -> TypeScheme -> [Name]
+freeInScheme' free bound = fst . freeAndBoundInScheme' free bound
+
 freeInScheme :: TypeScheme -> [Name]
 freeInScheme = fst . freeAndBoundInScheme
+
+varsInScheme' :: [Name] -> [String] -> TypeScheme -> [Name]
+varsInScheme' free bound scheme =
+  let (free', bound') = freeAndBoundInScheme' free bound scheme
+  in free' ++ bound'
 
 varsInScheme :: TypeScheme -> [Name]
 varsInScheme scheme =
