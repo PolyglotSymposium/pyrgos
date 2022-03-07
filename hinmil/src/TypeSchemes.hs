@@ -1,8 +1,7 @@
 module TypeSchemes where
 
-import Data.Char (ord, chr)
+import Data.Char (ord)
 import Data.Foldable (foldl')
-import Data.Maybe (fromJust) -- Yes, I'm a bad person
 import Control.Monad.State
 
 import TypeAST
@@ -64,25 +63,33 @@ lastUsedSchemeVar nv = lastVar nv . varsInScheme
 lastFreeSchemeVar :: Int -> TypeScheme -> Int
 lastFreeSchemeVar nv = lastVar nv . freeInScheme
 
-foldTypeScheme :: (Name -> a) -> (Term -> a) -> (a -> a -> a) -> TypeScheme -> a
-foldTypeScheme _ g _ (Type term) = g term
-foldTypeScheme f g h (Forall name scheme) = h (f name) $ foldTypeScheme f g h scheme
-
+-- | Two kinds of recursion going on here: outer loop over the substitutions;
+-- | inner loop on the type scheme.
 schemeSubs :: Substitutions -> TypeScheme -> State Int TypeScheme
 schemeSubs substitutions tScheme =
+  -- Iterate through the substitutions
   foldSubstsM schemeSubs' tScheme substitutions where
+  -- | Kick off the recursion on the type scheme itself
   schemeSubs' :: TypeScheme -> Substitution -> State Int TypeScheme
   schemeSubs' scheme substitution =
     iter (freeInType $ substTerm substitution) mempty substitution scheme
+  -- | Recurse on the type scheme itself
   iter :: [Name] -> Substitutions -> Substitution -> TypeScheme -> State Int TypeScheme
   iter fvs rnss substitution ts@(Forall alpha sts) =
     if alpha == substName substitution
-    then return ts
-    else if elem alpha fvs
-    then do
-      newS <- newSubst alpha
-      ts' <- iter fvs (sub1 newS <> rnss) substitution sts
-      return $ Forall (substName newS) ts'
-    else Forall alpha <$> iter fvs rnss substitution sts
+    then return ts -- short-circuit the inner loop (TODO why?)
+    else do
+      (rnss', alpha') <-
+        -- If the binding is in the free variables, rename it
+        if elem alpha fvs
+        then do
+          -- Create a new substitution based on a new variable
+          newS <- newSubst alpha
+          return (sub1 newS <> rnss, substName newS)
+        else return (rnss, alpha)
+      -- Recurse over other type scheme bindings
+      ts' <- iter fvs rnss' substitution sts
+      return $ Forall alpha' ts'
   iter _ rnss substitution (Type term) =
+    -- TODO Why `subs` twice instead of substitution composition and apply once?
     return $ Type $ subs (sub1 substitution) $ subs rnss term
