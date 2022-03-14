@@ -19,7 +19,7 @@ freeInType' free bound (TyVar var) =
 freeInType' free bound (TyApp _ args) =
   foldl' (\r t -> freeInType' r bound t) free args
 
-freeAndBoundInScheme' :: [Name] -> [String] -> TypeScheme -> ([Name], [Name])
+freeAndBoundInScheme' :: [Name] -> [Name] -> TypeScheme -> ([Name], [Name])
 freeAndBoundInScheme' free bound (Forall var scheme) =
   freeAndBoundInScheme' free (var : bound) scheme
 freeAndBoundInScheme' free bound (Type typ) =
@@ -28,13 +28,13 @@ freeAndBoundInScheme' free bound (Type typ) =
 freeAndBoundInScheme :: TypeScheme -> ([Name], [Name])
 freeAndBoundInScheme = freeAndBoundInScheme' [] []
 
-freeInScheme' :: [Name] -> [String] -> TypeScheme -> [Name]
+freeInScheme' :: [Name] -> [Name] -> TypeScheme -> [Name]
 freeInScheme' free bound = fst . freeAndBoundInScheme' free bound
 
 freeInScheme :: TypeScheme -> [Name]
 freeInScheme = fst . freeAndBoundInScheme
 
-varsInScheme' :: [Name] -> [String] -> TypeScheme -> [Name]
+varsInScheme' :: [Name] -> [Name] -> TypeScheme -> [Name]
 varsInScheme' free bound scheme =
   let (free', bound') = freeAndBoundInScheme' free bound scheme
   in free' ++ bound'
@@ -49,17 +49,17 @@ freeInType = freeInType' [] []
 
 -- TODO clean this up later
 varNum :: String -> Int
-varNum "" = -1 -- hack???
+varNum "" = -1 -- TODO hack???
 varNum (hh : tt) =
   let letter = ord hh - ord 'a'
       primes r [] = r
       primes r (h : t) =
         if h == '\039'
         then primes (r+26) t
-        else -1
+        else -1 -- TODO augh
   in if letter >= 0 && letter <= 25
   then primes letter tt
-  else -1
+  else -1 -- TODO halp
 
 lastVar :: Int -> [Name] -> Int
 lastVar nv vars =
