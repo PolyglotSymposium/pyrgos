@@ -61,15 +61,14 @@ varNum (hh : tt) =
   then primes letter tt
   else -1 -- TODO halp
 
-lastVar :: Int -> [Name] -> Int
-lastVar nv vars =
-  foldl' max nv $ varNum <$> vars
+lastVar :: [Name] -> State Int ()
+lastVar vars = modify (\nv -> foldl' max nv $ varNum <$> vars)
 
-lastUsedSchemeVar :: Int -> TypeScheme -> Int
-lastUsedSchemeVar nv = lastVar nv . varsInScheme
+lastUsedSchemeVar :: TypeScheme -> State Int ()
+lastUsedSchemeVar = lastVar . varsInScheme
 
-lastFreeSchemeVar :: Int -> TypeScheme -> Int
-lastFreeSchemeVar nv = lastVar nv . freeInScheme
+lastFreeSchemeVar :: TypeScheme -> State Int ()
+lastFreeSchemeVar = lastVar . freeInScheme
 
 -- | Two kinds of recursion going on here: outer loop over the substitutions;
 -- | inner loop on the type scheme.
@@ -101,3 +100,11 @@ schemeSubs substitutions tScheme =
   iter _ rnss substitution (Type term) =
     -- TODO Why `subs` twice instead of substitution composition and apply once?
     return $ Type $ subs (sub1 substitution) $ subs rnss term
+
+instantiateScheme :: TypeScheme -> State Int Term
+instantiateScheme (Type tau') = return tau'
+instantiateScheme (Forall alpha sigma) = do
+  lastUsedSchemeVar sigma
+  subst' <- newSubst alpha
+  sigma' <- schemeSubs (sub1 subst') sigma
+  instantiateScheme sigma'

@@ -4,7 +4,6 @@ module Substitutions
   , subs
   ) where
 
-import Control.Monad (join, guard)
 import Control.Monad.State
 import Data.Functor (($>))
 import Data.List (intersperse)

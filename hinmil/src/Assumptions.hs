@@ -1,9 +1,9 @@
 module Assumptions where
 
-import qualified Data.Map as Map
 import Data.Foldable (foldl')
 import Data.Map (Map)
-import Control.Monad.State
+import qualified Data.Map as Map
+import Control.Monad.State (State, execState)
 
 import TypeAST
 import TypeSchemes
@@ -30,12 +30,13 @@ assumptionVars = assumptionVarsBy varsInScheme'
 lastFreeAssumptionVar :: Gamma -> Int
 lastFreeAssumptionVar =
   let hack = -1 -- TODO do we really mean -1 or do we mean Nothing :: Maybe Int?
-  in Map.foldr (flip lastFreeSchemeVar) hack
+  in Map.foldr (\x y -> execState (lastFreeSchemeVar x) y) hack
 
 -- | Apply the substitutions to every schema in the typing environment.
 assumptionSubs :: Substitutions -> Gamma -> State Int Gamma
-assumptionSubs = traverse . schemeSubs
+assumptionSubs substitutions = traverse (schemeSubs substitutions)
 
+-- TODO should this be called closeScheme?
 schemeClosure :: Gamma -> Term -> TypeScheme
 schemeClosure gamma tau =
   let favs = freeAssumptionVars gamma
