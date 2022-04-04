@@ -1,8 +1,9 @@
+{-# LANGUAGE FlexibleContexts #-}
 module TypeSchemes where
 
+import Control.Monad.State
 import Data.Char (ord)
 import Data.Foldable (foldl')
-import Control.Monad.State
 
 import TypeAST
 import Substitutions
@@ -61,10 +62,10 @@ varNum (hh : tt) =
   then primes letter tt
   else -1 -- TODO halp
 
-lastVar :: [Name] -> State Int ()
+lastVar :: MonadState Int m => [Name] -> m ()
 lastVar vars = modify (\nv -> foldl' max nv $ varNum <$> vars)
 
-lastUsedSchemeVar :: TypeScheme -> State Int ()
+lastUsedSchemeVar :: MonadState Int m => TypeScheme -> m ()
 lastUsedSchemeVar = lastVar . varsInScheme
 
 lastFreeSchemeVar :: TypeScheme -> State Int ()
@@ -72,16 +73,16 @@ lastFreeSchemeVar = lastVar . freeInScheme
 
 -- | Two kinds of recursion going on here: outer loop over the substitutions;
 -- | inner loop on the type scheme.
-schemeSubs :: Substitutions -> TypeScheme -> State Int TypeScheme
+schemeSubs :: MonadState Int m => Substitutions -> TypeScheme -> m TypeScheme
 schemeSubs substitutions tScheme =
   -- Iterate through the substitutions
   foldSubstsM schemeSubs' tScheme substitutions where
   -- | Kick off the recursion on the type scheme itself
-  schemeSubs' :: TypeScheme -> Substitution -> State Int TypeScheme
+  schemeSubs' :: MonadState Int m => TypeScheme -> Substitution -> m TypeScheme
   schemeSubs' scheme substitution =
     iter (freeInType $ substTerm substitution) mempty substitution scheme
   -- | Recurse on the type scheme itself
-  iter :: [Name] -> Substitutions -> Substitution -> TypeScheme -> State Int TypeScheme
+  iter :: MonadState Int m => [Name] -> Substitutions -> Substitution -> TypeScheme -> m TypeScheme
   iter fvs rnss substitution ts@(Forall alpha sts) =
     if alpha == substName substitution
     then return ts -- short-circuit the inner loop (TODO why?)
@@ -101,7 +102,7 @@ schemeSubs substitutions tScheme =
     -- TODO Why `subs` twice instead of substitution composition and apply once?
     return $ Type $ subs (sub1 substitution) $ subs rnss term
 
-instantiateScheme :: TypeScheme -> State Int Term
+instantiateScheme :: MonadState Int m => TypeScheme -> m Term
 instantiateScheme (Type tau') = return tau'
 instantiateScheme (Forall alpha sigma) = do
   lastUsedSchemeVar sigma

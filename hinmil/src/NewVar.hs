@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module NewVar where
 
 import Control.Monad.State
@@ -6,7 +7,7 @@ import Data.Char (ord, chr)
 import TypeAST
 
 -- TODO clean this up later
-newVar :: State Int Name
+newVar :: MonadState Int m => m Name
 newVar = do
   v <- get
   let nv = v + 1

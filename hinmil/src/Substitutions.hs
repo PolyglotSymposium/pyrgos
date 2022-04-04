@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Substitutions
   ( Substitution, subst, newSubst, substName, substTerm, printSubst
   , Substitutions, sub1, printSubsts, foldSubstsM
@@ -94,7 +95,7 @@ subst name term =
 
 -- | Occurs check not needed since the variable is new. It "cannot" occur
 -- | therefore in the term.
-newSubst :: Name -> State Int Substitution
+newSubst :: MonadState Int m => Name -> m Substitution
 newSubst name = do
   x <- newVar
   return $ Subst (TyVar x) name

@@ -1,5 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
 module Assumptions where
 
+import Control.Monad.State
 import Data.Foldable (foldl')
 import Data.Map (Map)
 import qualified Data.Map as Map
@@ -33,7 +35,7 @@ lastFreeAssumptionVar =
   in Map.foldr (\x y -> execState (lastFreeSchemeVar x) y) hack
 
 -- | Apply the substitutions to every schema in the typing environment.
-assumptionSubs :: Substitutions -> Gamma -> State Int Gamma
+assumptionSubs :: MonadState Int m => Substitutions -> Gamma -> m Gamma
 assumptionSubs substitutions = traverse (schemeSubs substitutions)
 
 -- TODO should this be called closeScheme?
