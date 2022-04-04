@@ -8,7 +8,7 @@ import TypeAST
 import TypeSchemes
 import Unification
 
-import Control.Monad.State.Class
+import Control.Monad.State
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.List.NonEmpty (NonEmpty(..))
@@ -52,9 +52,9 @@ w gamma (Let v e1 e2) = do
   (s2, tau2) <- w (extend v (schemeClosure s1Gamma tau1) s1Gamma) e2
   return (s2 <> s1, tau2)
 
-principal :: (MonadState Int m, MonadError InferenceFailure m) => Gamma -> Expr -> m TypeScheme
-principal gamma e = do
-  put $ lastFreeAssumptionVar gamma
-  (s, tau) <- w gamma e
-  sGamma <- assumptionSubs s gamma
-  return $ schemeClosure sGamma tau
+principal :: MonadError InferenceFailure m => Gamma -> Expr -> m TypeScheme
+principal gamma e = evalStateT principal' $ lastFreeAssumptionVar gamma where
+  principal' = do
+    (s, tau) <- w gamma e
+    sGamma <- assumptionSubs s gamma
+    return $ schemeClosure sGamma tau
