@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module AlgorithmW where
+module AlgorithmW (Expr(..), InferenceFailure(..), principal) where
 
 import Assumptions
 import NewVar
@@ -9,11 +9,9 @@ import TypeSchemes
 import Unification
 
 import Control.Monad.State.Class
-import Control.Monad.Error
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.List.NonEmpty (NonEmpty(..))
-import qualified Data.Map as Map
 
 data Expr             =
   Var Name            |
@@ -31,7 +29,7 @@ data InferenceFailure             =
 
 w :: (MonadState Int m, MonadError InferenceFailure m) => Gamma -> Expr -> m (Substitutions, Term)
 w gamma (Var v) = do
-  scheme <- maybe (throwError $ UndefinedVar v) pure $ Map.lookup v gamma
+  scheme <- maybe (throwError $ UndefinedVar v) pure $ inContext v gamma
   term <- instantiateScheme scheme
   return (mempty, term)
 w gamma (Apply e1 e2) = do
@@ -53,3 +51,10 @@ w gamma (Let v e1 e2) = do
   s1Gamma <- assumptionSubs s1 gamma
   (s2, tau2) <- w (extend v (schemeClosure s1Gamma tau1) s1Gamma) e2
   return (s2 <> s1, tau2)
+
+principal :: (MonadState Int m, MonadError InferenceFailure m) => Gamma -> Expr -> m TypeScheme
+principal gamma e = do
+  put $ lastFreeAssumptionVar gamma
+  (s, tau) <- w gamma e
+  sGamma <- assumptionSubs s gamma
+  return $ schemeClosure sGamma tau

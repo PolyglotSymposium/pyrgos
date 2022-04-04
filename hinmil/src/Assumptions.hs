@@ -1,24 +1,34 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Assumptions where
+module Assumptions
+  ( Gamma, emptyGamma, extend, inContext
+  , assumptionSubs
+  , schemeClosure
+  , lastFreeAssumptionVar
+  ) where
 
 import Control.Monad.State
 import Data.Foldable (foldl')
 import Data.Map (Map)
 import qualified Data.Map as Map
-import Control.Monad.State (State, execState)
 
 import TypeAST
 import TypeSchemes
 import Substitutions
 
-type Gamma = Map Name TypeScheme
+newtype Gamma = Gamma (Map Name TypeScheme)
+
+emptyGamma :: Gamma
+emptyGamma = Gamma Map.empty
 
 extend :: Name -> TypeScheme -> Gamma -> Gamma
-extend = Map.insert
+extend name scheme (Gamma gamma) = Gamma $ Map.insert name scheme gamma
+
+inContext :: Name -> Gamma -> Maybe TypeScheme
+inContext name (Gamma gamma) = Map.lookup name gamma
 
 assumptionVarsBy :: ([Name] -> [Name] -> TypeScheme -> [Name]) -> Gamma -> [Name]
-assumptionVarsBy getVarsFromScheme =
-  Map.foldr (\x f -> f ++ getVarsFromScheme f [] x) []
+assumptionVarsBy getVarsFromScheme (Gamma gamma) =
+  Map.foldr (\x f -> f ++ getVarsFromScheme f [] x) [] gamma
 
 -- | Run through all the type schemes in the environment (values in the map) and
 -- | find variables that are free in those schemes. Because these variables are
@@ -26,17 +36,14 @@ assumptionVarsBy getVarsFromScheme =
 freeAssumptionVars :: Gamma -> [Name]
 freeAssumptionVars = assumptionVarsBy freeInScheme'
 
-assumptionVars :: Gamma -> [Name]
-assumptionVars = assumptionVarsBy varsInScheme'
-
 lastFreeAssumptionVar :: Gamma -> Int
-lastFreeAssumptionVar =
+lastFreeAssumptionVar (Gamma gamma) =
   let hack = -1 -- TODO do we really mean -1 or do we mean Nothing :: Maybe Int?
-  in Map.foldr (\x y -> execState (lastFreeSchemeVar x) y) hack
+  in Map.foldr (\x y -> execState (lastFreeSchemeVar x) y) hack gamma
 
 -- | Apply the substitutions to every schema in the typing environment.
 assumptionSubs :: MonadState Int m => Substitutions -> Gamma -> m Gamma
-assumptionSubs substitutions = traverse (schemeSubs substitutions)
+assumptionSubs substitutions (Gamma gamma) = Gamma <$> traverse (schemeSubs substitutions) gamma
 
 -- TODO should this be called closeScheme?
 schemeClosure :: Gamma -> Term -> TypeScheme
