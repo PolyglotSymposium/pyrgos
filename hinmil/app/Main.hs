@@ -1,8 +1,12 @@
 module Main where
 
-import TypeAST
+import AlgorithmW
+import Assumptions
 import Substitutions
+import TypeAST
+import TypeSchemes
 import Unification
+
 import Data.Foldable (for_)
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
@@ -10,6 +14,10 @@ import Data.List.NonEmpty (NonEmpty(..))
 printUResult :: String -> Either UnificationFailure Substitutions -> String
 printUResult name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
 printUResult name (Right substs) = name ++ " MGU: " ++ printSubsts substs
+
+printUResult' :: String -> Either UnificationFailure Term -> String
+printUResult' name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
+printUResult' name (Right term) = name ++ " MGU: " ++ printTerm term
 
 compareSubstituted :: Term -> Term -> Substitutions -> String
 compareSubstituted term1 term2 ss
@@ -119,6 +127,16 @@ substitutionExamples = do
     "Not commutative:\n" ++
     "2: " ++ printSubsts (s3 <> s2 <> s1) ++ " != " ++ printSubsts (s1 <> s2 <> s3)
 
+singletonGamma :: Gamma
+singletonGamma = extend "x" (Type $ TyVar "Int") emptyGamma
+
+dualGamma :: Gamma
+dualGamma = extend "f" (Forall "a" $ Type (TyVar "a" --> TyVar "a")) singletonGamma
+
+printIResult :: String -> Either InferenceFailure TypeScheme -> String
+printIResult name (Left failure) = name ++ " ERROR: " ++ printIFailure failure
+printIResult name (Right scheme) = name ++ " MGU: " ++ printTypeScheme scheme
+
 main :: IO ()
 main = do
   putStrLn "SUBSTITUTION EXAMPLES:"
@@ -135,3 +153,11 @@ main = do
   let ex6part1 = printUResult "6:" ex6
   let ex6part2 = either printUFailure (compareSubstituted ex6Term1 ex6Term2) ex6
   putStrLn $ ex6part1 ++ " -> " ++ ex6part2
+  putStrLn "INFERENCE EXAMPLES:"
+  putStrLn $ printIResult "7:" $ principal singletonGamma $ Var "x"
+  putStrLn $ printIResult "8:" $ principal emptyGamma $ Lambda "x" $ Var "x"
+  putStrLn $ printIResult "9:" $ principal dualGamma $ Apply (Var "f") $ Var "x" -- TODO should say `Int`
+  putStrLn $ printIResult "10:" $ principal singletonGamma $ Let "y" (Var "x") (Var "y")
+  putStrLn $ printIResult "11:" $ principal singletonGamma $ Lambda "y" $ Var "x"
+  putStrLn $ printUResult' "12:" $ (\v -> subs v $ TyVar "c") <$> unify (TyVar "b" --> TyVar "b") (TyVar "Int" --> TyVar "c")
+  -- TODO test failure

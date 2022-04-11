@@ -12,6 +12,10 @@ data TypeScheme =
   Forall Name TypeScheme |
   Type Term
 
+printTypeScheme :: TypeScheme -> String
+printTypeScheme (Type term) = printTerm term
+printTypeScheme (Forall name scheme) = "forall " ++ name ++ ". " ++ printTypeScheme scheme
+
 freeInType' :: [Name] -> [Name] -> Term -> [Name]
 freeInType' free bound (TyVar var) =
   if elem var bound
