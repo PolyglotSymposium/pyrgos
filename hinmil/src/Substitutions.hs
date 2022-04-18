@@ -15,6 +15,7 @@ import NewVar
 data Substitution =
   -- | Substitute in the term when the name is matched.
   Subst Term Name -- "<term>/<name>"
+  deriving (Eq, Show)
 
 printSubst :: Substitution -> String
 printSubst (Subst term name) = printTerm term ++ "/" ++ name
@@ -25,7 +26,7 @@ substName (Subst _ x) = x
 substTerm :: Substitution -> Term
 substTerm (Subst x _) = x
 
-newtype Substitutions = Substs [Substitution]
+newtype Substitutions = Substs [Substitution] deriving (Eq, Show)
 
 printSubsts :: Substitutions -> String
 printSubsts (Substs xs) = "[" ++ join (intersperse ", " $ printSubst <$> xs) ++ "]"
