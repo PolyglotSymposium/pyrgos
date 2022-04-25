@@ -8,7 +8,10 @@ import Data.List.NonEmpty (NonEmpty(..), toList)
 
 type Name = String
 
-data Term = TyVar Name | TyApp Name (NonEmpty Term) deriving (Eq, Show)
+data Term =
+  TyVar Name |
+  TyApp Name (NonEmpty Term)
+  deriving (Eq, Show)
 
 printTerm :: Term -> String
 printTerm (TyVar name) = name

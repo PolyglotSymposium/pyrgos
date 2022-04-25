@@ -109,24 +109,6 @@ ex6Term2 =
 ex6 :: Either UnificationFailure Substitutions
 ex6 = unify ex6Term1 ex6Term2
 
-substitutionExamples :: Maybe String
-substitutionExamples = do
-  s1' <- subst "x" $ TyVar "a"
-  s2' <- subst "y" $ TyApp "f" $ TyVar "b" :| [TyVar "x"]
-  s3' <- subst "z" $ TyApp "g" $ TyVar "y" :| [TyVar "x", TyVar "a"]
-  let s1 = sub1 s1'
-  let s2 = sub1 s2'
-  let s3 = sub1 s3'
-  let sLeft = s3 <> s2
-  let sRight = s2 <> s1
-  let sTotalL = sLeft <> s1
-  let sTotalR = s3 <> sRight
-  return $
-    "Associative:\n" ++
-    "1: " ++ printSubsts sTotalL ++ " =? " ++ printSubsts sTotalR ++ "\n" ++
-    "Not commutative:\n" ++
-    "2: " ++ printSubsts (s3 <> s2 <> s1) ++ " != " ++ printSubsts (s1 <> s2 <> s3)
-
 singletonGamma :: Gamma
 singletonGamma = extend "x" (Type $ TyVar "Int") emptyGamma
 
@@ -139,8 +121,6 @@ printIResult name (Right scheme) = name ++ " MGU: " ++ printTypeScheme scheme
 
 main :: IO ()
 main = do
-  putStrLn "SUBSTITUTION EXAMPLES:"
-  for_ substitutionExamples putStrLn
   putStrLn "UNIFICATION EXAMPLES:"
   putStrLn $ printUResult "1:" ex1
   putStrLn $ printUResult "2:" ex2

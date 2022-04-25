@@ -26,6 +26,13 @@ associativity a b c =
       bc = b <> c
   in ab <> c == a <> bc
 
+nonCommutativity :: Substitutions -> Substitutions -> Bool
+nonCommutativity a b =
+  let ab = a <> b
+      ba = b <> a
+  in ab /= ba || a == b || a == mempty || b == mempty
+
 spec :: Spec
 spec = do
   it "compose associatively" $ property associativity
+  it "composition does not commute for distinct non-empty values" $ property nonCommutativity
