@@ -49,4 +49,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - hinmil
+    - hspec
+    - hspec-contrib
     - QuickCheck

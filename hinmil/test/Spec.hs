@@ -1,10 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+import Test.Hspec
 import Test.QuickCheck
 
 import TypeAST
 import Substitutions
 import Data.List.NonEmpty (NonEmpty(..))
-import Data.Maybe (isJust)
 
 decr :: Int -> Int
 decr x = x - 1
@@ -53,4 +53,6 @@ associativity a b c =
   in ab <> c == a <> bc
 
 main :: IO ()
-main = quickCheck associativity
+main = hspec $ do
+  describe "Substitutions" $ do
+    it "compose associatively" $ property associativity

@@ -74,5 +74,7 @@ test-suite hinmil-test
     , containers
     , either
     , hinmil
+    , hspec
+    , hspec-contrib
     , mtl
   default-language: Haskell2010
