@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import AlgorithmW
 import Assumptions
@@ -7,17 +7,12 @@ import TypeAST
 import TypeSchemes
 import Unification
 
-import Data.Foldable (for_)
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
 
 printUResult :: String -> Either UnificationFailure Substitutions -> String
 printUResult name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
 printUResult name (Right substs) = name ++ " MGU: " ++ printSubsts substs
-
-printUResult' :: String -> Either UnificationFailure Term -> String
-printUResult' name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
-printUResult' name (Right term) = name ++ " MGU: " ++ printTerm term
 
 compareSubstituted :: Term -> Term -> Substitutions -> String
 compareSubstituted term1 term2 ss
@@ -110,7 +105,7 @@ ex6 :: Either UnificationFailure Substitutions
 ex6 = unify ex6Term1 ex6Term2
 
 singletonGamma :: Gamma
-singletonGamma = extend "x" (Type $ TyVar "Int") emptyGamma
+singletonGamma = extend "x" (Type $ TyLit "Int") emptyGamma
 
 dualGamma :: Gamma
 dualGamma = extend "f" (Forall "a" $ Type (TyVar "a" --> TyVar "a")) singletonGamma
@@ -139,5 +134,3 @@ main = do
   putStrLn $ printIResult "9:" $ principal dualGamma $ Apply (Var "f") $ Var "x" -- TODO should say `Int`
   putStrLn $ printIResult "10:" $ principal singletonGamma $ Let "y" (Var "x") (Var "y")
   putStrLn $ printIResult "11:" $ principal singletonGamma $ Lambda "y" $ Var "x"
-  putStrLn $ printUResult' "12:" $ (\v -> subs v $ TyVar "c") <$> unify (TyVar "b" --> TyVar "b") (TyVar "Int" --> TyVar "c")
-  -- TODO test failure

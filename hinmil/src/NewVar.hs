@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
-module NewVar where
+module NewVar (newVar) where
 
 import Control.Monad.State
 import Data.Char (ord, chr)

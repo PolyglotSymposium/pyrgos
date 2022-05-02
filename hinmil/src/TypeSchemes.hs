@@ -1,5 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
-module TypeSchemes where
+module TypeSchemes
+  ( TypeScheme(..), printTypeScheme
+  , freeInType
+  , freeInScheme, freeInScheme', varsInScheme, varsInScheme', lastFreeSchemeVar
+  , schemeSubs
+  , instantiateScheme
+  ) where
 
 import Control.Monad.State
 import Data.Char (ord)
@@ -17,6 +23,7 @@ printTypeScheme (Type term) = printTerm term
 printTypeScheme (Forall name scheme) = "forall " ++ name ++ ". " ++ printTypeScheme scheme
 
 freeInType' :: [Name] -> [Name] -> Term -> [Name]
+freeInType' free _ (TyLit _) = free
 freeInType' free bound (TyVar var) =
   if elem var bound
   then free

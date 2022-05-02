@@ -65,3 +65,8 @@ packages:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+
+ghc-options:
+    "$locals": -Wall -Wno-unticked-promoted-constructors -Wmissing-export-lists -Wno-name-shadowing
+    "$targets": -Werror
+    "$everything": -O2 -fhide-source-paths

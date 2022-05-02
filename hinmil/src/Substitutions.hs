@@ -43,6 +43,8 @@ foldSubstsM f x (Substs ss) = foldM f x ss
 subs :: Substitutions -> Term -> Term
 -- If we have no substitutions, return the same term.
 subs (Substs []) term = term
+-- Substitutions cannot be applied to a type literal
+subs _ term@(TyLit _) = term
 -- If we have hit a leaf of our type AST, to wit, a type variable, then iterate
 -- through the substitutions, looking for a match on its name. If found,
 -- substitute in the corresponding term, and short-circuit.
@@ -86,6 +88,7 @@ instance Monoid Substitutions where
 -- | Check for circular occurrence. Circularity would result in nontermination
 -- | of our typechecker and unsoundness of our type system.
 occurs :: Name -> Term -> Bool
+occurs _ (TyLit _) = False
 occurs name (TyVar vname) = name == vname
 occurs name (TyApp _ args) = any (occurs name) args
 
