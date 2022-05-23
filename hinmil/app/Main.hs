@@ -6,9 +6,13 @@ import Substitutions
 import TypeAST
 import TypeSchemes
 import Unification
+import qualified Parser
 
+import Data.Function ((&))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
+import System.Environment (getArgs)
+import Text.Megaparsec (parse, errorBundlePretty)
 
 printUResult :: String -> Either UnificationFailure Substitutions -> String
 printUResult name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
@@ -114,8 +118,14 @@ printIResult :: String -> Either InferenceFailure TypeScheme -> String
 printIResult name (Left failure) = name ++ " ERROR: " ++ printIFailure failure
 printIResult name (Right scheme) = name ++ " MGU: " ++ printTypeScheme scheme
 
-main :: IO ()
-main = do
+parseAndPrint :: String -> IO ()
+parseAndPrint input =
+  parse Parser.expr "cmd" input
+  & either errorBundlePretty show
+  & putStrLn
+
+runTests :: IO ()
+runTests = do
   putStrLn "UNIFICATION EXAMPLES:"
   putStrLn $ printUResult "1:" ex1
   putStrLn $ printUResult "2:" ex2
@@ -134,3 +144,11 @@ main = do
   putStrLn $ printIResult "9:" $ principal dualGamma $ Apply (Var "f") $ Var "x" -- TODO should say `Int`
   putStrLn $ printIResult "10:" $ principal singletonGamma $ Let "y" (Var "x") (Var "y")
   putStrLn $ printIResult "11:" $ principal singletonGamma $ Lambda "y" $ Var "x"
+
+main :: IO ()
+main = do
+  args <- getArgs
+  case args of
+    ["--tests"] -> runTests
+    ["--parse", code] -> parseAndPrint code
+    _ -> putStrLn "TODO"

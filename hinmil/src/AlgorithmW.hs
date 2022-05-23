@@ -8,6 +8,7 @@ module AlgorithmW
 
 import Assumptions
 import NewVar
+import Expr
 import Substitutions
 import TypeAST
 import TypeSchemes
@@ -17,12 +18,6 @@ import Control.Monad.State
 import Control.Monad.Except
 import Data.Bifunctor (first)
 import Data.List.NonEmpty (NonEmpty(..))
-
-data Expr             =
-  Var Name            |
-  Apply Expr Expr     |
-  Lambda String Expr  |
-  Let Name Expr Expr  --
 
 infixr -->
 (-->) :: Term -> Term -> Term
