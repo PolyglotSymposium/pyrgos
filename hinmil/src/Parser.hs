@@ -1,4 +1,4 @@
-module Parser (Parser, expr) where
+module Parser (Parser, expr, name, equals) where
 
 {-
 <name> is a nonempty Latin-alphabetic string, other than "let" and "in"

@@ -70,6 +70,7 @@ test-suite hinmil-test
   other-modules:
       Arbitraries.TypeAST
       SubstitutionsSpec
+      ParserSpec
       Paths_hinmil
   hs-source-dirs:
       test
@@ -84,4 +85,6 @@ test-suite hinmil-test
     , hspec-contrib
     , megaparsec
     , mtl
+    , hspec-megaparsec
+    , text
   default-language: Haskell2010

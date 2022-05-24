@@ -53,3 +53,4 @@ tests:
     - hspec
     - hspec-contrib
     - QuickCheck
+    - Megaparsec
