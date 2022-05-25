@@ -1,15 +1,12 @@
 --{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module ParserSpec (spec, main) where
+module ParserSpec (spec) where
 
 --import Control.Applicative hiding (some)
 import Test.Hspec
 import Test.Hspec.Megaparsec
 import Text.Megaparsec
 import Parser (name, equals)
-
-main :: IO ()
-main = hspec spec
 
 spec :: Spec
 spec = do

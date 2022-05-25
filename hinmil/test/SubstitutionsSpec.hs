@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module SubstitutionsSpec (spec, main) where
+module SubstitutionsSpec (spec) where
 
 import Arbitraries.TypeAST ()
 import Test.Hspec
@@ -31,9 +31,6 @@ nonCommutativity a b =
   let ab = a <> b
       ba = b <> a
   in ab /= ba || a == b || a == mempty || b == mempty
-
-main :: IO ()
-main = hspec spec
 
 spec :: Spec
 spec = do
