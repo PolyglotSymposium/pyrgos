@@ -12,6 +12,8 @@ import Data.Function ((&))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
 import System.Environment (getArgs)
+import System.IO
+import Control.Monad (unless)
 import Text.Megaparsec (parse, errorBundlePretty)
 
 printUResult :: String -> Either UnificationFailure Substitutions -> String
@@ -151,4 +153,17 @@ main = do
   case args of
     ["--tests"] -> runTests
     ["--parse", code] -> parseAndPrint code
+    ["--repl"] -> runRepl
     _ -> putStrLn "TODO"
+
+repl :: IO String
+repl = putStr "hinmil> "
+  >> hFlush stdout
+  >> getLine
+
+runRepl :: IO ()
+runRepl = do
+  input <- repl
+  unless (input == ":quit")
+    $ parseAndPrint input
+    >> runRepl

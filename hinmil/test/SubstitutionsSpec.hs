@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module SubstitutionsSpec where
+module SubstitutionsSpec (spec) where
 
 import Arbitraries.TypeAST ()
 import Test.Hspec
