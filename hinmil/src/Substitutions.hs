@@ -74,7 +74,8 @@ instance Semigroup Substitution where
 instance Semigroup Substitutions where
   -- Substitutions from the right need to be applied to substitutions from the
   -- left before being concatenated with the them.
-  -- Substitutions from the right become leftmost (highest-priority).
+  -- Substitutions from the right are place closest to the head
+  -- (highest-priority).
   Substs seed <> Substs foldee = Substs $ foldr oneSubst seed foldee where
     -- We take the next highest-precedence substitution from the right, make it
     -- our new highest-precedence substitution (with `:`), and apply it to all

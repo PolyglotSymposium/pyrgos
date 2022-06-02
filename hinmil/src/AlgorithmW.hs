@@ -45,15 +45,15 @@ w gamma (Apply e1 e2) = do
   v <- liftEither $ first DoesNotUnify $ unify s2tau1 (tau2 --> TyVar beta)
   let vBeta = subs v (TyVar beta)
   return (v <> s2 <> s1, vBeta) -- TODO composition order?
-w gamma (Lambda v e) = do
+w gamma (Lambda param body) = do
   beta <- newVar
-  (s1, tau1) <- w (extend v (Type $ TyVar beta) gamma) e
+  (s1, tau1) <- w (extend param (Type $ TyVar beta) gamma) body
   let s1beta = subs s1 (TyVar beta)
   return (s1, (s1beta --> tau1))
-w gamma (Let v e1 e2) = do
-  (s1, tau1) <- w gamma e1
+w gamma (Let lhs rhs body) = do
+  (s1, tau1) <- w gamma rhs
   s1Gamma <- assumptionSubs s1 gamma
-  (s2, tau2) <- w (extend v (schemeClosure s1Gamma tau1) s1Gamma) e2
+  (s2, tau2) <- w (extend lhs (schemeClosure s1Gamma tau1) s1Gamma) body
   return (s2 <> s1, tau2) -- TODO composition order?
 
 principal :: MonadError InferenceFailure m => Gamma -> Expr -> m TypeScheme

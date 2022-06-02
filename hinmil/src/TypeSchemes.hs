@@ -7,6 +7,7 @@ module TypeSchemes
   , instantiateScheme
   ) where
 
+import Control.Monad.Except
 import Control.Monad.State
 import Data.Char (ord)
 import Data.Foldable (foldl')
@@ -82,6 +83,13 @@ lastUsedSchemeVar = lastVar . varsInScheme
 lastFreeSchemeVar :: TypeScheme -> State Int ()
 lastFreeSchemeVar = lastVar . freeInScheme
 
+foldSchemeM :: Monad m => (b -> Term -> m Term) -> (b -> Name -> m (b, Name)) -> b -> TypeScheme -> m TypeScheme
+foldSchemeM fType fForall acc (Forall name scheme) = do
+  (acc', name') <- fForall acc name
+  scheme' <- foldSchemeM fType fForall acc' scheme
+  return $ Forall name' scheme'
+foldSchemeM fType _ acc (Type term) = Type <$> fType acc term
+
 -- | Two kinds of recursion going on here: outer loop over the substitutions;
 -- | inner loop on the type scheme.
 schemeSubs :: MonadState Int m => Substitutions -> TypeScheme -> m TypeScheme
@@ -90,28 +98,37 @@ schemeSubs substitutions tScheme =
   foldSubstsM schemeSubs' tScheme substitutions where
   -- | Kick off the recursion on the type scheme itself
   schemeSubs' :: MonadState Int m => TypeScheme -> Substitution -> m TypeScheme
-  schemeSubs' scheme substitution =
-    iter (freeInType $ substTerm substitution) mempty substitution scheme
+  schemeSubs' scheme substitution = do
+    let freeInSubst = freeInType $ substTerm substitution
+    let fForall = forallHelper freeInSubst substitution
+    let fType = typeHelper substitution
+    e <- runExceptT $ foldSchemeM fType fForall mempty scheme
+    return $ either (const scheme) id e
+
   -- | Recurse on the type scheme itself
-  iter :: MonadState Int m => [Name] -> Substitutions -> Substitution -> TypeScheme -> m TypeScheme
-  iter fvs rnss substitution ts@(Forall alpha sts) =
+  forallHelper :: (MonadState Int m, MonadError () m) => [Name] -> Substitution -> Substitutions -> Name -> m (Substitutions, Name)
+  forallHelper fvs substitution rnss alpha =
     if alpha == substName substitution
-    then return ts -- short-circuit the inner loop (TODO why?)
-    else do
-      (rnss', alpha') <-
-        -- If the binding is in the free variables, rename it
-        if elem alpha fvs
-        then do
-          -- Create a new substitution based on a new variable
-          newS <- newSubst alpha
-          return (sub1 newS <> rnss, substName newS)
-        else return (rnss, alpha)
-      -- Recurse over other type scheme bindings
-      ts' <- iter fvs rnss' substitution sts
-      return $ Forall alpha' ts'
-  iter _ rnss substitution (Type term) =
+    -- Short-circuit the inner loop, because if we have just introduced a
+    -- binding that conflicts with the substitution, then it is bound throughout
+    -- `sts`; therefore, there is no point in going further with this
+    -- substitution; try the next one.
+    then throwError ()
+    -- The substitution doesn't conflict with the binding
+    else if elem alpha fvs
+    -- If the binding is in the free variables of the substitution's type
+    -- term, rename it
+    then do
+      -- Create a new substitution based on a new variable
+      newS <- newSubst alpha
+      return (sub1 newS <> rnss, substName newS)
+    else return (rnss, alpha)
+
+  typeHelper :: MonadState Int m => Substitution -> Substitutions -> Term -> m Term
+  -- rnss is built up for use in this second branch
+  typeHelper substitution rnss term =
     -- TODO Why `subs` twice instead of substitution composition and apply once?
-    return $ Type $ subs (sub1 substitution) $ subs rnss term
+    return $ subs (sub1 substitution) $ subs rnss term
 
 instantiateScheme :: MonadState Int m => TypeScheme -> m Term
 instantiateScheme (Type tau') = return tau'
