@@ -83,13 +83,23 @@ lastUsedSchemeVar = lastVar . varsInScheme
 lastFreeSchemeVar :: TypeScheme -> State Int ()
 lastFreeSchemeVar = lastVar . freeInScheme
 
-foldSchemeM :: Monad m => (b -> Term -> m Term) -> (b -> Name -> m (b, Name)) -> b -> TypeScheme -> m TypeScheme
+foldSchemeM :: Monad m => (b -> Term -> m Term)
+                       -> (b -> Name -> m (b, Name))
+                       -> b -> TypeScheme -> m TypeScheme
 foldSchemeM fType fForall acc (Forall name scheme) = do
   (acc', name') <- fForall acc name
   scheme' <- foldSchemeM fType fForall acc' scheme
   return $ Forall name' scheme'
 foldSchemeM fType _ acc (Type term) = Type <$> fType acc term
 
+-- | Apply substitutions to a type scheme.
+-- |
+-- | Much more complex than applying substitutions to a type, since a type
+-- | cannot have bindings, and therefore there is no worry of scoping; the
+-- | substitutions can be naively applied. In this case, however, we have to
+-- | worry about the introduction of new variables in the type, and therefore
+-- | fiddle with whether the substitution is applicable.
+-- |
 -- | Two kinds of recursion going on here: outer loop over the substitutions;
 -- | inner loop on the type scheme.
 schemeSubs :: MonadState Int m => Substitutions -> TypeScheme -> m TypeScheme
@@ -107,7 +117,7 @@ schemeSubs substitutions tScheme =
 
   -- | Recurse on the type scheme itself
   forallHelper :: (MonadState Int m, MonadError () m) => [Name] -> Substitution -> Substitutions -> Name -> m (Substitutions, Name)
-  forallHelper fvs substitution rnss alpha =
+  forallHelper freeVars substitution rnss alpha =
     if alpha == substName substitution
     -- Short-circuit the inner loop, because if we have just introduced a
     -- binding that conflicts with the substitution, then it is bound throughout
@@ -115,7 +125,7 @@ schemeSubs substitutions tScheme =
     -- substitution; try the next one.
     then throwError ()
     -- The substitution doesn't conflict with the binding
-    else if elem alpha fvs
+    else if elem alpha freeVars
     -- If the binding is in the free variables of the substitution's type
     -- term, rename it
     then do
@@ -131,7 +141,7 @@ schemeSubs substitutions tScheme =
     return $ subs (sub1 substitution) $ subs rnss term
 
 instantiateScheme :: MonadState Int m => TypeScheme -> m Term
-instantiateScheme (Type tau') = return tau'
+instantiateScheme (Type t) = return t
 instantiateScheme (Forall alpha sigma) = do
   lastUsedSchemeVar sigma
   subst' <- newSubst alpha

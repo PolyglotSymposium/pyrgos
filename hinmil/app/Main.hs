@@ -143,7 +143,7 @@ runTests = do
   putStrLn "INFERENCE EXAMPLES:"
   putStrLn $ printIResult "7:" $ principal singletonGamma $ Var "x"
   putStrLn $ printIResult "8:" $ principal emptyGamma $ Lambda "x" $ Var "x"
-  putStrLn $ printIResult "9:" $ principal dualGamma $ Apply (Var "f") $ Var "x" -- TODO should say `Int`
+  putStrLn $ printIResult "9:" $ principal dualGamma $ Apply (Var "f") $ Var "x"
   putStrLn $ printIResult "10:" $ principal singletonGamma $ Let "y" (Var "x") (Var "y")
   putStrLn $ printIResult "11:" $ principal singletonGamma $ Lambda "y" $ Var "x"
 
@@ -151,7 +151,7 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    ["--tests"] -> runTests
+    ["--test"] -> runTests
     ["--parse", code] -> parseAndPrint code
     ["--repl"] -> runRepl
     _ -> putStrLn "TODO"
