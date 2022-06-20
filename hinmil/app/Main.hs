@@ -8,6 +8,7 @@ import TypeSchemes
 import Unification
 import qualified Parser
 
+import Data.Either.Combinators (mapLeft)
 import Data.Function ((&))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
@@ -126,6 +127,12 @@ parseAndPrint input =
   & either errorBundlePretty show
   & putStrLn
 
+parseInferPrint :: String -> IO ()
+parseInferPrint input = putStrLn $ either id id $ do
+  ast <- parse Parser.expr "cmd" input & mapLeft errorBundlePretty
+  scheme <- principal emptyGamma ast & mapLeft printIFailure
+  return $ show ast ++ " : " ++ printTypeScheme scheme
+
 runTests :: IO ()
 runTests = do
   putStrLn "UNIFICATION EXAMPLES:"
@@ -147,23 +154,24 @@ runTests = do
   putStrLn $ printIResult "10:" $ principal singletonGamma $ Let "y" (Var "x") (Var "y")
   putStrLn $ printIResult "11:" $ principal singletonGamma $ Lambda "y" $ Var "x"
 
+repl :: IO String
+repl = putStr "hinmil> "
+  >> hFlush stdout
+  >> getLine
+
+runReplWith :: (String -> IO ()) -> IO ()
+runReplWith f = do
+  input <- repl
+  unless (input == ":q")
+    $ f input
+    >> runReplWith f
+
 main :: IO ()
 main = do
   args <- getArgs
   case args of
     ["--test"] -> runTests
     ["--parse", code] -> parseAndPrint code
-    ["--repl"] -> runRepl
+    ["--parser-repl"] -> runReplWith parseAndPrint
+    ["--repl"] -> runReplWith parseInferPrint
     _ -> putStrLn "TODO"
-
-repl :: IO String
-repl = putStr "hinmil> "
-  >> hFlush stdout
-  >> getLine
-
-runRepl :: IO ()
-runRepl = do
-  input <- repl
-  unless (input == ":quit")
-    $ parseAndPrint input
-    >> runRepl
