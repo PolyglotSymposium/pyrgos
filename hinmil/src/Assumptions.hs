@@ -2,7 +2,7 @@
 module Assumptions
   ( Gamma, emptyGamma, extend, inContext
   , assumptionSubs
-  , schemeClosure
+  , closeScheme
   , lastFreeAssumptionVar
   ) where
 
@@ -45,17 +45,17 @@ lastFreeAssumptionVar (Gamma gamma) =
 assumptionSubs :: MonadState Int m => Substitutions -> Gamma -> m Gamma
 assumptionSubs substitutions (Gamma gamma) = Gamma <$> traverse (schemeSubs substitutions) gamma
 
--- TODO should this be called closeScheme?
-schemeClosure :: Gamma -> Term -> TypeScheme
-schemeClosure gamma tau =
+closeScheme :: Gamma -> Term -> TypeScheme
+closeScheme gamma tau =
   let favs = freeAssumptionVars gamma
       bindIfAbsolutelyFree (binders, boundVars) v =
-        -- We do not want to clobber any unification variables. Therefore if
-        -- this variable is a free assumption variable, skip it. Likewise, if we
-        -- have just bound it, we don't need to bind it again, so skip it.
+        -- We do not want to clobber any variables that are free in the
+        -- assumptions. Therefore if this variable is a free assumption
+        -- variable, skip it. Likewise, if we have just bound it, we don't need
+        -- to bind it again, so skip it.
         let (bind, addBound) = if elem v favs || elem v boundVars
                                then (id, id)
                                else (Forall v, (v :))
-        in (bind . binders, addBound boundVars)
+        in (binders . bind, addBound boundVars)
       binders' = fst $ foldl' bindIfAbsolutelyFree (id, []) $ freeInType tau
   in binders' $ Type tau

@@ -53,7 +53,7 @@ w gamma (Lambda param body) = do
 w gamma (Let lhs rhs body) = do
   (s1, tau1) <- w gamma rhs
   s1Gamma <- assumptionSubs s1 gamma
-  (s2, tau2) <- w (extend lhs (schemeClosure s1Gamma tau1) s1Gamma) body
+  (s2, tau2) <- w (extend lhs (closeScheme s1Gamma tau1) s1Gamma) body
   return (s2 <> s1, tau2) -- TODO composition order?
 
 principal :: MonadError InferenceFailure m => Gamma -> Expr -> m TypeScheme
@@ -61,4 +61,4 @@ principal gamma e = evalStateT principal' $ lastFreeAssumptionVar gamma where
   principal' = do
     (s, tau) <- w gamma e
     sGamma <- assumptionSubs s gamma
-    return $ schemeClosure sGamma tau
+    return $ closeScheme sGamma tau
