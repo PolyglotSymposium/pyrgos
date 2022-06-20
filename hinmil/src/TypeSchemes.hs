@@ -117,33 +117,33 @@ schemeSubs substitutions tScheme =
 
   -- | Recurse on the type scheme itself
   forallHelper :: (MonadState Int m, MonadError () m) => [Name] -> Substitution -> Substitutions -> Name -> m (Substitutions, Name)
-  forallHelper freeVars substitution rnss alpha =
-    if alpha == substName substitution
+  forallHelper freeVars substitution localSubs binding =
+    if binding == substName substitution
     -- Short-circuit the inner loop, because if we have just introduced a
     -- binding that conflicts with the substitution, then it is bound throughout
     -- `sts`; therefore, there is no point in going further with this
     -- substitution; try the next one.
     then throwError ()
     -- The substitution doesn't conflict with the binding
-    else if elem alpha freeVars
+    else if elem binding freeVars
     -- If the binding is in the free variables of the substitution's type
     -- term, rename it
     then do
       -- Create a new substitution based on a new variable
-      newS <- newSubst alpha
-      return (sub1 newS <> rnss, substName newS)
-    else return (rnss, alpha)
+      newS <- newSubst binding
+      return (sub1 newS <> localSubs, substName newS)
+    else return (localSubs, binding)
 
   typeHelper :: MonadState Int m => Substitution -> Substitutions -> Term -> m Term
-  -- rnss is built up for use in this second branch
-  typeHelper substitution rnss term =
+  -- localSubs is built up for use in this second branch
+  typeHelper substitution localSubs term =
     -- TODO Why `subs` twice instead of substitution composition and apply once?
-    return $ subs (sub1 substitution) $ subs rnss term
+    return $ subs (sub1 substitution) $ subs localSubs term
 
 instantiateScheme :: MonadState Int m => TypeScheme -> m Term
 instantiateScheme (Type t) = return t
-instantiateScheme (Forall alpha sigma) = do
+instantiateScheme (Forall binding sigma) = do
   lastUsedSchemeVar sigma
-  subst' <- newSubst alpha
+  subst' <- newSubstbinding
   sigma' <- schemeSubs (sub1 subst') sigma
   instantiateScheme sigma'
