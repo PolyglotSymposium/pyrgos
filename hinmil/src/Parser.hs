@@ -51,7 +51,13 @@ name :: Parser Name
 name = L.lexeme space $ some letterChar
 
 var :: Parser Expr
-var = Var <$> name
+var = do
+  x <- name
+  () <- case x of
+          "let" -> fail "'let' is a keyword"
+          "in" -> fail "'in' is a keyword"
+          _ -> return ()
+  return $ Var x
 
 parenFunc :: Parser Expr
 parenFunc = try var <|> try (parens compound) <|> apply
