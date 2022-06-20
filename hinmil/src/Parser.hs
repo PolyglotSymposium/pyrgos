@@ -54,8 +54,8 @@ var :: Parser Expr
 var = do
   x <- name
   () <- case x of
-          "let" -> fail "'let' is a keyword"
-          "in" -> fail "'in' is a keyword"
+          "let" -> fail "'let' is a reserved keyword"
+          "in" -> fail "'in' is a reserved keyword"
           _ -> return ()
   return $ Var x
 
@@ -70,7 +70,7 @@ apply = liftA2 Apply parenFunc parenArg
 
 lambda :: Parser Expr
 lambda = do
-  backslash
+  try backslash
   param <- name
   arrow
   body <- expr
@@ -78,7 +78,7 @@ lambda = do
 
 letIn :: Parser Expr
 letIn = do
-  letKW
+  try letKW
   lhs <- name
   equals
   rhs <- expr
@@ -87,7 +87,7 @@ letIn = do
   return $ Let lhs rhs body
 
 compound :: Parser Expr
-compound = try letIn <|> try apply <|> lambda
+compound = letIn <|> lambda <|> apply
 
 expr :: Parser Expr
 expr = try compound <|> var
