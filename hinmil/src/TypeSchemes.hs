@@ -144,6 +144,6 @@ instantiateScheme :: MonadState Int m => TypeScheme -> m Term
 instantiateScheme (Type t) = return t
 instantiateScheme (Forall binding sigma) = do
   lastUsedSchemeVar sigma
-  subst' <- newSubstbinding
+  subst' <- newSubst binding
   sigma' <- schemeSubs (sub1 subst') sigma
   instantiateScheme sigma'
