@@ -32,6 +32,7 @@ printIFailure (UndefinedVar var) = "Undefined variable: " ++ var
 printIFailure (DoesNotUnify failure) = "Failed to unify: " ++ printUFailure failure
 
 w :: (MonadState Int m, MonadError InferenceFailure m) => Gamma -> Expr -> m (Substitutions, Term)
+w _ (Lit x) = return (mempty, TyLit $ literalType x)
 w gamma (Var v) = do
   scheme <- maybe (throwError $ UndefinedVar v) pure $ inContext v gamma
   term <- instantiateScheme scheme
