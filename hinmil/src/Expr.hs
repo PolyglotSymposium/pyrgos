@@ -1,4 +1,9 @@
-module Expr (Literal(..), literalType, Expr(..)) where
+module Expr
+  ( Literal(..), literalType
+  , Expr(..)
+  , Decl(..)
+  , TopLevel(..)
+  ) where
 
 type Name = String
 
@@ -18,3 +23,10 @@ data Expr             =
   Lambda String Expr  |
   Let Name Expr Expr  --
   deriving Show
+
+data Decl          =
+  Define Name Expr --
+
+data TopLevel     =
+  TLExpr Expr     |
+  TLDecl Decl     --

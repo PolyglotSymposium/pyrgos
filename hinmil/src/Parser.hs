@@ -1,24 +1,12 @@
-module Parser (Parser, expr, name, equals) where
+module Parser (Parser, expr, name, equals, decl, topLevel) where
 
-{-
-<name> is a nonempty Latin-alphabetic string, other than "let" and "in"
-<var> ::= <name>
-<apply> ::= <paren-func> <paren-arg>
-<lambda> ::= '\' <name> "->" <expr>
-<let> ::= "let" <name> '=' <expr> "in" <expr>
-<compound> = <apply> | <lambda> | <let>
-<compound-func> = <lambda> | <let>
-<paren-func> = <var> | <apply> | '(' <compound-func> ')'
-<paren-arg> = <var> | '(' <compound> ')'
-<expr> ::= <var> | <compound>
--}
 import Expr
 
 import           Control.Applicative (liftA2)
 import           Control.Monad (void)
 import           Control.Applicative ((<|>))
 import           Data.Void (Void)
-import           Text.Megaparsec ( Parsec, between, try, some )
+import           Text.Megaparsec ( Parsec, between, try, some, manyTill )
 import           Text.Megaparsec.Char (space, letterChar)
 import qualified Text.Megaparsec.Char.Lexer as L
 
@@ -41,6 +29,9 @@ arrow = void $ symbol' "->"
 backslash :: Parser ()
 backslash = void $ symbol' "\\"
 
+strMark :: Parser ()
+strMark = void $ symbol' "\""
+
 letKW :: Parser ()
 letKW = void $ symbol' "let"
 
@@ -51,7 +42,7 @@ name :: Parser Name
 name = L.lexeme space $ some letterChar
 
 var :: Parser Expr
-var = do
+var = try $ do
   x <- name
   () <- case x of
           "let" -> fail "'let' is a reserved keyword"
@@ -59,11 +50,22 @@ var = do
           _ -> return ()
   return $ Var x
 
+int :: Parser Expr
+int = (Lit . IntLit) <$> L.decimal
+
+string :: Parser Expr
+string =
+  let p = try strMark >> manyTill L.charLiteral strMark
+  in (Lit . StringLit) <$> p
+
+terminal :: Parser Expr
+terminal = int <|> string <|> var
+
 parenFunc :: Parser Expr
-parenFunc = try var <|> try (parens compound) <|> apply
+parenFunc = terminal <|> try (parens compound) <|> apply
 
 parenArg :: Parser Expr
-parenArg = try var <|> parens compound
+parenArg = terminal <|> parens compound
 
 apply :: Parser Expr
 apply = liftA2 Apply parenFunc parenArg
@@ -90,4 +92,22 @@ compound :: Parser Expr
 compound = letIn <|> lambda <|> apply
 
 expr :: Parser Expr
-expr = try compound <|> var
+expr = try compound <|> terminal
+
+define :: Parser Decl
+define = do
+  lhs <- try (name <* equals)
+  rhs <- expr
+  return $ Define lhs rhs
+
+decl :: Parser Decl
+decl = define
+
+tlExpr :: Parser TopLevel
+tlExpr = TLExpr <$> expr
+
+tlDecl :: Parser TopLevel
+tlDecl = TLDecl <$> decl
+
+topLevel :: Parser TopLevel
+topLevel = tlDecl <|> tlExpr
