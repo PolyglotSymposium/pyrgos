@@ -2,20 +2,15 @@ module Main (main) where
 
 import AlgorithmW
 import Assumptions
+import Repl
 import Substitutions
 import TypeAST
 import TypeSchemes
 import Unification
-import qualified Parser
 
-import Data.Either.Combinators (mapLeft)
-import Data.Function ((&))
 import Data.List (intercalate)
 import Data.List.NonEmpty (NonEmpty(..))
 import System.Environment (getArgs)
-import System.IO
-import Control.Monad (unless)
-import Text.Megaparsec (parse, errorBundlePretty)
 
 printUResult :: String -> Either UnificationFailure Substitutions -> String
 printUResult name (Left failure) = name ++ " ERROR: " ++ printUFailure failure
@@ -121,18 +116,6 @@ printIResult :: String -> Either InferenceFailure TypeScheme -> String
 printIResult name (Left failure) = name ++ " ERROR: " ++ printIFailure failure
 printIResult name (Right scheme) = name ++ " MGU: " ++ printTypeScheme scheme
 
-parseAndPrint :: String -> IO ()
-parseAndPrint input =
-  parse Parser.expr "cmd" input
-  & either errorBundlePretty show
-  & putStrLn
-
-parseInferPrint :: String -> IO ()
-parseInferPrint input = putStrLn $ either id id $ do
-  ast <- parse Parser.expr "cmd" input & mapLeft errorBundlePretty
-  scheme <- principal emptyGamma ast & mapLeft printIFailure
-  return $ show ast ++ " : " ++ printTypeScheme scheme
-
 runTests :: IO ()
 runTests = do
   putStrLn "UNIFICATION EXAMPLES:"
@@ -154,24 +137,11 @@ runTests = do
   putStrLn $ printIResult "10:" $ principal singletonGamma $ Let "y" (Var "x") (Var "y")
   putStrLn $ printIResult "11:" $ principal singletonGamma $ Lambda "y" $ Var "x"
 
-repl :: IO String
-repl = putStr "hinmil> "
-  >> hFlush stdout
-  >> getLine
-
-runReplWith :: (String -> IO ()) -> IO ()
-runReplWith f = do
-  input <- repl
-  unless (input == ":q")
-    $ f input
-    >> runReplWith f
-
 main :: IO ()
 main = do
   args <- getArgs
   case args of
     ["--test"] -> runTests
-    ["--parse", code] -> parseAndPrint code
-    ["--parser-repl"] -> runReplWith parseAndPrint
-    ["--repl"] -> runReplWith parseInferPrint
+    ["--parser-repl"] -> parserRepl
+    ["--repl"] -> repl
     _ -> putStrLn "TODO"
