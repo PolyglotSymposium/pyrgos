@@ -9,6 +9,12 @@ import TypeAST
 decr :: Int -> Int
 decr x = x - 1
 
+arbTyLit :: Gen Term
+arbTyLit = do
+  c <- arbitraryPrintableChar
+  PrintableString x <- arbitrary
+  return $ TyLit (c : x)
+
 arbTyVar :: Gen Term
 arbTyVar = do
   c <- arbitraryPrintableChar
@@ -26,11 +32,12 @@ arbTyApp originalSize = do
 arbTerm :: Int -> Gen Term
 arbTerm originalSize = do
   size <- getSize
-  frequency [ (originalSize, arbTyVar)
+  frequency [ (originalSize, arbTyLit)
+            , (originalSize, arbTyVar)
             , (size, arbTyApp originalSize)
             ]
 
 instance Arbitrary Term where
-  arbitrary = resize 5 $ do
+  arbitrary = resize 4 $ do
     size <- getSize
     arbTerm size
