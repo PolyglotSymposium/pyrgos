@@ -1,4 +1,16 @@
-module AST (Name, TerminalType(..), Type(..), Monotype(..), Expr(..)) where
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE GADTs #-}
+module AST
+  ( Name
+  , TerminalType(..)
+  , Poly
+  , Ty(..)
+  , Monotype
+  , Polytype
+  , Expr(..)
+  ) where
+
+import Data.Kind
 
 type Name = String
 
@@ -6,18 +18,19 @@ data TerminalType =
   UnitType        |
   TypeVar Name    --
 
-data Type                   =
-  TerminalType TerminalType |
-  Forall Name Type          |
-  FunctionType Type Type    --
+data Poly
 
-data Monotype                    =
-  Monoterminal TerminalType      |
-  Monofunction Monotype Monotype --
+data Ty :: Type -> Type where
+  TerminalType :: TerminalType -> Ty a
+  Forall :: Name -> Ty Poly -> Ty Poly
+  FunctionType :: Ty a -> Ty a -> Ty a
 
-data Expr           =
-  Var Name          |
-  Unit              |
-  Lambda Name Expr  |
-  Apply Expr Expr   |
-  Ascribe Expr Type --
+type Polytype = Ty Poly
+type Monotype = Ty ()
+
+data Expr               =
+  Var Name              |
+  Unit                  |
+  Lambda Name Expr      |
+  Apply Expr Expr       |
+  Ascribe Expr Polytype --
