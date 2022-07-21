@@ -47,6 +47,7 @@ library
     , either
     , megaparsec
     , mtl
+    , transformers
   default-language: Haskell2010
 
 executable hinmil-exe
@@ -63,6 +64,7 @@ executable hinmil-exe
     , hinmil
     , megaparsec
     , mtl
+    , transformers
   default-language: Haskell2010
 
 test-suite hinmil-test
@@ -87,4 +89,5 @@ test-suite hinmil-test
     , hspec-megaparsec
     , megaparsec
     , mtl
+    , transformers
   default-language: Haskell2010

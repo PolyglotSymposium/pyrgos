@@ -2,11 +2,11 @@ module Parser (Parser, expr, name, equals, decl, topLevel) where
 
 import Expr
 
-import           Control.Applicative (liftA2)
 import           Control.Monad (void)
 import           Control.Applicative ((<|>))
+import           Data.Foldable (foldl')
 import           Data.Void (Void)
-import           Text.Megaparsec ( Parsec, between, try, some, manyTill )
+import           Text.Megaparsec (Parsec, between, try, some, manyTill)
 import           Text.Megaparsec.Char (space, letterChar)
 import qualified Text.Megaparsec.Char.Lexer as L
 
@@ -51,12 +51,12 @@ var = try $ do
   return $ Var x
 
 int :: Parser Expr
-int = (Lit . IntLit) <$> L.decimal
+int = (Lit . IntLit) <$> L.lexeme space L.decimal
 
 string :: Parser Expr
 string =
   let p = try strMark >> manyTill L.charLiteral strMark
-  in (Lit . StringLit) <$> p
+  in (Lit . StringLit) <$> L.lexeme space p
 
 terminal :: Parser Expr
 terminal = int <|> string <|> var
@@ -64,11 +64,15 @@ terminal = int <|> string <|> var
 parenFunc :: Parser Expr
 parenFunc = terminal <|> try (parens compound) <|> apply
 
+-- | Parenthesized argument (except if terminal)
 parenArg :: Parser Expr
 parenArg = terminal <|> parens compound
 
 apply :: Parser Expr
-apply = liftA2 Apply parenFunc parenArg
+apply = do
+  f <- parenFunc
+  xs <- some parenArg
+  return $ foldl' Apply f xs
 
 lambda :: Parser Expr
 lambda = do

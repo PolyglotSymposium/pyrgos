@@ -143,5 +143,5 @@ main = do
   case args of
     ["--test"] -> runTests
     ["--parser-repl"] -> parserRepl
-    ["--repl"] -> repl
+    ["--type-repl"] -> typeRepl
     _ -> putStrLn "TODO"

@@ -26,7 +26,9 @@ data Expr             =
 
 data Decl          =
   Define Name Expr --
+  deriving Show
 
 data TopLevel     =
   TLExpr Expr     |
   TLDecl Decl     --
+  deriving Show
