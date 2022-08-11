@@ -1,0 +1,15 @@
+(defmodule Prelude.Maybe)
+
+(deftype (Maybe a) (Disjoint Nil (Cons :Some a)))
+
+(: none (Maybe a))
+(def none nil)
+
+(: some (-> a Maybe a))
+(def (some x) (cons :some x))
+
+(: Maybe/case (-> (Maybe a) b (-> a b) b))
+(def (Maybe/case maybe default f)
+    (Disjoint/case maybe
+     (nil default)
+     ((:some . x) (f x))))
