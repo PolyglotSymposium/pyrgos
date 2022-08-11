@@ -1,6 +1,6 @@
 (defmodule Prelude.Maybe)
 
-(deftype (Maybe a) (Disjoint Nil (Cons :Some a)))
+(deftype (Maybe a) (Disjoint Nil (Cons :some a)))
 
 (: none (Maybe a))
 (def none nil)

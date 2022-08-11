@@ -1,0 +1,6 @@
+(defmodule Prelude.Void)
+
+(deftype Void (Disjoint))
+
+(: absurd (Void -> a))
+(def (absurd v) (Disjoint/case v))
