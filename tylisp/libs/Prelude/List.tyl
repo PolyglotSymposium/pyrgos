@@ -1,0 +1,35 @@
+(defmodule Prelude.List)
+
+(deftype (List a) (Union Nil (Cons a (List a)))
+
+  ;; TODO ParseSExpr typeclass
+(: List/parse (-> SExpr (SExpr -> a) (List a)))
+(def (List/parse expr f)
+     (union expr nil! (lambda (x) (bimap (cons! x) f (lambda (y) (List/parse f y))))))
+
+;; (: cons (-> a b (Cons a b)))
+(: :: (-> a (List a) (List a)))
+(def (:: x xs) (cons x xs)) ;; the union type just handles it?
+
+(: List/empty (List a))
+(def List/empty ()) ;; the union type just handles it?
+
+;; TODO Functor typeclass
+(: List/map (-> (List a) (a -> b) (List b)))
+(def (List/map xs f)
+     (union-case xs
+       (nil empty)
+       ((cons x xs') (:: (f x) (List/map xs' f)))))
+
+;; (: list (-> a * (List a)))
+;; (def (list . xs))
+
+;; (: x SExpr)
+;; (def x (1 2 3)) ;; TODO what does this syntax imply?
+;; > (parse x int!)
+;; (: (List Int))
+;; (1 2 3)
+;; (: y SExpr)
+;; (def y (1 "foo" 3) ;; TODO what does this syntax imply?)
+;; > (parse y int!)
+;; error: "foo" is not an Int
