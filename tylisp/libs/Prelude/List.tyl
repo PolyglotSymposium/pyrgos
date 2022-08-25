@@ -5,7 +5,7 @@
   ;; TODO ParseSExpr typeclass
 (: List/parse (-> SExpr (SExpr -> a) (List a)))
 (def (List/parse expr f)
-     (disjoint expr nil! (lambda (x) (bimap (cons! x) f (lambda (y) (List/parse f y))))))
+    (disjoint expr nil! (cons! f (List/parse f))))
 
 ;; (: cons (-> a b (Cons a b)))
 (: List/cons (-> a (List a) (List a)))
@@ -18,7 +18,7 @@
 (: List/map (-> (List a) (a -> b) (List b)))
 (def (List/map xs f)
      (Disjoint/case xs
-       (nil empty)
+       (() empty)
        ((cons x xs') (List/cons (f x) (List/map xs' f)))))
 
 ;; (: list (-> a * (List a)))

@@ -1,14 +1,14 @@
 (defmodule Prelude.Either)
 
 (deftype (Either a b)
-         (Disjoint (Cons :Left a)
-                   (Cons :Right b)))
+         (Disjoint (Cons :left a)
+                   (Cons :right b)))
 
 (: Either/parse (-> SExpr (SExpr -> a) (SExpr -> b) (Either a b)))
 (def (Either/parse expr f g)
     (disjoint expr
-              (lambda (x) (bimap (cons! x) (specific-keyword! :left) f))
-              (lambda (x) (bimap (cons! x) (specific-keyword! :right) g))))
+              (cons! (specific-keyword! :left) f)
+              (cons! (specific-keyword! :right) g)))
 
 (: left (-> a (Either a b)))
 (def (left x)

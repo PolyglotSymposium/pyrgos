@@ -3,7 +3,7 @@
 (deftype (Maybe a) (Disjoint Nil (Cons :some a)))
 
 (: none (Maybe a))
-(def none nil)
+(def none ())
 
 (: some (-> a Maybe a))
 (def (some x) (cons :some x))
@@ -11,5 +11,5 @@
 (: Maybe/case (-> (Maybe a) b (-> a b) b))
 (def (Maybe/case maybe default f)
     (Disjoint/case maybe
-     (nil default)
+     (() default)
      ((:some . x) (f x))))
