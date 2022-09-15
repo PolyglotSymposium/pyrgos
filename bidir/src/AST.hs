@@ -3,30 +3,43 @@
 module AST
   ( Name
   , TerminalType(..)
-  , Poly
-  , Ty(..)
-  , Monotype
-  , Polytype
+  -- , Poly
+  -- , Ty(..)
+  , Monotype(..)
+  , Polytype(..)
   , Expr(..)
   ) where
 
-import Data.Kind
+-- import Data.Kind
 
 type Name = String
 
-data TerminalType =
-  UnitType        |
-  TypeVar Name    --
+data TerminalType         =
+  UnitType                |
+  UniversalTypeVar Name   |
+  ExistentialTypeVar Name --
+  deriving Eq
 
-data Poly
+--data Poly
+--
+--data Ty :: Type -> Type where
+--  TerminalType :: TerminalType -> Ty a
+--  Forall :: Name -> Ty Poly -> Ty Poly
+--  FunctionType :: Ty a -> Ty a -> Ty a
+--
+--type Polytype = Ty Poly
+--type Monotype = Ty ()
 
-data Ty :: Type -> Type where
-  TerminalType :: TerminalType -> Ty a
-  Forall :: Name -> Ty Poly -> Ty Poly
-  FunctionType :: Ty a -> Ty a -> Ty a
+data Polytype                        =
+  PolyTerminalType TerminalType      |
+  Forall Name Polytype               |
+  PolyFunctionType Polytype Polytype --
+  deriving Eq
 
-type Polytype = Ty Poly
-type Monotype = Ty ()
+data Monotype                        =
+  MonoTerminalType TerminalType      |
+  MonoFunctionType Monotype Monotype --
+  deriving Eq
 
 data Expr               =
   Var Name              |

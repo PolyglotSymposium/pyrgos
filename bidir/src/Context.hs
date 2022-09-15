@@ -1,76 +1,82 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Context
-  ( Context, noContext
-  , lookupVar, containsTypeVar
-  , wellFormed, isSubtypeOf
+  ( Context, emptyContext
+  , extendWithBoundTypeVar
+  , extendWithAscription
+  , extendWithUnsolved
+  , extendWithSolved
+  , extendWithScopeMarker
   ) where
 
 import AST
 
 import Control.Monad.Error.Class
-import Control.Monad.Reader.Class
-import Data.Either.Utils
+import Control.Monad.State.Class
 
-data Context =
-  Context { boundTypeVars :: [Name]
-          , assumptions :: [(Name, Polytype)]
-          }
+data ContextEntry                 =
+  BoundTypeVar Name               |
+  Ascription Name Polytype        |
+  UnsolvedExistential Name        |
+  SolvedExistential Name Monotype |
+  ScopeMarker Name                --
+  deriving Eq
 
-noContext :: Context
-noContext = Context [] []
+newtype Context = Context [ContextEntry]
 
-data Err                               =
-  CannotProveSubtypingRelation Name Name |
-  NotInContext Name Context              --
+emptyContext :: Context
+emptyContext = Context []
 
-lookupVar :: (MonadReader Context m, MonadError Err m) => Name -> m Polytype
-lookupVar x = do
-  context <- ask
-  let result = lookup x $ assumptions context
-  maybeToEither (NotInContext x context) result
+extendWithBoundTypeVar :: MonadState Context m => Name -> m ()
+extendWithBoundTypeVar name =
+  modify (\(Context xs) -> Context $ (BoundTypeVar name) : xs)
 
-bindTypeVar :: Name -> Context -> Context
-bindTypeVar name context =
-  context { boundTypeVars = name : boundTypeVars context }
+extendWithAscription :: MonadState Context m => Name -> Polytype -> m ()
+extendWithAscription name ty =
+  modify (\(Context xs) -> Context $ (Ascription name ty) : xs)
 
-containsTypeVar :: (MonadReader Context m, MonadError Err m) => Name -> m ()
-containsTypeVar x = do
-  context <- ask
-  if elem x $ boundTypeVars context
+extendWithUnsolved :: MonadState Context m => Name -> m ()
+extendWithUnsolved name =
+  modify (\(Context xs) -> Context $ (UnsolvedExistential name) : xs)
+
+extendWithSolved :: MonadState Context m => Name -> Monotype -> m ()
+extendWithSolved name monotype =
+  modify (\(Context xs) -> Context $ (SolvedExistential name monotype) : xs)
+
+extendWithScopeMarker :: MonadState Context m => Name -> m ()
+extendWithScopeMarker name =
+  modify (\(Context xs) -> Context $ (ScopeMarker name) : xs)
+
+elemBound :: (MonadState Context m, MonadError String m)
+            => Name -> m ()
+elemBound x = do
+  Context context <- get
+  if elem (BoundTypeVar x) context
   then return ()
-  else throwError $ NotInContext x context
+  else throwError ("Bound type variable not in context" {-x context-})
 
-wellFormed :: (MonadReader Context m, MonadError Err m) => Polytype -> m ()
--- Variables are well-formed if in context
-wellFormed (TerminalType (TypeVar x)) = containsTypeVar x
--- Unit type is always well-formed
-wellFormed (TerminalType UnitType) = return ()
--- Universal quantification is well-formed when the quantified type is
--- well-formed in the extended context
-wellFormed (Forall name ty) =
-  local (bindTypeVar name) $ wellFormed ty
--- A function type is well-formed when both its input and its output are
--- well-formed.
-wellFormed (FunctionType input output) = do
-  wellFormed input
-  wellFormed output
+isExistential :: ContextEntry -> Maybe Name
+isExistential (UnsolvedExistential x) = Just x
+isExistential (SolvedExistential x _) = Just x
+isExistential _ = Nothing
 
-isSubtypeOf :: (MonadReader Context m, MonadError Err m) => Polytype
-                                                         -> Polytype -> m ()
--- Reflexivity of subtyping on literal types
-isSubtypeOf (TerminalType UnitType) (TerminalType UnitType) = return ()
--- Reflexivity of subtyping on type variables
-isSubtypeOf (TerminalType (TypeVar name1)) (TerminalType (TypeVar name2)) =
-  if (name1 == name2)
-  then containsTypeVar name1
-  else throwError $ CannotProveSubtypingRelation name1 name2
--- The subtyping relation on functions requires contravariance in inputs and
--- covariance in outputs
-isSubtypeOf (FunctionType input1 output1) (FunctionType input2 output2) = do
-  -- Contravariance of inputs
-  isSubtypeOf input2 input1
-  -- Covariance of outputs
-  isSubtypeOf output1 output2
--- TODO left and right universal quantification rules
-isSubtypeOf _ _ = return ()
+elemExistential :: (MonadState Context m, MonadError String m)
+                => Name -> m ()
+elemExistential x = do
+  Context context <- get
+  if any (\e -> isExistential e == Just x) context
+  then return ()
+  else throwError ("Existential type variable not in context" {-x context-})
+
+wellFormedPolytype :: (MonadState Context m, MonadError String m)
+                   => Polytype -> m ()
+wellFormedPolytype (PolyTerminalType UnitType) = return ()
+wellFormedPolytype (PolyTerminalType (UniversalTypeVar x)) = elemBound x
+wellFormedPolytype (PolyTerminalType (ExistentialTypeVar x)) = elemExistential x
+wellFormedPolytype (PolyFunctionType a b) = do
+  wellFormedPolytype a
+  wellFormedPolytype b
+wellFormedPolytype (Forall binding body) = do
+  -- TODO we did `modify` but this should be `local`
+  extendWithBoundTypeVar binding
+  wellFormedPolytype body
