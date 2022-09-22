@@ -27,6 +27,14 @@ newtype Context = Context [ContextEntry]
 emptyContext :: Context
 emptyContext = Context []
 
+-- TODO does this exist?
+localize :: MonadState s m => m a -> m a
+localize s = do
+  x' <- get -- store off previous state
+  x <- s -- run the localized monadic action
+  put x' -- restore the previous state
+  return x -- return the result of the monadic action
+
 extendWithBoundTypeVar :: MonadState Context m => Name -> m ()
 extendWithBoundTypeVar name =
   modify (\(Context xs) -> Context $ (BoundTypeVar name) : xs)
@@ -77,6 +85,5 @@ wellFormedPolytype (PolyFunctionType a b) = do
   wellFormedPolytype a
   wellFormedPolytype b
 wellFormedPolytype (Forall binding body) = do
-  -- TODO we did `modify` but this should be `local`
-  extendWithBoundTypeVar binding
+  localize $ extendWithBoundTypeVar binding
   wellFormedPolytype body
