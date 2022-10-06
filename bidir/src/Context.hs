@@ -1,4 +1,3 @@
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE FlexibleContexts #-}
 module Context
   ( Context, emptyContext
@@ -7,6 +6,7 @@ module Context
   , extendWithUnsolved
   , extendWithSolved
   , extendWithScopeMarker
+  , wellFormedPolytype
   ) where
 
 import AST
@@ -15,10 +15,19 @@ import Control.Monad.Error.Class
 import Control.Monad.State.Class
 
 data ContextEntry                 =
+  -- A universally-bound type variable that is in scope
+  -- α
   BoundTypeVar Name               |
-  Ascription Name Polytype        |
+  -- A value-level variable in scope whose type is known
+  -- x : A
+  VarTyping Name Polytype         |
+  -- An unsolved existential type variable that is in scope
+  -- α^
   UnsolvedExistential Name        |
+  -- An solved existential type variable that is in scope
+  -- α^ = τ
   SolvedExistential Name Monotype |
+  -- A scope marker for an existential type variable
   ScopeMarker Name                --
   deriving Eq
 
@@ -35,13 +44,24 @@ localize s = do
   put x' -- restore the previous state
   return x -- return the result of the monadic action
 
+boundTypeVarInEntry :: Name -> ContextEntry -> Bool
+boundTypeVarInEntry x (BoundTypeVar y) = x == y
+boundTypeVarInEntry x (VarTyping _ ptype) = _ -- TODO look in ptype for x?
+boundTypeVarInEntry _ (UnsolvedExistential _) = False
+boundTypeVarInEntry x (SolvedExistential _ mtype) = _ -- TODO look in mtype for x?
+boundTypeVarInEntry _ (ScopeMarker _) = False
+
+boundTypeVarInDomain :: Name -> Context -> Bool
+boundTypeVarInDomain x (Context entries) =
+  elemBy boundTypeVarInEntry entries
+
 extendWithBoundTypeVar :: MonadState Context m => Name -> m ()
 extendWithBoundTypeVar name =
   modify (\(Context xs) -> Context $ (BoundTypeVar name) : xs)
 
 extendWithAscription :: MonadState Context m => Name -> Polytype -> m ()
 extendWithAscription name ty =
-  modify (\(Context xs) -> Context $ (Ascription name ty) : xs)
+  modify (\(Context xs) -> Context $ (VarTyping name ty) : xs)
 
 extendWithUnsolved :: MonadState Context m => Name -> m ()
 extendWithUnsolved name =
