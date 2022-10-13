@@ -2,7 +2,7 @@
 module Context
   ( Context, emptyContext
   , extendWithBoundTypeVar
-  , extendWithAscription
+  , extendWithVarTyping
   , extendWithUnsolved
   , extendWithSolved
   , extendWithScopeMarker
@@ -13,6 +13,7 @@ import AST
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
+import Data.Function ((&))
 
 data ContextEntry                 =
   -- A universally-bound type variable that is in scope
@@ -46,34 +47,61 @@ localize s = do
 
 boundTypeVarInEntry :: Name -> ContextEntry -> Bool
 boundTypeVarInEntry x (BoundTypeVar y) = x == y
-boundTypeVarInEntry x (VarTyping _ ptype) = _ -- TODO look in ptype for x?
+boundTypeVarInEntry _x (VarTyping _ _ptype) = undefined -- TODO look in ptype for x?
 boundTypeVarInEntry _ (UnsolvedExistential _) = False
-boundTypeVarInEntry x (SolvedExistential _ mtype) = _ -- TODO look in mtype for x?
+boundTypeVarInEntry _x (SolvedExistential _ _mtype) = undefined -- TODO look in mtype for x?
 boundTypeVarInEntry _ (ScopeMarker _) = False
 
+-- α ∈ dom(Γ) for UvarCtx rule
 boundTypeVarInDomain :: Name -> Context -> Bool
 boundTypeVarInDomain x (Context entries) =
-  elemBy boundTypeVarInEntry entries
+  any (boundTypeVarInEntry x) entries
+
+valueVarInEntry :: Name -> ContextEntry -> Bool
+valueVarInEntry x (VarTyping y _) = x == y
+valueVarInEntry _ _ = False
+
+-- x ∈ dom(Γ) for VarCtx rule
+valueVarInDomain :: Name -> Context -> Bool
+valueVarInDomain x (Context entries) =
+  any (valueVarInEntry x) entries
+
+existentialInEntry :: Name -> ContextEntry -> Bool
+existentialInEntry _ (BoundTypeVar _) = False
+existentialInEntry _x (VarTyping _ _ptype) = undefined -- TODO look in ptype for x?
+existentialInEntry x (UnsolvedExistential y) = x == y
+existentialInEntry x (SolvedExistential y _mtype) = x == y -- TODO look in mtype for x?
+existentialInEntry x (ScopeMarker y) = x == y
+
+-- α^ ∈ dom(Γ) for EvarCtx, SolvedEvarCtx rules
+existentialInDomain :: Name -> Context -> Bool
+existentialInDomain x (Context entries) =
+  any (existentialInEntry x) entries
 
 extendWithBoundTypeVar :: MonadState Context m => Name -> m ()
 extendWithBoundTypeVar name =
-  modify (\(Context xs) -> Context $ (BoundTypeVar name) : xs)
+  let _ = boundTypeVarInDomain -- TODO
+  in modify (\(Context xs) -> Context $ (BoundTypeVar name) : xs)
 
-extendWithAscription :: MonadState Context m => Name -> Polytype -> m ()
-extendWithAscription name ty =
-  modify (\(Context xs) -> Context $ (VarTyping name ty) : xs)
+extendWithVarTyping :: MonadState Context m => Name -> Polytype -> m ()
+extendWithVarTyping name ty =
+  let _ = valueVarInDomain -- TODO
+  in modify (\(Context xs) -> Context $ (VarTyping name ty) : xs)
 
 extendWithUnsolved :: MonadState Context m => Name -> m ()
 extendWithUnsolved name =
-  modify (\(Context xs) -> Context $ (UnsolvedExistential name) : xs)
+  let _ = existentialInDomain -- TODO
+  in modify (\(Context xs) -> Context $ (UnsolvedExistential name) : xs)
 
 extendWithSolved :: MonadState Context m => Name -> Monotype -> m ()
 extendWithSolved name monotype =
-  modify (\(Context xs) -> Context $ (SolvedExistential name monotype) : xs)
+  let _ = existentialInDomain -- TODO
+  in modify (\(Context xs) -> Context $ (SolvedExistential name monotype) : xs)
 
 extendWithScopeMarker :: MonadState Context m => Name -> m ()
 extendWithScopeMarker name =
-  modify (\(Context xs) -> Context $ (ScopeMarker name) : xs)
+  let _ = existentialInDomain -- TODO
+  in modify (\(Context xs) -> Context $ (ScopeMarker name) : xs)
 
 elemBound :: (MonadState Context m, MonadError String m)
             => Name -> m ()
@@ -107,3 +135,11 @@ wellFormedPolytype (PolyFunctionType a b) = do
 wellFormedPolytype (Forall binding body) = do
   localize $ extendWithBoundTypeVar binding
   wellFormedPolytype body
+
+substituteSolved :: Context -> Polytype -> Polytype
+substituteSolved _ x@(PolyTerminalType UnitType) = x
+substituteSolved _ x@(PolyTerminalType (UniversalTypeVar _)) = x
+substituteSolved (Context ctxt) (PolyTerminalType (ExistentialTypeVar x)) = _
+substituteSolved ctxt (Forall x ptype) = Forall x $ substituteSolved ctxt ptype
+substituteSolved ctxt (PolyFunctionType a b) =
+  PolyFunctionType (substituteSolved ctxt a) (substituteSolved ctxt b)
