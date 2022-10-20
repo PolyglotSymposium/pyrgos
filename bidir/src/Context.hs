@@ -7,13 +7,17 @@ module Context
   , extendWithSolved
   , extendWithScopeMarker
   , wellFormedPolytype
+  , substituteSolved
   ) where
 
 import AST
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
+import Control.Monad (guard)
+import Data.Functor (($>))
 import Data.Function ((&))
+import Data.Maybe (mapMaybe, listToMaybe)
 
 data ContextEntry                 =
   -- A universally-bound type variable that is in scope
@@ -136,10 +140,19 @@ wellFormedPolytype (Forall binding body) = do
   localize $ extendWithBoundTypeVar binding
   wellFormedPolytype body
 
+solution :: Context -> Name -> Maybe Monotype
+solution (Context ctxt) existential = mapMaybe solution' ctxt & listToMaybe where
+  solution' :: ContextEntry -> Maybe Monotype
+  solution' (SolvedExistential x mtype) = guard (x == existential) $> mtype
+  solution' _ = Nothing
+
+-- Figure 8
 substituteSolved :: Context -> Polytype -> Polytype
 substituteSolved _ x@(PolyTerminalType UnitType) = x
 substituteSolved _ x@(PolyTerminalType (UniversalTypeVar _)) = x
-substituteSolved (Context ctxt) (PolyTerminalType (ExistentialTypeVar x)) = _
+substituteSolved ctxt t@(PolyTerminalType (ExistentialTypeVar x)) =
+  solution ctxt x
+  & maybe t (substituteSolved ctxt . liftToPoly)
 substituteSolved ctxt (Forall x ptype) = Forall x $ substituteSolved ctxt ptype
 substituteSolved ctxt (PolyFunctionType a b) =
   PolyFunctionType (substituteSolved ctxt a) (substituteSolved ctxt b)

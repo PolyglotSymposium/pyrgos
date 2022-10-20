@@ -7,6 +7,7 @@ module AST
   -- , Ty(..)
   , Monotype(..)
   , Polytype(..)
+  , liftToPoly
   , Expr(..)
   ) where
 
@@ -40,6 +41,12 @@ data Monotype                        =
   MonoTerminalType TerminalType      |
   MonoFunctionType Monotype Monotype --
   deriving Eq
+
+liftToPoly :: Monotype -> Polytype
+liftToPoly (MonoTerminalType tt) =
+  PolyTerminalType tt
+liftToPoly (MonoFunctionType a b) =
+  PolyFunctionType (liftToPoly a) (liftToPoly b)
 
 data Expr               =
   Var Name              |
