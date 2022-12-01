@@ -5,9 +5,9 @@ module Context
   , extendWithVarTyping
   , extendWithUnsolved
   , extendWithSolved
-  , extendWithScopeMarker
   , wellFormedPolytype
-  , substituteSolved
+  , substituteSolved, substituteForUniversal
+  , truncateContext
   ) where
 
 import AST
@@ -19,21 +19,22 @@ import Data.Functor (($>))
 import Data.Function ((&))
 import Data.Maybe (mapMaybe, listToMaybe)
 
-data ContextEntry                 =
+data ContextEntry                   =
   -- A universally-bound type variable that is in scope
   -- α
-  BoundTypeVar Name               |
+  BoundTypeVar Name                 |
   -- A value-level variable in scope whose type is known
   -- x : A
-  VarTyping Name Polytype         |
-  -- An unsolved existential type variable that is in scope
-  -- α^
-  UnsolvedExistential Name        |
-  -- An solved existential type variable that is in scope
-  -- α^ = τ
-  SolvedExistential Name Monotype |
-  -- A scope marker for an existential type variable
-  ScopeMarker Name                --
+  VarTyping Name Polytype           |
+  -- Either of (depending on the `Maybe`):
+  -- 1. An unsolved existential type variable that is in scope
+  --    α^
+  -- 2. An solved existential type variable that is in scope
+  --    α^ = τ
+  Existential Name (Maybe Monotype) --
+  -- We do not believe it is necessary to execution to model scope markers as
+  -- separate context entries. This appears to be an artifact of the syntax of
+  -- the paper---to make it readable.
   deriving Eq
 
 newtype Context = Context [ContextEntry]
@@ -52,9 +53,8 @@ localize s = do
 boundTypeVarInEntry :: Name -> ContextEntry -> Bool
 boundTypeVarInEntry x (BoundTypeVar y) = x == y
 boundTypeVarInEntry _x (VarTyping _ _ptype) = undefined -- TODO look in ptype for x?
-boundTypeVarInEntry _ (UnsolvedExistential _) = False
-boundTypeVarInEntry _x (SolvedExistential _ _mtype) = undefined -- TODO look in mtype for x?
-boundTypeVarInEntry _ (ScopeMarker _) = False
+boundTypeVarInEntry _ (Existential _ Nothing) = False
+boundTypeVarInEntry _x (Existential _ (Just _mtype)) = undefined -- TODO look in mtype for x?
 
 -- α ∈ dom(Γ) for UvarCtx rule
 boundTypeVarInDomain :: Name -> Context -> Bool
@@ -73,9 +73,7 @@ valueVarInDomain x (Context entries) =
 existentialInEntry :: Name -> ContextEntry -> Bool
 existentialInEntry _ (BoundTypeVar _) = False
 existentialInEntry _x (VarTyping _ _ptype) = undefined -- TODO look in ptype for x?
-existentialInEntry x (UnsolvedExistential y) = x == y
-existentialInEntry x (SolvedExistential y _mtype) = x == y -- TODO look in mtype for x?
-existentialInEntry x (ScopeMarker y) = x == y
+existentialInEntry x (Existential y _mtype) = x == y -- TODO look in mtype for x?
 
 -- α^ ∈ dom(Γ) for EvarCtx, SolvedEvarCtx rules
 existentialInDomain :: Name -> Context -> Bool
@@ -95,17 +93,14 @@ extendWithVarTyping name ty =
 extendWithUnsolved :: MonadState Context m => Name -> m ()
 extendWithUnsolved name =
   let _ = existentialInDomain -- TODO
-  in modify (\(Context xs) -> Context $ (UnsolvedExistential name) : xs)
+  in modify (\(Context xs) -> Context $ (Existential name Nothing) : xs)
 
+-- TODO Should this really be exposed? We don't ever extend with a solved,
+-- really, in practice; we solve an unsolved...
 extendWithSolved :: MonadState Context m => Name -> Monotype -> m ()
 extendWithSolved name monotype =
   let _ = existentialInDomain -- TODO
-  in modify (\(Context xs) -> Context $ (SolvedExistential name monotype) : xs)
-
-extendWithScopeMarker :: MonadState Context m => Name -> m ()
-extendWithScopeMarker name =
-  let _ = existentialInDomain -- TODO
-  in modify (\(Context xs) -> Context $ (ScopeMarker name) : xs)
+  in modify (\(Context xs) -> Context $ (Existential name (Just monotype)) : xs)
 
 elemBound :: (MonadState Context m, MonadError String m)
             => Name -> m ()
@@ -116,8 +111,7 @@ elemBound x = do
   else throwError ("Bound type variable not in context" {-x context-})
 
 isExistential :: ContextEntry -> Maybe Name
-isExistential (UnsolvedExistential x) = Just x
-isExistential (SolvedExistential x _) = Just x
+isExistential (Existential x _) = Just x
 isExistential _ = Nothing
 
 elemExistential :: (MonadState Context m, MonadError String m)
@@ -143,7 +137,7 @@ wellFormedPolytype (Forall binding body) = do
 solution :: Context -> Name -> Maybe Monotype
 solution (Context ctxt) existential = mapMaybe solution' ctxt & listToMaybe where
   solution' :: ContextEntry -> Maybe Monotype
-  solution' (SolvedExistential x mtype) = guard (x == existential) $> mtype
+  solution' (Existential x (Just mtype)) = guard (x == existential) $> mtype
   solution' _ = Nothing
 
 -- Figure 8
@@ -156,3 +150,22 @@ substituteSolved ctxt t@(PolyTerminalType (ExistentialTypeVar x)) =
 substituteSolved ctxt (Forall x ptype) = Forall x $ substituteSolved ctxt ptype
 substituteSolved ctxt (PolyFunctionType a b) =
   PolyFunctionType (substituteSolved ctxt a) (substituteSolved ctxt b)
+
+-- When you hit a universal with `Name`, substitute in this `TerminalType` in
+-- `Polytype`, producing `Polytype`.
+substituteForUniversal :: Name -> TerminalType -> Polytype -> Polytype
+substituteForUniversal = undefined -- TODO
+
+truncateContext :: (MonadState Context m, MonadError String m) => Name -> m ()
+truncateContext existential = do
+  Context context <- get
+  context' <- truncateContext' context
+  put (Context context')
+  where
+  truncateContext' :: MonadError String m => [ContextEntry] -> m [ContextEntry]
+  truncateContext' (Existential x _ : ctxt) =
+    if existential == x
+    then return ctxt
+    else truncateContext' ctxt
+  truncateContext' (_ : ctxt) = truncateContext' ctxt
+  truncateContext' [] = throwError "BUG: failed to truncate context"

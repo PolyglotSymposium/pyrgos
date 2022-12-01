@@ -27,6 +27,7 @@ library
   exposed-modules:
       AST
       Context
+      Typer
   other-modules:
       Paths_bidir
   hs-source-dirs:
