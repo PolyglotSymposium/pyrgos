@@ -1,13 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Context
   ( Context, emptyContext
-  , extendWithBoundTypeVar
+  , extendWithUniversal
   , extendWithVarTyping
   , extendWithUnsolved
   , extendWithSolved
   , wellFormedPolytype
   , substituteSolved, substituteForUniversal
-  , truncateContext
+  , truncateContextE, truncateContextA
   ) where
 
 import AST
@@ -80,8 +80,8 @@ existentialInDomain :: Name -> Context -> Bool
 existentialInDomain x (Context entries) =
   any (existentialInEntry x) entries
 
-extendWithBoundTypeVar :: MonadState Context m => Name -> m ()
-extendWithBoundTypeVar name =
+extendWithUniversal :: MonadState Context m => Name -> m ()
+extendWithUniversal name =
   let _ = boundTypeVarInDomain -- TODO
   in modify (\(Context xs) -> Context $ (BoundTypeVar name) : xs)
 
@@ -131,7 +131,7 @@ wellFormedPolytype (PolyFunctionType a b) = do
   wellFormedPolytype a
   wellFormedPolytype b
 wellFormedPolytype (Forall binding body) = do
-  localize $ extendWithBoundTypeVar binding
+  localize $ extendWithUniversal binding
   wellFormedPolytype body
 
 solution :: Context -> Name -> Maybe Monotype
@@ -156,16 +156,30 @@ substituteSolved ctxt (PolyFunctionType a b) =
 substituteForUniversal :: Name -> TerminalType -> Polytype -> Polytype
 substituteForUniversal = undefined -- TODO
 
-truncateContext :: (MonadState Context m, MonadError String m) => Name -> m ()
-truncateContext existential = do
+truncateContextE :: (MonadState Context m, MonadError String m) => Name -> m ()
+truncateContextE existential = do
   Context context <- get
-  context' <- truncateContext' context
+  context' <- truncateContextE' context
   put (Context context')
   where
-  truncateContext' :: MonadError String m => [ContextEntry] -> m [ContextEntry]
-  truncateContext' (Existential x _ : ctxt) =
+  truncateContextE' :: MonadError String m => [ContextEntry] -> m [ContextEntry]
+  truncateContextE' (Existential x _ : ctxt) =
     if existential == x
     then return ctxt
-    else truncateContext' ctxt
-  truncateContext' (_ : ctxt) = truncateContext' ctxt
-  truncateContext' [] = throwError "BUG: failed to truncate context"
+    else truncateContextE' ctxt
+  truncateContextE' (_ : ctxt) = truncateContextE' ctxt
+  truncateContextE' [] = throwError "BUG: failed to truncate context existentially"
+
+truncateContextA :: (MonadState Context m, MonadError String m) => Name -> m ()
+truncateContextA universal = do
+  Context context <- get
+  context' <- truncateContextA' context
+  put (Context context')
+  where
+  truncateContextA' :: MonadError String m => [ContextEntry] -> m [ContextEntry]
+  truncateContextA' (BoundTypeVar x : ctxt) =
+    if universal == x
+    then return ctxt
+    else truncateContextA' ctxt
+  truncateContextA' (_ : ctxt) = truncateContextA' ctxt
+  truncateContextA' [] = throwError "BUG: failed to truncate context universally"
