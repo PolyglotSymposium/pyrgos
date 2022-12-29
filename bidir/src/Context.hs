@@ -8,6 +8,7 @@ module Context
   , wellFormedPolytype
   , substituteSolved, substituteForUniversal
   , truncateContextE, truncateContextA
+  , refineExistialAsFunction
   ) where
 
 import AST
@@ -18,6 +19,7 @@ import Control.Monad (guard)
 import Data.Functor (($>))
 import Data.Function ((&))
 import Data.Maybe (mapMaybe, listToMaybe)
+import Data.List (elemIndex)
 
 data ContextEntry                   =
   -- A universally-bound type variable that is in scope
@@ -121,6 +123,29 @@ elemExistential x = do
   if any (\e -> isExistential e == Just x) context
   then return ()
   else throwError ("Existential type variable not in context" {-x context-})
+
+maybeSplitAt :: Eq a => a -> [a] -> Maybe ([a], [a])
+maybeSplitAt pred xs = do
+  index <- elemIndex pred xs
+  return $ splitAt (index - 1) xs
+
+refineExistialAsFunction :: (MonadState Context m, MonadError String m)
+                         => Name -> m ()
+refineExistialAsFunction x = do
+  Context context <- get
+  let errorMsg = "Existential type variable not in context" {-x context-}
+  (newer, older) <-
+    maybeSplitAt (Existential x Nothing) context
+    & maybe (throwError errorMsg) return
+  let older' = drop 1 older
+  let a1 = "TODO fresh existential type variable"
+  let a2 = "TODO fresh existential type variable"
+  let splice = [ Existential x (Just $ MonoFunctionType (MonoTerminalType (ExistentialTypeVar a1)) (MonoTerminalType (ExistentialTypeVar a2)))
+               , Existential a1 Nothing
+               , Existential a2 Nothing
+               ]
+  let context' = newer ++ splice ++ older'
+  put $ Context context'
 
 wellFormedPolytype :: (MonadState Context m, MonadError String m)
                    => Polytype -> m ()

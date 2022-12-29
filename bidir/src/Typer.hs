@@ -43,3 +43,21 @@ subtypeOf a (Forall alpha b) = do
   subtypeOf a b
   truncateContextA alpha
 subtypeOf _sub _sup = undefined -- TODO
+
+instantiateL :: (MonadState Context m, MonadError String m)
+             => Name -> Polytype -> m ()
+instantiateL _name (PolyTerminalType _tt) = undefined
+instantiateL _name (Forall _a _b) = undefined
+-- InstLArr
+instantiateL name (PolyFunctionType _a1 _a2) = do
+  refineExistialAsFunction name
+  undefined
+
+instantiateR :: (MonadState Context m, MonadError String m)
+             => Polytype -> Name -> m ()
+instantiateR (PolyTerminalType _tt) _name = undefined
+instantiateR (Forall _a _b) _name = undefined
+-- InstRArr
+instantiateR (PolyFunctionType _a _b) name = do
+  refineExistialAsFunction name
+  undefined
