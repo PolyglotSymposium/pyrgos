@@ -1,5 +1,9 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Typer where
+module Typer
+  ( subtypeOf
+  , instantiateL, instantiateR
+  , instantiateLArrow
+  ) where
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
@@ -44,7 +48,7 @@ subtypeOf a (Forall alpha b) = do
   truncateContextA alpha
 subtypeOf _sub _sup = undefined -- TODO
 
-isExistentialInScope :: Monotype ->
+-- isExistentialInScope :: Monotype ->
 
 instantiateL :: (MonadState Context m, MonadError String m)
              => Name -> Polytype -> m ()
@@ -62,22 +66,21 @@ instantiateL name (Forall beta b) = do
 -- Is tau an existential variable? If so, is in Γ'? If both are reach, apply
 -- the reach rule. If either one of those is not true, apply solve, and τ must
 -- be well-formed w.r.t. Γ.
-instantiateL name poly =
-  case polyIsMono poly of
-    Nothing => -- TODO felt overwhelmed and called it a day
-    Just mono =>
-  get <- context
-  let (gamma', gamma) = splitContextE name context
-  -- Is tau an existential variable that is in scope in gamma'?
-  let whichRule = do
-    beta <- monotypeIsExistential tau
-    either (\_ -> Nothing) Just $ runStateT gamma' $ wellFormedPolytype $ PolyTerminalType $ ExistentialTypeVar beta
-  case whichRule do
-    -- InstLSolve
-    Nothing => undefined
-    -- InstLReach
-    Just () => undefined
-instantiateL name (PolyFunctionType a1 a2) = instantiateLArrow name a1 a2
+instantiateL _name _poly = undefined
+  -- case polyIsMono poly of
+  --   Nothing => -- TODO felt overwhelmed and called it a day
+  --   Just mono =>
+  -- get <- context
+  -- let (gamma', gamma) = splitContextE name context
+  -- -- Is tau an existential variable that is in scope in gamma'?
+  -- let whichRule = do
+  --   beta <- monotypeIsExistential tau
+  --   either (\_ -> Nothing) Just $ runStateT gamma' $ wellFormedPolytype $ PolyTerminalType $ ExistentialTypeVar beta
+  -- case whichRule do
+  --   -- InstLSolve
+  --   Nothing => undefined
+  --   -- InstLReach
+  --   Just () => undefined
 
 -- InstLArr
 instantiateLArrow :: (MonadState Context m, MonadError String m)
