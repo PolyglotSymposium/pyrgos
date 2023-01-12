@@ -9,6 +9,7 @@ module Context
   , substituteSolved, substituteForUniversal
   , truncateContextE, truncateContextA
   , refineExistialAsFunction
+  , splitContextE
   ) where
 
 import AST
@@ -130,7 +131,7 @@ maybeSplitAt pred xs = do
   return $ splitAt (index - 1) xs
 
 refineExistialAsFunction :: (MonadState Context m, MonadError String m)
-                         => Name -> m ()
+                         => Name -> m (Name, Name)
 refineExistialAsFunction x = do
   Context context <- get
   let errorMsg = "Existential type variable not in context" {-x context-}
@@ -146,6 +147,7 @@ refineExistialAsFunction x = do
                ]
   let context' = newer ++ splice ++ older'
   put $ Context context'
+  return (a1, a2)
 
 wellFormedPolytype :: (MonadState Context m, MonadError String m)
                    => Polytype -> m ()
@@ -181,6 +183,12 @@ substituteSolved ctxt (PolyFunctionType a b) =
 substituteForUniversal :: Name -> TerminalType -> Polytype -> Polytype
 substituteForUniversal = undefined -- TODO
 
+splitContextE :: Name -> Context -> Maybe (Context, Context)
+splitContextE existential (Context context) = do
+  (newer, older) <- maybeSplitAt (Existential existential Nothing) context
+  return (Context newer, Context older)
+
+-- TODO rewrite with splitContextE?
 truncateContextE :: (MonadState Context m, MonadError String m) => Name -> m ()
 truncateContextE existential = do
   Context context <- get
@@ -195,6 +203,7 @@ truncateContextE existential = do
   truncateContextE' (_ : ctxt) = truncateContextE' ctxt
   truncateContextE' [] = throwError "BUG: failed to truncate context existentially"
 
+-- TODO write a splitContextA and rewrite in terms of that?
 truncateContextA :: (MonadState Context m, MonadError String m) => Name -> m ()
 truncateContextA universal = do
   Context context <- get

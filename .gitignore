@@ -10,5 +10,6 @@
 GPATH
 GRTAGS
 GTAGS
+TAGS
 dist-newstyle/
 .DS_Store

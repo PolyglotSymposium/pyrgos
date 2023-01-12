@@ -5,9 +5,9 @@ module AST
   , TerminalType(..)
   -- , Poly
   -- , Ty(..)
-  , Monotype(..)
+  , Monotype(..), monotypeIsExistential
   , Polytype(..)
-  , liftToPoly
+  , liftToPoly, polyIsMono
   , Expr(..)
   ) where
 
@@ -41,6 +41,18 @@ data Monotype                        =
   MonoTerminalType TerminalType      |
   MonoFunctionType Monotype Monotype --
   deriving Eq
+
+monotypeIsExistential :: Monotype -> Maybe Name
+monotypeIsExistential (MonoTerminalType (ExistentialTypeVar name)) = Just name
+monotypeIsExistential _ = Nothing
+
+polyIsMono :: Polytype -> Maybe Monotype
+polyIsMono (PolyTerminalType tt) = Just $ MonoTerminalType tt
+polyIsMono (Forall _ _) = Nothing
+polyIsMono (PolyFunctionType a b) = do
+  a' <- polyIsMono a
+  b' <- polyIsMono b
+  return $ MonoFunctionType a' b'
 
 liftToPoly :: Monotype -> Polytype
 liftToPoly (MonoTerminalType tt) =
