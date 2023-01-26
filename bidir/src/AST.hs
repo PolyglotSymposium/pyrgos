@@ -1,7 +1,9 @@
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE GADTs #-}
 module AST
-  ( Name
+  ( Name, EName
   , TerminalType(..)
   -- , Poly
   -- , Ty(..)
@@ -9,16 +11,31 @@ module AST
   , Polytype(..)
   , liftToPoly, polyIsMono
   , Expr(..)
+  , MonadFreshEVar (freshEVar)
   ) where
 
 -- import Data.Kind
+import Data.UUID (UUID)
+import Data.UUID.V4 (nextRandom)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 
 type Name = String
 
-data TerminalType         =
-  UnitType                |
-  UniversalTypeVar Name   |
-  ExistentialTypeVar Name --
+data EName                =
+  SourceCodeName Name     |
+  InternalName   UUID     --
+  deriving Eq
+
+class Monad m => MonadFreshEVar m where
+  freshEVar :: m EName
+
+instance (Monad m, MonadIO m) => MonadFreshEVar m where
+  freshEVar = liftIO $ InternalName <$> nextRandom
+
+data TerminalType          =
+  UnitType                 |
+  UniversalTypeVar Name    |
+  ExistentialTypeVar EName --
   deriving Eq
 
 --data Poly
@@ -42,7 +59,7 @@ data Monotype                        =
   MonoFunctionType Monotype Monotype --
   deriving Eq
 
-monotypeIsExistential :: Monotype -> Maybe Name
+monotypeIsExistential :: Monotype -> Maybe EName
 monotypeIsExistential (MonoTerminalType (ExistentialTypeVar name)) = Just name
 monotypeIsExistential _ = Nothing
 

@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MonoLocalBinds #-}
 module Context
   ( Context, emptyContext
   , extendWithUniversal
@@ -34,7 +35,7 @@ data ContextEntry                   =
   --    α^
   -- 2. An solved existential type variable that is in scope
   --    α^ = τ
-  Existential Name (Maybe Monotype) --
+  Existential EName (Maybe Monotype) --
   -- We do not believe it is necessary to execution to model scope markers as
   -- separate context entries. This appears to be an artifact of the syntax of
   -- the paper---to make it readable.
@@ -73,13 +74,13 @@ valueVarInDomain :: Name -> Context -> Bool
 valueVarInDomain x (Context entries) =
   any (valueVarInEntry x) entries
 
-existentialInEntry :: Name -> ContextEntry -> Bool
+existentialInEntry :: EName -> ContextEntry -> Bool
 existentialInEntry _ (BoundTypeVar _) = False
 existentialInEntry _x (VarTyping _ _ptype) = undefined -- TODO look in ptype for x?
 existentialInEntry x (Existential y _mtype) = x == y -- TODO look in mtype for x?
 
 -- α^ ∈ dom(Γ) for EvarCtx, SolvedEvarCtx rules
-existentialInDomain :: Name -> Context -> Bool
+existentialInDomain :: EName -> Context -> Bool
 existentialInDomain x (Context entries) =
   any (existentialInEntry x) entries
 
@@ -93,14 +94,14 @@ extendWithVarTyping name ty =
   let _ = valueVarInDomain -- TODO
   in modify (\(Context xs) -> Context $ (VarTyping name ty) : xs)
 
-extendWithUnsolved :: MonadState Context m => Name -> m ()
+extendWithUnsolved :: MonadState Context m => EName -> m ()
 extendWithUnsolved name =
   let _ = existentialInDomain -- TODO
   in modify (\(Context xs) -> Context $ (Existential name Nothing) : xs)
 
 -- TODO Should this really be exposed? We don't ever extend with a solved,
 -- really, in practice; we solve an unsolved...
-extendWithSolved :: MonadState Context m => Name -> Monotype -> m ()
+extendWithSolved :: MonadState Context m => EName -> Monotype -> m ()
 extendWithSolved name monotype =
   let _ = existentialInDomain -- TODO
   in modify (\(Context xs) -> Context $ (Existential name (Just monotype)) : xs)
@@ -113,12 +114,12 @@ elemBound x = do
   then return ()
   else throwError ("Bound type variable not in context" {-x context-})
 
-isExistential :: ContextEntry -> Maybe Name
+isExistential :: ContextEntry -> Maybe EName
 isExistential (Existential x _) = Just x
 isExistential _ = Nothing
 
 elemExistential :: (MonadState Context m, MonadError String m)
-                => Name -> m ()
+                => EName -> m ()
 elemExistential x = do
   Context context <- get
   if any (\e -> isExistential e == Just x) context
@@ -130,8 +131,8 @@ maybeSplitAt pred xs = do
   index <- elemIndex pred xs
   return $ splitAt (index - 1) xs
 
-refineExistialAsFunction :: (MonadState Context m, MonadError String m)
-                         => Name -> m (Name, Name)
+refineExistialAsFunction :: (MonadState Context m, MonadError String m, MonadFreshEVar m)
+                         => EName -> m (EName, EName)
 refineExistialAsFunction x = do
   Context context <- get
   let errorMsg = "Existential type variable not in context" {-x context-}
@@ -139,8 +140,8 @@ refineExistialAsFunction x = do
     maybeSplitAt (Existential x Nothing) context
     & maybe (throwError errorMsg) return
   let older' = drop 1 older
-  let a1 = "TODO fresh existential type variable"
-  let a2 = "TODO fresh existential type variable"
+  a1 <- freshEVar
+  a2 <- freshEVar
   let splice = [ Existential x (Just $ MonoFunctionType (MonoTerminalType (ExistentialTypeVar a1)) (MonoTerminalType (ExistentialTypeVar a2)))
                , Existential a1 Nothing
                , Existential a2 Nothing
@@ -161,7 +162,7 @@ wellFormedPolytype (Forall binding body) = do
   localize $ extendWithUniversal binding
   wellFormedPolytype body
 
-solution :: Context -> Name -> Maybe Monotype
+solution :: Context -> EName -> Maybe Monotype
 solution (Context ctxt) existential = mapMaybe solution' ctxt & listToMaybe where
   solution' :: ContextEntry -> Maybe Monotype
   solution' (Existential x (Just mtype)) = guard (x == existential) $> mtype
@@ -183,13 +184,13 @@ substituteSolved ctxt (PolyFunctionType a b) =
 substituteForUniversal :: Name -> TerminalType -> Polytype -> Polytype
 substituteForUniversal = undefined -- TODO
 
-splitContextE :: Name -> Context -> Maybe (Context, Context)
+splitContextE :: EName -> Context -> Maybe (Context, Context)
 splitContextE existential (Context context) = do
   (newer, older) <- maybeSplitAt (Existential existential Nothing) context
   return (Context newer, Context older)
 
 -- TODO rewrite with splitContextE?
-truncateContextE :: (MonadState Context m, MonadError String m) => Name -> m ()
+truncateContextE :: (MonadState Context m, MonadError String m) => EName -> m ()
 truncateContextE existential = do
   Context context <- get
   context' <- truncateContextE' context

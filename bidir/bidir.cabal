@@ -38,6 +38,7 @@ library
     , either
     , mtl
     , transformers
+    , uuid
   default-language: Haskell2010
 
 executable bidir-exe
@@ -54,6 +55,7 @@ executable bidir-exe
     , either
     , mtl
     , transformers
+    , uuid
   default-language: Haskell2010
 
 test-suite bidir-test
@@ -71,4 +73,5 @@ test-suite bidir-test
     , either
     , mtl
     , transformers
+    , uuid
   default-language: Haskell2010
