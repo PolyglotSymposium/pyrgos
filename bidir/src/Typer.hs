@@ -7,6 +7,7 @@ module Typer
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
+import Control.Monad.Trans.State (evalStateT)
 import Control.Monad (guard)
 
 import AST
@@ -63,24 +64,40 @@ instantiateL name (Forall beta b) = do
 -- Reach: Γ,α^,Γ'[β^]
 -- Solve: τ
 -- Reach: τ = β^
--- Is tau an existential variable? If so, is in Γ'? If both are reach, apply
--- the reach rule. If either one of those is not true, apply solve, and τ must
--- be well-formed w.r.t. Γ.
-instantiateL _name _poly = undefined
-  -- case polyIsMono poly of
-  --   Nothing => -- TODO felt overwhelmed and called it a day
-  --   Just mono =>
-  -- get <- context
-  -- let (gamma', gamma) = splitContextE name context
-  -- -- Is tau an existential variable that is in scope in gamma'?
-  -- let whichRule = do
-  --   beta <- monotypeIsExistential tau
-  --   either (\_ -> Nothing) Just $ runStateT gamma' $ wellFormedPolytype $ PolyTerminalType $ ExistentialTypeVar beta
-  -- case whichRule do
-  --   -- InstLSolve
-  --   Nothing => undefined
-  --   -- InstLReach
-  --   Just () => undefined
+-- Is tau an existential variable? If so, is in Γ'? If both are true, apply the
+-- reach rule. If either one of those is not true, apply solve, and τ must be
+-- well-formed w.r.t. Γ.
+instantiateL alpha poly =
+  case polyIsMono poly of
+    Nothing -> undefined -- TODO
+    Just tau -> do
+      context <- get
+      let Just (gamma', _gamma) = splitContextE alpha context -- TODO
+      -- Is tau an existential variable that is in scope in gamma'?
+      let whichRule = do
+          beta <- monotypeIsExistential tau
+          let betaIsInScope = wellFormedPolytype $ PolyTerminalType $ ExistentialTypeVar beta
+          either (\_ -> Nothing) Just $ evalStateT betaIsInScope gamma'
+          return beta
+      case whichRule of
+        -- InstLSolve
+        Nothing -> undefined -- TODO
+        -- InstLReach
+        Just beta -> instantiateLReach alpha beta
+
+instantiateLSolve :: (MonadState Context m, MonadError String m)
+                  => Name -> Monotype -> m ()
+instantiateLSolve = undefined
+
+-- Assumes that the scoping of the existential variables has already been
+-- verified. In that sense, this is not a full implementation of the rule. That
+-- is because those things end up being verified in the process of determining
+-- whether to run this rule.
+--
+-- InstLReach
+instantiateLReach :: (MonadState Context m, MonadError String m)
+                  => Name -> Name -> m ()
+instantiateLReach = undefined
 
 -- InstLArr
 instantiateLArrow :: (MonadState Context m, MonadError String m)
