@@ -49,8 +49,45 @@ subtypeOf a (Forall alpha b) = do
   truncateContextA alpha
 subtypeOf _sub _sup = undefined -- TODO
 
--- isExistentialInScope :: Monotype ->
-
+-- | The various instantiate rules are disjoint, but for the most part, not
+-- | trivially so.
+-- |
+-- | 1. `InstLAllR` is syntactically disjoint from the three other
+-- |     left-instantiation rules---and likewise `InstRAllL` from the other
+-- |     right-instantiation rules---on the type AST alone, since a monotype
+-- |     cannot include a ∀ binding.
+-- | 2. InstLArr and InstLReach (and likewise InstRArr and InstRReach) are
+-- |    syntactically disjoint from one another, because a polytype function and an
+-- |    existential variable are syntactically disjoint.
+-- | 3. InstLSolve is not syntactically disjoint from InstLReach (and likewise
+-- |    for InstRSolve and InstRReach) because an existential variable is a
+-- |    monotype.
+-- | 4. InstLSolve is not syntactically disjoint from InstLArr (and likewise
+-- |    for InstRSolve and InstRArr) because a function type that is a monotype
+-- |    is also a polytype.
+-- | 5. If the monotype is not an existential, InstLSolve and InstLReach are
+-- |    disjoint because InstLReach only handles existentials. And so for
+-- |    InstRSolve and InstRReach.
+-- | 6. If the monotype is an existential, InstLSolve and InstLReach are
+-- |    disjoint on based on whether it was introduced before or after the other
+-- |    existential in the context.
+-- | 7. If the function type is not a monotype, InstLSolve and InstLArr are
+-- |    disjoint because InstLSolve only handles monotypes. And so for
+-- |    InstRSolve and InstRArr.
+-- | 8. If the function type is a monotype, InstLSolve and InstLArr are not
+-- |    disjoint. However, in some cases they are disjoint based on InstLSolve's
+-- |    premise (that is, whether or not the function type is well-typed with
+-- |    respect to only the older items in the context, or instead is well-typed
+-- |    w.r.t. the whole context). And so for InstRSolve and InstRArr.
+-- | 9. If the function type is a monotype, InstLSolve and InstLArr are not
+-- |    disjoint. However, in all cases where they are additionally not disjoint
+-- |    based on InstLSolve's premise (that is, whether or not the function type
+-- |    is well-typed with respect to only the older items in the context, or
+-- |    instead is well-typed w.r.t. the whole context), they will always
+-- |    produce isomorphic results, but solve encodes it more simply, and in
+-- |    less steps. Thus, where they are truly not disjoint, InstLSolve can
+-- |    always be preferred, as if they were disjoint. And so for InstRSolve and
+-- |    InstRArr.
 instantiateL :: (MonadState Context m, MonadError String m)
              => Name -> Polytype -> m ()
 -- InstLAllR
@@ -69,7 +106,7 @@ instantiateL name (Forall beta b) = do
 -- well-formed w.r.t. Γ.
 instantiateL alpha poly =
   case polyIsMono poly of
-    Nothing -> undefined -- TODO
+    Nothing -> undefined -- TODO InstLArr
     Just tau -> do
       context <- get
       let Just (gamma', _gamma) = splitContextE alpha context -- TODO
