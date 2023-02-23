@@ -5,7 +5,7 @@ module Context
   , extendWithVarTyping
   , extendWithUnsolved
   , extendWithSolved
-  , wellFormedPolytype
+  , wellFormedPolytype, existentialInScope
   , substituteSolved, substituteForUniversal
   , truncateContextE, truncateContextA
   , refineExistialAsFunction
@@ -16,6 +16,7 @@ import AST
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
+import Control.Monad.Trans.State (evalStateT)
 import Control.Monad (guard)
 import Data.Functor (($>))
 import Data.Function ((&))
@@ -160,6 +161,11 @@ wellFormedPolytype (PolyFunctionType a b) = do
 wellFormedPolytype (Forall binding body) = do
   localize $ extendWithUniversal binding
   wellFormedPolytype body
+
+existentialInScope :: Name -> Context -> Maybe ()
+existentialInScope name context =
+  let x = wellFormedPolytype $ PolyTerminalType $ ExistentialTypeVar name
+  in either (\_ -> Nothing) Just $ evalStateT x context
 
 solution :: Context -> Name -> Maybe Monotype
 solution (Context ctxt) existential = mapMaybe solution' ctxt & listToMaybe where

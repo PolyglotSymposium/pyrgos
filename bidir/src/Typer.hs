@@ -7,7 +7,6 @@ module Typer
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
-import Control.Monad.Trans.State (evalStateT)
 import Control.Monad (guard)
 
 import AST
@@ -49,8 +48,8 @@ subtypeOf a (Forall alpha b) = do
   truncateContextA alpha
 subtypeOf _sub _sup = undefined -- TODO
 
--- | The various instantiate rules are disjoint, but for the most part, not
--- | trivially so.
+-- | The various instantiation rules are either disjoint or a static or of
+-- | preference can be established; but not trivially so.
 -- |
 -- | 1. `InstLAllR` is syntactically disjoint from the three other
 -- |     left-instantiation rules---and likewise `InstRAllL` from the other
@@ -69,7 +68,7 @@ subtypeOf _sub _sup = undefined -- TODO
 -- |    disjoint because InstLReach only handles existentials. And so for
 -- |    InstRSolve and InstRReach.
 -- | 6. If the monotype is an existential, InstLSolve and InstLReach are
--- |    disjoint on based on whether it was introduced before or after the other
+-- |    disjoint based on whether it was introduced before or after the other
 -- |    existential in the context.
 -- | 7. If the function type is not a monotype, InstLSolve and InstLArr are
 -- |    disjoint because InstLSolve only handles monotypes. And so for
@@ -84,43 +83,44 @@ subtypeOf _sub _sup = undefined -- TODO
 -- |    based on InstLSolve's premise (that is, whether or not the function type
 -- |    is well-typed with respect to only the older items in the context, or
 -- |    instead is well-typed w.r.t. the whole context), they will always
--- |    produce isomorphic results, but solve encodes it more simply, and in
+-- |    produce isomorphic results, but solving encodes it more simply, and in
 -- |    less steps. Thus, where they are truly not disjoint, InstLSolve can
 -- |    always be preferred, as if they were disjoint. And so for InstRSolve and
 -- |    InstRArr.
 instantiateL :: (MonadState Context m, MonadError String m)
              => Name -> Polytype -> m ()
 -- InstLAllR
-instantiateL name (Forall beta b) = do
-  wellFormedPolytype (PolyTerminalType (ExistentialTypeVar name)) -- TODO really? Every time?
+instantiateL alpha (Forall beta b) = do
+  wellFormedPolytype (PolyTerminalType (ExistentialTypeVar alpha)) -- TODO really? Every time?
   extendWithUniversal beta -- TODO do we need a with pattern?
-  instantiateL name b
+  instantiateL alpha b
   truncateContextA beta
--- Solve: Γ,α^,Γ'
--- Reach: Γ[α^][β^]
--- Reach: Γ,α^,Γ'[β^]
--- Solve: τ
--- Reach: τ = β^
--- Is tau an existential variable? If so, is in Γ'? If both are true, apply the
--- reach rule. If either one of those is not true, apply solve, and τ must be
--- well-formed w.r.t. Γ.
-instantiateL alpha poly =
+-- Arrow and Solve
+instantiateL alpha poly@(PolyFunctionType a1 a2) =
+  -- TODO did we actually implement the rules in the giant comment above?
   case polyIsMono poly of
-    Nothing -> undefined -- TODO InstLArr
-    Just tau -> do
-      context <- get
-      let Just (gamma', _gamma) = splitContextE alpha context -- TODO
-      -- Is tau an existential variable that is in scope in gamma'?
-      let whichRule = do
-          beta <- monotypeIsExistential tau
-          let betaIsInScope = wellFormedPolytype $ PolyTerminalType $ ExistentialTypeVar beta
-          either (\_ -> Nothing) Just $ evalStateT betaIsInScope gamma'
-          return beta
-      case whichRule of
-        -- InstLSolve
-        Nothing -> undefined -- TODO
-        -- InstLReach
-        Just beta -> instantiateLReach alpha beta
+    Nothing -> instantiateLArrow alpha a1 a2
+    Just tau -> instantiateLSolve alpha tau
+-- Solve and Reach
+instantiateL alpha (PolyTerminalType tt) = do
+  let tau = MonoTerminalType tt
+  context <- get
+  (gamma', gamma) <- maybe (throwError "alpha was not in scope") return $ splitContextE alpha context
+  -- Is tau an existential variable that is in scope in gamma'?
+  let whichRuleOrError = do
+      beta <- monotypeIsExistential tau
+      errorOrBeta <- case (existentialInScope beta gamma', existentialInScope beta gamma) of
+                        (Nothing, Nothing) -> Just (Left "beta was not in scope")
+                        (Nothing, Just ()) -> Nothing -- solve
+                        (Just (), Nothing) -> Just (Right beta) -- reach
+                        (Just (), Just ()) -> Just (Left "BUG: malformed context")
+      return errorOrBeta
+  whichRule <- either throwError return $ sequence whichRuleOrError
+  case whichRule of
+    -- InstLSolve
+    Nothing -> instantiateLSolve alpha tau
+    -- InstLReach
+    Just beta -> instantiateLReach alpha beta
 
 instantiateLSolve :: (MonadState Context m, MonadError String m)
                   => Name -> Monotype -> m ()
