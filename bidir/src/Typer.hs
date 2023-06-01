@@ -12,6 +12,7 @@ import Control.Monad (guard)
 import AST
 import Context
 
+-- Figure 9
 subtypeOf :: (MonadState Context m, MonadError String m)
           => Polytype -> Polytype -> m ()
 -- <:Unit
@@ -19,18 +20,21 @@ subtypeOf (PolyTerminalType UnitType) (PolyTerminalType UnitType) =
   return ()
 -- <:Var
 subtypeOf x'@(PolyTerminalType (UniversalTypeVar x)) (PolyTerminalType (UniversalTypeVar y)) = do
-  maybe (throwError "Unable to prove subtyping relation for unrelated universal type variables") return $ guard (x == y)
+  -- TODO is there an idiom for guard & throw with MonadError?
+  unless (x == y) (throwError "Unable to prove subtyping relation for unrelated universal type variables")
   wellFormedPolytype x'
 -- <:Exvar
 subtypeOf x'@(PolyTerminalType (ExistentialTypeVar x)) (PolyTerminalType (ExistentialTypeVar y)) = do
-  maybe (throwError "Unable to prove subtyping relation for unrelated existential type variables") return $ guard (x == y)
+  unless (x == y) (throwError "Unable to prove subtyping relation for unrelated existential type variables")
   wellFormedPolytype x'
 -- <:→
 subtypeOf (PolyFunctionType aIn aOut) (PolyFunctionType bIn bOut) = do
+  -- Contravariance of inputs leads to reverse of a & b
   subtypeOf bIn aIn
   substitutions <- get
   let aOut' = substituteSolved substitutions aOut
   let bOut' = substituteSolved substitutions bOut
+  -- Covariance of outputs leads to reverse of a & b
   subtypeOf aOut' bOut'
 -- Should the left for-all rule get precedence over the right?
 -- That's what we've done here.
@@ -46,7 +50,7 @@ subtypeOf a (Forall alpha b) = do
   extendWithUniversal alpha
   subtypeOf a b
   truncateContextA alpha
-subtypeOf _sub _sup = undefined -- TODO
+subtypeOf _sub _sup = undefined -- TODO instantiation rules
 
 -- | The various instantiation rules are either disjoint or a static or of
 -- | preference can be established; but not trivially so.

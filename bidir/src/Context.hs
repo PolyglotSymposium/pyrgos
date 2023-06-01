@@ -6,7 +6,7 @@ module Context
   , extendWithUnsolved
   , extendWithSolved
   , wellFormedPolytype, existentialInScope
-  , substituteSolved, substituteForUniversal
+  , substituteSolved
   , truncateContextE, truncateContextA
   , refineExistialAsFunction
   , splitContextE
@@ -158,8 +158,8 @@ wellFormedPolytype (PolyTerminalType (ExistentialTypeVar x)) = elemExistential x
 wellFormedPolytype (PolyFunctionType a b) = do
   wellFormedPolytype a
   wellFormedPolytype b
-wellFormedPolytype (Forall binding body) = do
-  localize $ extendWithUniversal binding
+wellFormedPolytype (Forall binding body) = localize $ do
+  extendWithUniversal binding
   wellFormedPolytype body
 
 existentialInScope :: Name -> Context -> Maybe ()
@@ -174,6 +174,7 @@ solution (Context ctxt) existential = mapMaybe solution' ctxt & listToMaybe wher
   solution' _ = Nothing
 
 -- Figure 8
+-- Apply the context as a set of substitutions to the polytype
 substituteSolved :: Context -> Polytype -> Polytype
 substituteSolved _ x@(PolyTerminalType UnitType) = x
 substituteSolved _ x@(PolyTerminalType (UniversalTypeVar _)) = x
@@ -183,11 +184,6 @@ substituteSolved ctxt t@(PolyTerminalType (ExistentialTypeVar x)) =
 substituteSolved ctxt (Forall x ptype) = Forall x $ substituteSolved ctxt ptype
 substituteSolved ctxt (PolyFunctionType a b) =
   PolyFunctionType (substituteSolved ctxt a) (substituteSolved ctxt b)
-
--- When you hit a universal with `Name`, substitute in this `TerminalType` in
--- `Polytype`, producing `Polytype`.
-substituteForUniversal :: Name -> TerminalType -> Polytype -> Polytype
-substituteForUniversal = undefined -- TODO
 
 splitContextE :: Name -> Context -> Maybe (Context, Context)
 splitContextE existential (Context context) = do

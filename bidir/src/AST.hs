@@ -6,7 +6,7 @@ module AST
   -- , Poly
   -- , Ty(..)
   , Monotype(..), monotypeIsExistential
-  , Polytype(..)
+  , Polytype(..), substituteForUniversal
   , liftToPoly, polyIsMono
   , Expr(..)
   ) where
@@ -59,6 +59,11 @@ liftToPoly (MonoTerminalType tt) =
   PolyTerminalType tt
 liftToPoly (MonoFunctionType a b) =
   PolyFunctionType (liftToPoly a) (liftToPoly b)
+
+-- When you hit a universal with `Name`, substitute in this `TerminalType` in
+-- `Polytype`, producing `Polytype`.
+substituteForUniversal :: Name -> TerminalType -> Polytype -> Polytype
+substituteForUniversal = undefined -- TODO
 
 data Expr               =
   Var Name              |
