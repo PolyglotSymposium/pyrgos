@@ -7,10 +7,14 @@ module Typer
 
 import Control.Monad.Error.Class
 import Control.Monad.State.Class
-import Control.Monad (guard)
+import Control.Monad (unless)
 
 import AST
 import Context
+
+-- TODO upgrade to mtl >= 2.3.1 and delete this
+tryError :: MonadError e m => m a -> m (Either e a)
+tryError action = catchError (Right <$> action) (return . Left)
 
 -- Figure 9
 subtypeOf :: (MonadState Context m, MonadError String m)
@@ -52,7 +56,7 @@ subtypeOf a (Forall alpha b) = do
   truncateContextA alpha
 subtypeOf _sub _sup = undefined -- TODO instantiation rules
 
--- | The various instantiation rules are either disjoint or a static or of
+-- | The various instantiation rules are either disjoint or an static order of
 -- | preference can be established; but not trivially so.
 -- |
 -- | 1. `InstLAllR` is syntactically disjoint from the three other
@@ -91,6 +95,8 @@ subtypeOf _sub _sup = undefined -- TODO instantiation rules
 -- |    less steps. Thus, where they are truly not disjoint, InstLSolve can
 -- |    always be preferred, as if they were disjoint. And so for InstRSolve and
 -- |    InstRArr.
+-- | TODO Surely there is a better or simpler way? Don't try analytically to
+-- | figure out which rule to use---just prioritize and backtrack?
 instantiateL :: (MonadState Context m, MonadError String m)
              => Name -> Polytype -> m ()
 -- InstLAllR
@@ -101,24 +107,32 @@ instantiateL alpha (Forall beta b) = do
   truncateContextA beta
 -- Arrow and Solve
 instantiateL alpha poly@(PolyFunctionType a1 a2) =
-  -- TODO did we actually implement the rules in the giant comment above?
   case polyIsMono poly of
     Nothing -> instantiateLArrow alpha a1 a2
-    Just tau -> instantiateLSolve alpha tau
+    Just tau -> do
+      context <- get
+      (_, gamma) <- maybe (throwError "alpha was not in scope") return $ splitContextE alpha context
+      result <- tryError $ localize $ (wellFormedPolytype poly <* put gamma)
+      case result of
+        -- It was not well-typed purely with respect to gamma; Array
+        Left _ -> instantiateLArrow alpha a1 a2
+        -- It was well-typed purely with respect to gamma; Solve
+        Right () -> instantiateLSolve alpha tau
 -- Solve and Reach
 instantiateL alpha (PolyTerminalType tt) = do
   let tau = MonoTerminalType tt
   context <- get
   (gamma', gamma) <- maybe (throwError "alpha was not in scope") return $ splitContextE alpha context
   -- Is tau an existential variable that is in scope in gamma'?
-  let whichRuleOrError = do
-      beta <- monotypeIsExistential tau
-      errorOrBeta <- case (existentialInScope beta gamma', existentialInScope beta gamma) of
-                        (Nothing, Nothing) -> Just (Left "beta was not in scope")
-                        (Nothing, Just ()) -> Nothing -- solve
-                        (Just (), Nothing) -> Just (Right beta) -- reach
-                        (Just (), Just ()) -> Just (Left "BUG: malformed context")
-      return errorOrBeta
+  let whichRuleOrError =
+        do
+        -- `Nothing` branch here short-circuits to Solve
+        beta <- monotypeIsExistential tau -- TODO need to satisfy solve's premise on `Nothing` case
+        case (existentialInScope beta gamma', existentialInScope beta gamma) of
+          (Nothing, Nothing) -> Just (Left "BUG: existential was not in scope")
+          (Nothing, Just ()) -> Nothing -- Solve
+          (Just (), Nothing) -> Just (Right beta) -- Reach
+          (Just (), Just ()) -> Just (Left "BUG: malformed context")
   whichRule <- either throwError return $ sequence whichRuleOrError
   case whichRule of
     -- InstLSolve
@@ -126,9 +140,12 @@ instantiateL alpha (PolyTerminalType tt) = do
     -- InstLReach
     Just beta -> instantiateLReach alpha beta
 
+-- | Only call this function once you have satisfied Solve's premise. This
+-- | function will not re-check the premise.
 instantiateLSolve :: (MonadState Context m, MonadError String m)
                   => Name -> Monotype -> m ()
-instantiateLSolve = undefined
+instantiateLSolve alpha tau =
+   solveExistential alpha tau
 
 -- Assumes that the scoping of the existential variables has already been
 -- verified. In that sense, this is not a full implementation of the rule. That
@@ -138,7 +155,7 @@ instantiateLSolve = undefined
 -- InstLReach
 instantiateLReach :: (MonadState Context m, MonadError String m)
                   => Name -> Name -> m ()
-instantiateLReach = undefined
+instantiateLReach = undefined -- TODO start here next time
 
 -- InstLArr
 instantiateLArrow :: (MonadState Context m, MonadError String m)

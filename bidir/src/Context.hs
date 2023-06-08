@@ -1,12 +1,13 @@
 {-# LANGUAGE FlexibleContexts #-}
 module Context
-  ( Context, emptyContext
+  ( localize
+  , Context, emptyContext
   , extendWithUniversal
   , extendWithVarTyping
   , extendWithUnsolved
   , extendWithSolved
   , wellFormedPolytype, existentialInScope
-  , substituteSolved
+  , substituteSolved, solveExistential
   , truncateContextE, truncateContextA
   , refineExistialAsFunction
   , splitContextE
@@ -184,6 +185,14 @@ substituteSolved ctxt t@(PolyTerminalType (ExistentialTypeVar x)) =
 substituteSolved ctxt (Forall x ptype) = Forall x $ substituteSolved ctxt ptype
 substituteSolved ctxt (PolyFunctionType a b) =
   PolyFunctionType (substituteSolved ctxt a) (substituteSolved ctxt b)
+
+solveExistential :: (MonadState Context m, MonadError String m) => Name -> Monotype -> m ()
+solveExistential solvedVar solution = do
+  context <- get
+  -- TODO we keep splitting and rejoining the context in one flow... doesn't feel
+  -- good
+  let Just (Context newer, Context older) = splitContextE solvedVar context
+  put $ Context (newer ++ Existential solvedVar (Just solution) : older)
 
 splitContextE :: Name -> Context -> Maybe (Context, Context)
 splitContextE existential (Context context) = do
