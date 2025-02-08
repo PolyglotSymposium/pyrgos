@@ -13,3 +13,5 @@ GTAGS
 TAGS
 dist-newstyle/
 .DS_Store
+
+_build
