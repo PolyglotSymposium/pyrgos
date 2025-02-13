@@ -6,8 +6,12 @@
 scheme_entry:
 .LFB0:
 	.cfi_startproc
-	movl $42, %eax
-	addl $21, %eax
+	mov $42, %rax
+	push %rax
+	mov $16, %rax
+	mov %rax, %rbx
+	pop %rax
+	sub %rbx, %rax
 	ret
 	.cfi_endproc
 .LFE0:

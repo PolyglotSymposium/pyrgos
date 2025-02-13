@@ -4,4 +4,4 @@ type primcall =
 
 and expr =
   | PrimCall of primcall
-  | Integer of int
+  | Integer of int64
