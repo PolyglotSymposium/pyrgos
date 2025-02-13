@@ -9,4 +9,4 @@ assemble: scheme.c
 	$(CC) -O3 --omit-frame-pointer -S scheme.c
 
 clean:
-	rm -f *.o scheme
+	rm -f *.o scheme.exe

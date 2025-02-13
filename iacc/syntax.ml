@@ -1,7 +1,7 @@
 type primcall =
-  | Add of int*int
-  | Sub of int*int
+  | Add of expr*expr
+  | Sub of expr*expr
 
-type expr =
+and expr =
   | PrimCall of primcall
   | Integer of int
