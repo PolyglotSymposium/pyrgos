@@ -32,6 +32,7 @@ let format_asm_value : asm_value -> string =
 (* TODO why not use 64-bit instructions? *)
 type asm64 =
   | Op_add of asm_value*register
+  | Op_lea of asm_value*register
   | Op_pop of register
   | Op_push of asm_value
   | Op_sub of asm_value*register
@@ -42,6 +43,8 @@ let emit_asm : asm64 -> unit =
   function
   | Op_add (value, reg) ->
     Printf.printf "  add %s, %s\n" (format_asm_value value) (format_register reg)
+  | Op_lea (value, reg) ->
+    Printf.printf "  lea %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_sub (value, reg) ->
     Printf.printf "  sub %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_mov (value, reg) ->

@@ -6,13 +6,20 @@
 scheme_entry:
 .LFB0:
 	.cfi_startproc
-	mov $42, %rax
-	push %rax
-	mov $16, %rax
-	mov %rax, %rbx
-	pop %rax
-	sub %rbx, %rax
-	ret
+  mov $36, %rax
+  push %rax
+  mov $22, %rax
+  pop %rbx
+  add %rbx, %rax
+  push %rax
+  mov 0(%rsp), %rax
+  push %rax
+  mov $16, %rax
+  mov %rax, %rbx
+  pop %rax
+  sub %rbx, %rax
+  lea 8(%rsp), %rsp
+  ret
 	.cfi_endproc
 .LFE0:
 	.size	scheme_entry, .-scheme_entry
