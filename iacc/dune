@@ -1,2 +1,7 @@
 (executable
  (name iacc))
+
+(ocamllex lexer)
+
+(menhir
+ (modules parser))
