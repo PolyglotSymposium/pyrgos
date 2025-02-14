@@ -29,7 +29,7 @@ let format_asm_value : asm_value -> string =
     Printf.sprintf "$%Ld" x
 
 (* TODO factor out by operation arity? *)
-(* TODO why not use 64-bit instructions? *)
+(* TODO have I modeled these at all decently? *)
 type asm64 =
   | Op_add of asm_value*register
   | Op_lea of asm_value*register

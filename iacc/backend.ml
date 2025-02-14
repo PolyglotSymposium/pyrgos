@@ -55,6 +55,8 @@ and intermediate_to_asm64_ (non_let: int64): intermediate -> unit asm64_writer =
     drop 1L
   | IR_Variable index ->
     move_offset (Int64.mul (Int64.add non_let index) 8L) Reg_rsp Reg_rax
+  | IR_Match (_e, _cases) ->
+    failwith "match/with: backend not implemented"
 
 let intermediate_to_asm64 (e: intermediate) : unit asm64_writer =
   intermediate_to_asm64_ 0L e *>
