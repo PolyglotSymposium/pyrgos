@@ -39,39 +39,40 @@ type asm64 =
   | Op_mov of asm_value*register
   | Op_ret
 
-let emit_asm_ : asm64 -> unit =
+let emit_asm_ (out : out_channel): asm64 -> unit =
   function
   | Op_add (value, reg) ->
-    Printf.printf "add %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "add %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_lea (value, reg) ->
-    Printf.printf "lea %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "lea %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_sub (value, reg) ->
-    Printf.printf "sub %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "sub %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_mov (value, reg) ->
-    Printf.printf "mov %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "mov %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_push (value) ->
-    Printf.printf "push %s\n" (format_asm_value value)
+    Printf.fprintf out "push %s\n" (format_asm_value value)
   | Op_pop (reg) ->
-    Printf.printf "pop %s\n" (format_register reg)
-  | Op_ret -> print_endline "ret"
+    Printf.fprintf out "pop %s\n" (format_register reg)
+  | Op_ret ->
+    Printf.fprintf out "ret\n"
 
-let emit_asm (asm64 : asm64) : unit =
-   print_string "\t";
-   emit_asm_ asm64
+let emit_asm (out : out_channel) (asm64 : asm64) : unit =
+   Printf.fprintf out "\t";
+   emit_asm_ out asm64
 
-let emit_asm_header () : unit =
-  print_endline "__entry__:"
+let emit_asm_header (out : out_channel) : unit =
+  Printf.fprintf out "__entry__:\n"
 
-let emit_asm_footer () : unit =
-  print_endline ".LC0:";
-  print_endline "\t.string	\"%d\\n\"";
-  print_endline "\t.globl	main";
-  print_endline "\t.type	main, @function";
-  print_endline "main:";
-  print_endline "\tcall __entry__";
-  print_endline "\tmovl	%eax, %esi";
-  print_endline "\tleaq	.LC0(%rip), %rdi";
-  print_endline "\txorl	%eax, %eax";
-  print_endline "\tcall	printf@PLT";
-  print_endline "\txorl	%eax, %eax";
-  print_endline "\tret"
+let emit_asm_footer (out : out_channel) : unit =
+  Printf.fprintf out ".LC0:\n";
+  Printf.fprintf out "\t.string	\"%%d\\n\"\n";
+  Printf.fprintf out "\t.globl	main\n";
+  Printf.fprintf out "\t.type	main, @function\n";
+  Printf.fprintf out "main:\n";
+  Printf.fprintf out "\tcall __entry__\n";
+  Printf.fprintf out "\tmovl	%%eax, %%esi\n";
+  Printf.fprintf out "\tleaq	.LC0(%%rip), %%rdi\n";
+  Printf.fprintf out "\txorl	%%eax, %%eax\n";
+  Printf.fprintf out "\tcall	printf@PLT\n";
+  Printf.fprintf out "\txorl	%%eax, %%eax\n";
+  Printf.fprintf out "\tret\n"

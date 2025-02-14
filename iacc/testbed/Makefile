@@ -1,4 +1,4 @@
-FILES		= main.s
+FILES		= example.s
 CC			= gcc
 CFLAGS	= -Wall
 

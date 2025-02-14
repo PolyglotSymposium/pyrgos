@@ -11,8 +11,8 @@ let ( *> ) fa fb =
   and Asm64_writer (log2, x) = fb
   in Asm64_writer (List.append log1 log2, x)
 
-let emit_all_asm (fa : unit asm64_writer) : unit =
-  emit_asm_header ();
+let emit_all_asm (out : out_channel) (fa : unit asm64_writer) : unit =
+  emit_asm_header out;
   let (Asm64_writer (lines, ())) = fa
-  in List.iter emit_asm lines;
-  emit_asm_footer ()
+  in List.iter (emit_asm out) lines;
+  emit_asm_footer out
