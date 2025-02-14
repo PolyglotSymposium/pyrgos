@@ -1,12 +1,6 @@
-FILES		= scheme.s main.c
+FILES		= main.s
 CC			= gcc
-CFLAGS	= -Wall -g
+CFLAGS	= -Wall
 
 compile: $(FILES)
-	$(CC) $(CFLAGS) $(FILES) -o scheme.exe
-
-assemble: scheme.c
-	$(CC) -O3 --omit-frame-pointer -S scheme.c
-
-clean:
-	rm -f *.o scheme.exe
+	$(CC) $(CFLAGS) $(FILES) -o example.exe

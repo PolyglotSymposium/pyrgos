@@ -1,11 +1,4 @@
-	.file	"scheme.c"
-	.text
-	.p2align 4
-	.globl	scheme_entry
-	.type	scheme_entry, @function
-scheme_entry:
-.LFB0:
-	.cfi_startproc
+__entry__:
 	mov $36, %rax
 	push %rax
 	mov $22, %rax
@@ -34,8 +27,15 @@ scheme_entry:
 	lea 8(%rsp), %rsp
 	lea 8(%rsp), %rsp
 	ret
-	.cfi_endproc
-.LFE0:
-	.size	scheme_entry, .-scheme_entry
-	.ident	"GCC: (GNU) 14.2.1 20240910"
-	.section	.note.GNU-stack,"",@progbits
+.LC0:
+	.string	"%d\n"
+	.globl	main
+	.type	main, @function
+main:
+	call __entry__
+	movl	%eax, %esi
+	leaq	.LC0(%rip), %rdi
+	xorl	%eax, %eax
+	call	printf@PLT
+	xorl	%eax, %eax
+	ret
