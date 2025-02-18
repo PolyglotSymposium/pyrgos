@@ -1,4 +1,6 @@
 let x = 36 + 22
 let y = x - 16
 let z = 1337
-y + x + z
+match y + x + z with
+| 1437 -> 111
+| _ -> 999

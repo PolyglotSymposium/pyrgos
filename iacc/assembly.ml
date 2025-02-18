@@ -3,6 +3,7 @@ type register =
   | Reg_rbx
   | Reg_rcx
   | Reg_rsp
+  | Reg_al
 
 let register_name : register -> string =
   function
@@ -10,10 +11,12 @@ let register_name : register -> string =
   | Reg_rbx -> "rbx"
   | Reg_rcx -> "rcx"
   | Reg_rsp -> "rsp"
+  | Reg_al -> "al"
 
 let format_register (reg : register) : string =
   Printf.sprintf "%%%s" (register_name reg)
 
+(* TODO not convinced I have modeled this precisely *)
 type asm_value =
   | Register of register
   | Offset of int64*register
@@ -28,37 +31,57 @@ let format_asm_value : asm_value -> string =
   | LitInt64 x ->
     Printf.sprintf "$%Ld" x
 
+type label = Lbl of string
+
+let format_label : label -> string =
+  function
+  | Lbl lbl -> lbl
+
 (* TODO factor out by operation arity? *)
 (* TODO have I modeled these at all decently? *)
 type asm64 =
+  | Label of label
+  | Op_cmp of asm_value*asm_value
+  | Op_test of asm_value*asm_value
+  | Op_setz of register
   | Op_add of asm_value*register
   | Op_lea of asm_value*register
   | Op_pop of register
+  | Op_jz of label
+  | Op_jmp of label
   | Op_push of asm_value
   | Op_sub of asm_value*register
   | Op_mov of asm_value*register
   | Op_ret
 
-let emit_asm_ (out : out_channel): asm64 -> unit =
+let emit_asm (out : out_channel): asm64 -> unit =
   function
+  | Label lbl ->
+    Printf.fprintf out "%s:\n" (format_label lbl)
+  | Op_cmp (value1, value2) ->
+    Printf.fprintf out "\tcmp %s, %s\n" (format_asm_value value1) (format_asm_value value2)
+  | Op_test (value1, value2) ->
+    Printf.fprintf out "\ttest %s, %s\n" (format_asm_value value1) (format_asm_value value2)
   | Op_add (value, reg) ->
-    Printf.fprintf out "add %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "\tadd %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_lea (value, reg) ->
-    Printf.fprintf out "lea %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "\tlea %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_sub (value, reg) ->
-    Printf.fprintf out "sub %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "\tsub %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_mov (value, reg) ->
-    Printf.fprintf out "mov %s, %s\n" (format_asm_value value) (format_register reg)
+    Printf.fprintf out "\tmov %s, %s\n" (format_asm_value value) (format_register reg)
   | Op_push (value) ->
-    Printf.fprintf out "push %s\n" (format_asm_value value)
-  | Op_pop (reg) ->
-    Printf.fprintf out "pop %s\n" (format_register reg)
+    Printf.fprintf out "\tpush %s\n" (format_asm_value value)
+  | Op_jmp lbl ->
+    Printf.fprintf out "\tjmp %s\n" (format_label lbl)
+  | Op_jz lbl ->
+    Printf.fprintf out "\tjz %s\n" (format_label lbl)
+  | Op_setz reg ->
+    Printf.fprintf out "\tsetz %s\n" (format_register reg)
+  | Op_pop reg ->
+    Printf.fprintf out "\tpop %s\n" (format_register reg)
   | Op_ret ->
-    Printf.fprintf out "ret\n"
-
-let emit_asm (out : out_channel) (asm64 : asm64) : unit =
-   Printf.fprintf out "\t";
-   emit_asm_ out asm64
+    Printf.fprintf out "\tret\n"
 
 let emit_asm_header (out : out_channel) : unit =
   Printf.fprintf out "__entry__:\n"

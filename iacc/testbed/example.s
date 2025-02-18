@@ -23,6 +23,21 @@ __entry__:
 	add %rbx, %rax
 	pop %rbx
 	add %rbx, %rax
+	push %rax
+	mov 0(%rsp), %rax
+	push %rax
+	mov $1437, %rax
+	pop %rbx
+	cmp %rbx, %rax
+	setz %al
+	test %rax, %rax
+	jz lbl0
+	mov $111, %rax
+	jmp lbl1
+lbl0:
+	mov $999, %rax
+lbl1:
+	lea 8(%rsp), %rsp
 	lea 8(%rsp), %rsp
 	lea 8(%rsp), %rsp
 	lea 8(%rsp), %rsp
