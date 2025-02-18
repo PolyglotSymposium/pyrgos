@@ -53,8 +53,7 @@ let rec primcall (non_let: int64): primcall -> unit asm64_writer =
     push Reg_rax *>
     intermediate_to_asm64_ (Int64.succ non_let) y *>
     pop Reg_rbx *>
-    tell (Op_cmp (Register Reg_rbx, Register Reg_rax)) *>
-    tell (Op_setz Reg_al)
+    tell (Op_cmp (Register Reg_rbx, Register Reg_rax))
 
 and intermediate_to_asm64_ (non_let: int64): intermediate -> unit asm64_writer =
   function
@@ -71,14 +70,13 @@ and intermediate_to_asm64_ (non_let: int64): intermediate -> unit asm64_writer =
     move_offset (Int64.mul (Int64.add non_let index) 8L) Reg_rsp Reg_rax
   | IR_IfThenElse ite ->
     intermediate_to_asm64_ non_let ite.condition *>
-    tell (Op_test (Register Reg_rax, Register Reg_rax)) *>
     let else_label = unique_label () in
     let end_label = unique_label () in
-    tell (Op_jz else_label) *>
-    intermediate_to_asm64_ non_let ite.branch1 *>
+    tell (Op_je else_label) *>
+    intermediate_to_asm64_ non_let ite.branch2 *>
     tell (Op_jmp end_label) *>
     tell (Label else_label) *>
-    intermediate_to_asm64_ non_let ite.branch2 *>
+    intermediate_to_asm64_ non_let ite.branch1 *>
     tell (Label end_label)
   | IR_Fail _ ->
     failwith "exceptions are not implemented (yet)"

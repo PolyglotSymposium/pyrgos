@@ -47,7 +47,7 @@ type asm64 =
   | Op_add of asm_value*register
   | Op_lea of asm_value*register
   | Op_pop of register
-  | Op_jz of label
+  | Op_je of label
   | Op_jmp of label
   | Op_push of asm_value
   | Op_sub of asm_value*register
@@ -74,8 +74,8 @@ let emit_asm (out : out_channel): asm64 -> unit =
     Printf.fprintf out "\tpush %s\n" (format_asm_value value)
   | Op_jmp lbl ->
     Printf.fprintf out "\tjmp %s\n" (format_label lbl)
-  | Op_jz lbl ->
-    Printf.fprintf out "\tjz %s\n" (format_label lbl)
+  | Op_je lbl ->
+    Printf.fprintf out "\tje %s\n" (format_label lbl)
   | Op_setz reg ->
     Printf.fprintf out "\tsetz %s\n" (format_register reg)
   | Op_pop reg ->

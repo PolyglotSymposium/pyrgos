@@ -29,13 +29,21 @@ __entry__:
 	mov $1437, %rax
 	pop %rbx
 	cmp %rbx, %rax
-	setz %al
-	test %rax, %rax
-	jz lbl0
-	mov $111, %rax
+	je lbl0
+	mov 0(%rsp), %rax
+	push %rax
+	mov $1337, %rax
+	pop %rbx
+	cmp %rbx, %rax
+	je lbl2
+	mov $999, %rax
+	jmp lbl3
+lbl2:
+	mov $222, %rax
+lbl3:
 	jmp lbl1
 lbl0:
-	mov $999, %rax
+	mov $111, %rax
 lbl1:
 	lea 8(%rsp), %rsp
 	lea 8(%rsp), %rsp

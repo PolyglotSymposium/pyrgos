@@ -7,4 +7,8 @@
       (IR_PrimCall (IR_Add (IR_Variable 2) (IR_Variable 0)))))
     (IR_IfThenElse
      ((condition (IR_PrimCall (IR_Eq (IR_Variable 0) (IR_Integer 1437))))
-      (branch1 (IR_Integer 111)) (branch2 (IR_Integer 999))))))))
+      (branch1 (IR_Integer 111))
+      (branch2
+       (IR_IfThenElse
+        ((condition (IR_PrimCall (IR_Eq (IR_Variable 0) (IR_Integer 1337))))
+         (branch1 (IR_Integer 222)) (branch2 (IR_Integer 999)))))))))))
