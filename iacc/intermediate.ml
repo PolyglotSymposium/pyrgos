@@ -40,14 +40,18 @@ let rec expr_to_intermediate_ (expr : expr)
                               (env : environment) : intermediate =
   match expr with
   | Integer n -> IR_Integer n
-  | ApplyInfix (Add (e1, e2)) ->
+  | Apply (Apply (InfixOp "+", e1), e2) ->
     let i1 = expr_to_intermediate_ e1 env
     and i2 = expr_to_intermediate_ e2 env
     in IR_PrimCall (IR_Add (i1, i2))
-  | ApplyInfix (Sub (e1, e2)) ->
+  | Apply (Apply (InfixOp "-", e1), e2) ->
     let i1 = expr_to_intermediate_ e1 env
     and i2 = expr_to_intermediate_ e2 env
     in IR_PrimCall (IR_Sub (i1, i2))
+  | Apply (_, _) ->
+    failwith "unimplemented case of apply"
+  | InfixOp _ ->
+    failwith "unexpected infix operator"
   | Let (Pattern_Wildcard, _value, body_expr) ->
     expr_to_intermediate_ body_expr env (* TODO execute effects in value? *)
   | Let (Pattern_Int _, _, _) ->
