@@ -18,7 +18,7 @@ let write_asm (filename : string) asm : unit =
 
 let compile_program (filename : string) : unit =
   let syntax = Frontend.lex_and_parse filename in
-  let ir = Intermediate.expr_to_intermediate syntax in
+  let ir = Middle.expr_to_intermediate syntax in
   let asm = Backend.intermediate_to_asm64 ir in
   write_expr filename syntax;
   write_ir filename ir;

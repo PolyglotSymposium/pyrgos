@@ -4,12 +4,11 @@ type pattern =
   | Pattern_Int of int64
   | Pattern_Var of string
   | Pattern_Wildcard
+  | Pattern_Deconstruct of string * pattern list
   [@@deriving sexp]
 
 and match_with = {
   subject : expr;
-  (* The list is in the order constructed naturally by parsing:
-     that is, the farther down cases are closer to the head.  *)
   cases : (pattern * expr) list
 } [@@deriving sexp]
 
@@ -19,6 +18,7 @@ and expr =
   | Let of pattern * expr * expr  (* Name, value, body *)
   | Variable of string
   | InfixOp of string
+  | Constructor of string
   | Match of match_with
   [@@deriving sexp]
 

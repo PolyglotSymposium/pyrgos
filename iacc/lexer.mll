@@ -1,7 +1,8 @@
 let space = ['\t' ' ']
 let num_char = ['0'-'9']
-let id_char1 = ['a'-'z' 'A'-'Z']
-let id_charn = ['a'-'z' 'A'-'Z' '0'-'9' '_' '?' '!' '\'']
+let lower_char = ['a'-'z']
+let upper_char = ['A'-'Z']
+let id_char = ['a'-'z' 'A'-'Z' '0'-'9' '_' '?' '!' '\'']
 
 rule token = parse
 | space+ { token lexbuf }
@@ -18,7 +19,8 @@ rule token = parse
 | "let" { Parser.LET }
 | "match" { Parser.MATCH }
 | "with" { Parser.WITH }
-| id_char1 id_charn* as id { Parser.IDENTIFIER id }
-| '_' id_charn* { Parser.WILDCARD }
+| lower_char id_char* as id { Parser.LOWER_IDENTIFIER id }
+| upper_char id_char* as id { Parser.UPPER_IDENTIFIER id }
+| '_' id_char* { Parser.WILDCARD }
 | eof { Parser.EOF }
 | _ { failwith "lexical error" }

@@ -79,7 +79,11 @@ and intermediate_to_asm64_ (non_let: int64): intermediate -> unit asm64_writer =
     intermediate_to_asm64_ non_let ite.branch1 *>
     tell (Label end_label)
   | IR_Fail _ ->
-    failwith "exceptions are not implemented (yet)"
+    failwith "IR exceptions are not implemented (yet)"
+  | IR_MkArray (_args) ->
+    failwith "IR tuples are not fully implemented (yet)"
+  | IR_ArrayIndex (_length, _array) ->
+    failwith "IR tuples are not fully implemented (yet)"
 
 let intermediate_to_asm64 (e: intermediate) : unit asm64_writer =
   intermediate_to_asm64_ 0L e *>
