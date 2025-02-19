@@ -48,7 +48,11 @@ let rec expr_to_intermediate_ (expr : expr)
     let i1 = expr_to_intermediate_ e1 env
     and i2 = expr_to_intermediate_ e2 env
     in IR_PrimCall (IR_Sub (i1, i2))
-  | Let (name, value_expr, body_expr) ->
+  | Let (Pattern_Wildcard, _value, body_expr) ->
+    expr_to_intermediate_ body_expr env (* TODO execute effects in value? *)
+  | Let (Pattern_Int _, _, _) ->
+    fail_with_match_not_exhaustive ()
+  | Let (Pattern_Var name, value_expr, body_expr) ->
     let value = expr_to_intermediate_ value_expr env
     and body = expr_to_intermediate_ body_expr (Some name :: env)
     in IR_Let (value, body)

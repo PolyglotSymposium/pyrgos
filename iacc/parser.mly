@@ -17,8 +17,8 @@ expr:
 | INTEGER { Syntax.Integer $1 }
 | IDENTIFIER { Syntax.Variable $1 }
 | LPAREN expr RPAREN { $2 }
-| LET IDENTIFIER EQ expr SEMICOLON expr { Syntax.Let ($2, $4, $6) }
-| LET IDENTIFIER EQ expr NEWLINE expr { Syntax.Let ($2, $4, $6) }
+| LET pattern EQ expr SEMICOLON expr { Syntax.Let ($2, $4, $6) }
+| LET pattern EQ expr NEWLINE expr { Syntax.Let ($2, $4, $6) }
 (* TODO infixes are right-associating *)
 | expr PLUS expr { Syntax.ApplyInfix (Syntax.Add ($1, $3)) }
 | expr MINUS expr { Syntax.ApplyInfix (Syntax.Sub ($1, $3)) }

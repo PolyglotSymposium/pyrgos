@@ -23,10 +23,13 @@ and match_with = {
 and expr =
   | ApplyInfix of apply_infix
   | Integer of int64
-  | Let of string * expr * expr  (* Name, value, body *)
+  | Let of pattern * expr * expr  (* Name, value, body *)
   | Variable of string
   | Match of match_with
   [@@deriving sexp]
+
+let fail_with_match_not_exhaustive () =
+  failwith "Pattern match not exhaustive"
 
 let assert_exhaustive (m: match_with) : unit =
   (* No one wants to enumerate every case of int64 in a source file.\
@@ -36,4 +39,4 @@ let assert_exhaustive (m: match_with) : unit =
       | Pattern_Wildcard -> true
       | _ -> false
   ) m.cases then ()
-  else failwith "Pattern match not exhaustive"
+  else fail_with_match_not_exhaustive ()

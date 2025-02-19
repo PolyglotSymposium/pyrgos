@@ -1,6 +1,6 @@
-(Let x (ApplyInfix (Add (Integer 36) (Integer 22)))
- (Let y (ApplyInfix (Sub (Variable x) (Integer 16)))
-  (Let z (Integer 1337)
+(Let (Pattern_Var x) (ApplyInfix (Add (Integer 36) (Integer 22)))
+ (Let (Pattern_Var y) (ApplyInfix (Sub (Variable x) (Integer 16)))
+  (Let (Pattern_Var z) (Integer 1337)
    (Match
     ((subject
       (ApplyInfix
