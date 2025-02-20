@@ -3,6 +3,9 @@ open Assembly
 type 'a asm64_writer =
   | Asm64_writer of asm64 list * 'a
 
+let writer_unit  : unit asm64_writer =
+  Asm64_writer ([], ())
+
 let tell (x : asm64) : unit asm64_writer =
   Asm64_writer ([x], ())
 
