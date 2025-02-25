@@ -3,8 +3,8 @@
   (IR_Let (IR_Integer 1337)
    (IR_Let
     (IR_PrimCall
-     (IR_Add (IR_Variable 1)
-      (IR_PrimCall (IR_Add (IR_Variable 2) (IR_Variable 0)))))
+     (IR_Add (IR_PrimCall (IR_Add (IR_Variable 1) (IR_Variable 2)))
+      (IR_Variable 0)))
     (IR_IfThenElse
      ((condition (IR_PrimCall (IR_Eq (IR_Variable 0) (IR_Integer 1437))))
       (branch1 (IR_Integer 111))

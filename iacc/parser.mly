@@ -1,3 +1,5 @@
+(* TODO error handling *)
+
 %token <int64> INTEGER
 %token <string> LOWER_IDENTIFIER
 %token <string> UPPER_IDENTIFIER
@@ -6,6 +8,8 @@
 %token LPAREN RPAREN
 %token MATCH WITH BAR ARROW WILDCARD
 %token SEMICOLON NEWLINE EOF
+
+%left PLUS MINUS
 
 %start <Syntax.expr> program
 
@@ -21,10 +25,9 @@ expr:
 | LPAREN expr RPAREN { $2 }
 | LET pattern EQ expr SEMICOLON expr { Syntax.Let ($2, $4, $6) }
 | LET pattern EQ expr NEWLINE expr { Syntax.Let ($2, $4, $6) }
-(* TODO infixes are right-associating *)
+| expr expr { Syntax.Apply ($1, $2) }
 | expr PLUS expr { Syntax.Apply (Syntax.Apply (Syntax.InfixOp "+", $1), $3) }
 | expr MINUS expr { Syntax.Apply (Syntax.Apply (Syntax.InfixOp "-", $1), $3) }
-| expr expr { Syntax.Apply ($1, $2) }
 | MATCH expr WITH NEWLINE match_cases { Syntax.Match { subject = $2; cases = $5 } }
 
 match_cases:

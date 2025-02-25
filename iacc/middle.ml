@@ -32,7 +32,6 @@ let rec expr_to_intermediate_ (expr : expr)
     IR-translation as a single-case match-with expression *)
     lower_match { subject = subject; cases = [(pattern, body)] } env
   | Variable name ->
-    (* TODO: handle shadowing *)
     begin
       match List.find_index (fun x -> x = Some name) env with
       | None -> failwith ("Unbound variable: " ^ name)

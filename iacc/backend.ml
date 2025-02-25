@@ -32,10 +32,13 @@ let sub (reg1 : register) (reg2 : register) : unit asm64_writer =
 let move_reg (reg1 : register) (reg2 : register) : unit asm64_writer =
   tell (Op_mov (Src_register reg1, Dst_register reg2))
 
-let move_offset (offset: int64) (reg1 : register) (reg2 : register) : unit asm64_writer =
+let move_from_offset (offset: int64) (reg1 : register) (reg2 : register) : unit asm64_writer =
   tell (Op_mov (Src_offset (offset,  reg1), Dst_register reg2))
 
-let heap_pointer = Reg_esi
+let move_to_offset (reg1 : register) (offset: int64) (reg2 : register) : unit asm64_writer =
+  tell (Op_mov (Src_register reg1, Dst_offset (offset, reg2)))
+
+let heap_pointer = Reg_rsi
 
 let allocate (size : int64) : unit asm64_writer =
   tell (Op_mov (Src_register heap_pointer, Dst_register Reg_rax)) *>
@@ -75,7 +78,7 @@ and intermediate_to_asm64_ (non_let: int64) : intermediate -> unit asm64_writer 
     intermediate_to_asm64_ non_let body *>
     drop 1L
   | IR_Variable index ->
-    move_offset ((non_let + index) * 8L) Reg_rsp Reg_rax
+    move_from_offset ((non_let + index) * 8L) Reg_rsp Reg_rax
   | IR_IfThenElse ite ->
     intermediate_to_asm64_ non_let ite.condition *>
     let else_label = unique_label () in
@@ -90,17 +93,19 @@ and intermediate_to_asm64_ (non_let: int64) : intermediate -> unit asm64_writer 
     failwith "IR exceptions are not implemented (yet)"
   | IR_MkArray args ->
     let size = Int64.of_int (List.length args) * 8L in (* each element is 8 bytes/64 bits *)
-    let _ = allocate size (* TODO *> *)
-    in failwith "TODO: MkArray implementation incomplete"
-    (* Store each argument in the array *)
-    (* TODO List.foldi args writer_unit (fun addr arg_writer arg ->
-      arg_writer *>
-      tell (Op_mov (Src_register Reg_rax, Dst_offset (Int64.of_int addr * 8L, Reg_rax))) (* Store arg in array *)
-    ) *)
-    (* TODO return array pointer *)
+    allocate size *>
+    store_into_array non_let args *>
+    move_reg heap_pointer Reg_rax
   | IR_ArrayIndex (index, array) ->
     intermediate_to_asm64_ non_let array *>
-    move_offset (Int64.of_int index * 8L) Reg_rax Reg_rax
+    move_from_offset (Int64.of_int index * 8L) Reg_rax Reg_rax
+
+and store_into_array (non_let: int64) (args: intermediate list) : unit asm64_writer =
+  List.foldi args ~init:writer_unit ~f:(fun i acc arg ->
+    acc *>
+    intermediate_to_asm64_ non_let arg *>
+    move_to_offset Reg_rax (Int64.of_int i * 8L) heap_pointer
+  )
 
 let intermediate_to_asm64 (e: intermediate) : unit asm64_writer =
   intermediate_to_asm64_ 0L e *>

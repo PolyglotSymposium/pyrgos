@@ -1,5 +1,7 @@
 open Sexplib.Std
 
+(* TODO file, line, column metadata annotations *)
+
 type pattern =
   | Pattern_Int of int64
   | Pattern_Var of string

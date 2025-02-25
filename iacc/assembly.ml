@@ -3,7 +3,7 @@ type register =
   | Reg_rbx
   | Reg_rcx
   | Reg_rsp
-  | Reg_esi
+  | Reg_rsi
   | Reg_al
 
 let register_name : register -> string =
@@ -12,7 +12,7 @@ let register_name : register -> string =
   | Reg_rbx -> "rbx"
   | Reg_rcx -> "rcx"
   | Reg_rsp -> "rsp"
-  | Reg_esi -> "esi"
+  | Reg_rsi -> "rsi"
   | Reg_al -> "al"
 
 let format_register (reg : register) : string =
@@ -98,7 +98,7 @@ let emit_asm_header (out : out_channel) : unit =
   Printf.fprintf out "\tsyscall\n";
   Printf.fprintf out "\tcmp $-1, %%rax\n"; (* Check for sbrk error (-1 return means error) *)
   Printf.fprintf out "\tje heap_allocation_error\n"; (* Jump to error handler if sbrk fails*)
-  Printf.fprintf out "\tmov %%rax, %%esi\n" (*; Store the start of the 10MB heap in %esi *)
+  Printf.fprintf out "\tmov %%rax, %%rsi\n" (*; Store the start of the 10MB heap in %rsi *)
 
 let emit_asm_footer (out : out_channel) : unit =
   Printf.fprintf out "heap_allocation_error:\n";
@@ -111,9 +111,9 @@ let emit_asm_footer (out : out_channel) : unit =
   Printf.fprintf out "\t.type	main, @function\n";
   Printf.fprintf out "main:\n";
   Printf.fprintf out "\tcall __entry__\n";
-  Printf.fprintf out "\tmovl	%%eax, %%esi\n";
-  Printf.fprintf out "\tleaq	.LC0(%%rip), %%rdi\n";
-  Printf.fprintf out "\txorl	%%eax, %%eax\n";
+  Printf.fprintf out "\tmov	%%rax, %%rsi\n";
+  Printf.fprintf out "\tlea	.LC0(%%rip), %%rdi\n";
+  Printf.fprintf out "\txor	%%rax, %%rax\n";
   Printf.fprintf out "\tcall	printf@PLT\n";
-  Printf.fprintf out "\txorl	%%eax, %%eax\n";
+  Printf.fprintf out "\txor	%%rax, %%rax\n";
   Printf.fprintf out "\tret\n"
