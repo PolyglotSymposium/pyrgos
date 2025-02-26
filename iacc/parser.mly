@@ -35,11 +35,14 @@ match_cases:
 | BAR pattern ARROW expr { [($2, $4)] }
 
 pattern:
-| INTEGER { Syntax.Pattern_Int $1 }
-| LOWER_IDENTIFIER { Syntax.Pattern_Var $1 }
-| WILDCARD { Syntax.Pattern_Wildcard }
+| tpattern { Syntax.Pattern_Terminal $1 }
 | UPPER_IDENTIFIER patterns { Syntax.Pattern_Deconstruct ($1, $2) }
 | UPPER_IDENTIFIER { Syntax.Pattern_Deconstruct ($1, []) }
+
+tpattern:
+| INTEGER { Syntax.TPat_Int $1 }
+| LOWER_IDENTIFIER { Syntax.TPat_Var $1 }
+| WILDCARD { Syntax.TPat_Wildcard }
 
 patterns:
 | pattern patterns { $1 :: $2 }
