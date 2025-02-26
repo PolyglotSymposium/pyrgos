@@ -6,10 +6,7 @@ __entry__:
 	je heap_allocation_error
 	mov %rax, %rsi
 	mov $36, %rax
-	push %rax
-	mov $22, %rax
-	pop %rbx
-	add %rbx, %rax
+	add $22, %rax
 	push %rax
 	mov 0(%rsp), %rax
 	push %rax

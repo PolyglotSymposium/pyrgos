@@ -47,14 +47,21 @@ let allocate (size : int64) : unit asm64_writer =
   tell (Op_mov (Src_register heap_pointer, Dst_register Reg_rax)) *>
   tell (Op_add (LitInt64 size, Dst_register heap_pointer))
 
+(* TODO clearly there is a lot of needless duplication here *)
 let rec primcall (non_let: int64): primcall -> unit asm64_writer =
   function
+  | IR2_Add (IR2_Integer x, IR2_Integer y) ->
+    tell (Op_mov (LitInt64 x, Dst_register Reg_rax)) *>
+    tell (Op_add (LitInt64 y, Dst_register Reg_rax))
   | IR2_Add (x, y) ->
     intermediate_to_asm64_ non_let x *>
     push Reg_rax *>
     intermediate_to_asm64_ (Int64.succ non_let) y *>
     pop Reg_rbx *>
     add Reg_rbx Reg_rax
+  | IR2_Sub (IR2_Integer x, IR2_Integer y) ->
+    tell (Op_mov (LitInt64 x, Dst_register Reg_rax)) *>
+    tell (Op_sub (LitInt64 y, Dst_register Reg_rax))
   | IR2_Sub (x, y) ->
     intermediate_to_asm64_ non_let x *>
     push Reg_rax *>
@@ -68,6 +75,9 @@ let rec primcall (non_let: int64): primcall -> unit asm64_writer =
     intermediate_to_asm64_ (Int64.succ non_let) y *>
     pop Reg_rbx *>
     tell (Op_cmp (Src_register Reg_rbx, Src_register Reg_rax))
+  | IR2_And (IR2_Integer x, IR2_Integer y) ->
+    tell (Op_mov (LitInt64 x, Dst_register Reg_rax)) *>
+    tell (Op_and (LitInt64 y, Dst_register Reg_rax))
   | IR2_And (x, y) ->
     intermediate_to_asm64_ non_let x *>
     push Reg_rax *>
