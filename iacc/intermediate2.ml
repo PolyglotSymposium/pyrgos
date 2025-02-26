@@ -13,7 +13,8 @@ type primcall =
   | IR2_Add of intermediate2 * intermediate2
   | IR2_Sub of intermediate2 * intermediate2
   | IR2_Eq of intermediate2 * intermediate2
-  [@@deriving sexp]
+  | IR2_And of intermediate2 * intermediate2
+[@@deriving sexp]
 
 and if_then_else = {
   condition : intermediate2;

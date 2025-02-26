@@ -57,6 +57,7 @@ type asm64 =
   | Label of label
   | Op_cmp of asm_src*asm_src
   | Op_add of asm_src*asm_dst
+  | Op_and of asm_src*asm_dst
   | Op_lea of asm_src*register
   | Op_pop of register
   | Op_je of label
@@ -74,6 +75,8 @@ let emit_asm (out : out_channel): asm64 -> unit =
     Printf.fprintf out "\tcmp %s, %s\n" (format_asm_src value1) (format_asm_src value2)
   | Op_add (src, dst) ->
     Printf.fprintf out "\tadd %s, %s\n" (format_asm_src src) (format_asm_dst dst)
+  | Op_and (src, dst) ->
+    Printf.fprintf out "\tand %s, %s\n" (format_asm_src src) (format_asm_dst dst)
   | Op_lea (value, reg) ->
     Printf.fprintf out "\tlea %s, %s\n" (format_asm_src value) (format_register reg)
   | Op_sub (src, dst) ->

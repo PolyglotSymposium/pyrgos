@@ -26,6 +26,9 @@ let drop (n : int64) : unit asm64_writer =
 let add (reg1 : register) (reg2 : register) : unit asm64_writer =
   tell (Op_add (Src_register reg1, Dst_register reg2))
 
+let and_ (reg1 : register) (reg2 : register) : unit asm64_writer =
+  tell (Op_and (Src_register reg1, Dst_register reg2))
+
 let sub (reg1 : register) (reg2 : register) : unit asm64_writer =
   tell (Op_sub (Src_register reg1, Dst_register reg2))
 
@@ -65,6 +68,12 @@ let rec primcall (non_let: int64): primcall -> unit asm64_writer =
     intermediate_to_asm64_ (Int64.succ non_let) y *>
     pop Reg_rbx *>
     tell (Op_cmp (Src_register Reg_rbx, Src_register Reg_rax))
+  | IR2_And (x, y) ->
+    intermediate_to_asm64_ non_let x *>
+    push Reg_rax *>
+    intermediate_to_asm64_ (Int64.succ non_let) y *>
+    pop Reg_rbx *>
+    and_ Reg_rbx Reg_rax
 
 and intermediate_to_asm64_ (non_let: int64) : intermediate2 -> unit asm64_writer =
   function
